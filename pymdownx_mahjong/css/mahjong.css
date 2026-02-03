@@ -23,7 +23,7 @@
     --mahjong-error-border: #dc2626;
     --mahjong-error-color: #fca5a5;
     --mahjong-tile-bg: #1e1e1e;
-    --mahjong-tile-border: #9a9a8a;
+    --mahjong-tile-border: #47473e;
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.3);
 }
 
@@ -48,7 +48,7 @@
     display: contents;
 }
 
-/* Main container */
+/* NOTE Main container */
 .mahjong-hand {
     display: block;
     margin: 1em 0;
@@ -58,24 +58,24 @@
     border-radius: 4px;
 }
 
-/* Override MkDocs Material theme figure margins */
+/* NOTE Override MkDocs Material/Zensical theme figure margins */
 .md-typeset .mahjong-hand {
     margin-left: 1rem;
 }
 
-/* Hand row - contains left (tiles/melds), draw, and right (dora) sections */
+/* NOTE Hand row - contains left (tiles/melds), draw, and right (dora) sections */
 .mahjong-hand-row {
     display: flex;
     flex-wrap: nowrap;
     align-items: flex-end;
 }
 
-/* Left section - closed tiles and melds */
+/* NOTE Left section - closed tiles and melds */
 .mahjong-hand-left {
     flex: 0 0 auto;
 }
 
-/* Draw tile section - separated from main hand */
+/* NOTE Draw tile section */
 .mahjong-hand-draw {
     flex: 0 0 auto;
     margin-left: calc(var(--mahjong-meld-gap) * 0.75);
@@ -96,13 +96,13 @@
     pointer-events: none;
 }
 
-/* Melds section - after draw tile */
+/* NOTE Melds section - after draw tile */
 .mahjong-hand-melds {
     flex: 0 0 auto;
     margin-left: calc(var(--mahjong-meld-gap) * 0.75);
 }
 
-/* Tiles container - flexbox layout */
+/* NOTE Tiles container - flexbox layout */
 .mahjong-tiles {
     display: flex;
     flex-wrap: wrap;
@@ -110,7 +110,7 @@
     gap: var(--mahjong-tile-gap);
 }
 
-/* Individual tile - styled like physical riichi tiles */
+/* NOTE Individual tile - styled like physical riichi tiles */
 .mahjong-tile {
     display: inline-flex;
     align-items: center;
@@ -122,9 +122,6 @@
     background: var(--mahjong-tile-bg);
     border: 2px solid var(--mahjong-tile-border);
     border-radius: 6px;
-    box-shadow:
-        1px 2px 3px var(--mahjong-tile-shadow),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     padding: 2px;
     box-sizing: border-box;
     position: relative;
