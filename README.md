@@ -1,6 +1,12 @@
+![PyPI - Version](https://img.shields.io/pypi/v/pymdownx-mahjong)
+
 # PyMdown Mahjong
 
-Extensions for [Python Markdown](https://python-markdown.github.io) that aids writing Mahjong content
+[Python Markdown](https://python-markdown.github.io) extension to render and stylize Mahjong tiles. Designed for usage with [MkDocs](https://github.com/mkdocs/mkdocs) and [Zensical](https://github.com/zensical/zensical).
+
+## Documentation
+
+Demo and documentation can be found at [https://tylernguyen.github.io/pymdownx-mahjong/](https://tylernguyen.github.io/pymdownx-mahjong/).
 
 ## License
 
