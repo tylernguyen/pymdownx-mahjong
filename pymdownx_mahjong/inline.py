@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from markdown.inlinepatterns import InlineProcessor
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 # Pattern matches :123m:, :1z:, :0m: (red dora), etc.
 # Must be valid MPSZ: one or more groups of digits followed by m/p/s/z
 # Examples: :1m:, :123p:, :5z:, :0s:, :123m456p:
-INLINE_TILE_PATTERN = r":([0-9]+[mpsz])+:"
+INLINE_TILE_PATTERN: Final[str] = r":([0-9]+[mpsz])+:"
 
 
 class MahjongInlineProcessor(InlineProcessor):

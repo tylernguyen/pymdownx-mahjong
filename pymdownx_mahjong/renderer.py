@@ -2,23 +2,47 @@
 
 from __future__ import annotations
 
+import functools
 import html
 import importlib.resources
 import re
 from pathlib import Path
+from typing import Final, Pattern
 
 from .parser import Hand, Meld, MeldType, Tile
 from .tiles import TileInfo, get_special_tile
 
 # Pre-compiled regex patterns for SVG processing
-_RE_XML_DECL = re.compile(r"<\?xml[^?]*\?>")
-_RE_SODIPODI_SELF = re.compile(r"<sodipodi:namedview[^>]*/>")
-_RE_SODIPODI_FULL = re.compile(r"<sodipodi:namedview[^>]*>.*?</sodipodi:namedview>", re.DOTALL)
-_RE_METADATA = re.compile(r"<metadata[^>]*>.*?</metadata>", re.DOTALL)
-_RE_WIDTH = re.compile(r'width="[^"]*"')
-_RE_HEIGHT = re.compile(r'height="[^"]*"')
+_RE_XML_DECL: Final[Pattern[str]] = re.compile(r"<\?xml[^?]*\?>")
+_RE_SODIPODI_SELF: Final[Pattern[str]] = re.compile(r"<sodipodi:namedview[^>]*/>")
+_RE_SODIPODI_FULL: Final[Pattern[str]] = re.compile(r"<sodipodi:namedview[^>]*>.*?</sodipodi:namedview>", re.DOTALL)
+_RE_METADATA: Final[Pattern[str]] = re.compile(r"<metadata[^>]*>.*?</metadata>", re.DOTALL)
+_RE_WIDTH: Final[Pattern[str]] = re.compile(r'width="[^"]*"')
+_RE_HEIGHT: Final[Pattern[str]] = re.compile(r'height="[^"]*"')
 # Pattern to find IDs in SVGs
-_RE_ID = re.compile(r'id="([^"]+)"')
+_RE_ID: Final[Pattern[str]] = re.compile(r'id="([^"]+)"')
+
+
+@functools.lru_cache(maxsize=128)
+def _load_svg_from_package(asset_name: str, theme: str) -> str:
+    """Load SVG content from package resources with caching.
+
+    This is a module-level cached function to avoid repeated file I/O
+    for the same tile assets across multiple renderer instances.
+
+    Args:
+        asset_name: Name of the asset (e.g., '1m', 'back')
+        theme: Theme to load ('light' or 'dark')
+
+    Returns:
+        Raw SVG content string
+
+    Raises:
+        FileNotFoundError: If the asset doesn't exist
+    """
+    assets = importlib.resources.files("pymdownx_mahjong") / "assets" / theme
+    svg_file = assets / f"{asset_name}.svg"
+    return svg_file.read_text(encoding="utf-8")
 
 
 class MahjongRenderer:
@@ -62,7 +86,6 @@ class MahjongRenderer:
         self.show_labels = show_labels
         self.inline_svg = inline_svg
         self.assets_path = Path(assets_path) if assets_path else None
-        self._svg_cache: dict[tuple[str, str], str] = {}
         self._svg_id_counter = 0
 
     def render(
@@ -290,17 +313,12 @@ class MahjongRenderer:
             SVG content string with unique IDs
         """
         theme = theme or (self.theme if self.theme != "auto" else "light")
-        cache_key = (theme, info.asset_name)
 
-        # Cache raw loaded SVG content (before ID uniquification)
-        if cache_key not in self._svg_cache:
-            svg_content = self._load_svg(info, theme)
-            # Process but don't add unique IDs yet - cache the base processed version
-            svg_content = self._process_svg(svg_content, unique_prefix=None)
-            self._svg_cache[cache_key] = svg_content
+        # Load and process SVG (package assets use module-level LRU cache)
+        svg_content = self._load_svg(info, theme)
+        svg_content = self._process_svg(svg_content)
 
-        # Get cached SVG and make IDs unique for this instance
-        svg_content = self._svg_cache[cache_key]
+        # Make IDs unique for this instance
         self._svg_id_counter += 1
         return self._make_ids_unique(svg_content, f"mj{self._svg_id_counter}_")
 
@@ -342,32 +360,28 @@ class MahjongRenderer:
         """
         theme = theme or (self.theme if self.theme != "auto" else "light")
 
-        # Try custom assets path first
+        # Try custom assets path first (not cached since it's user-specific)
         if self.assets_path:
             svg_path = self.assets_path / theme / f"{info.asset_name}.svg"
             if svg_path.exists():
                 return svg_path.read_text(encoding="utf-8")
 
-        # Fall back to package assets
+        # Fall back to package assets (uses module-level LRU cache)
         try:
-            assets = importlib.resources.files("pymdownx_mahjong") / "assets" / theme
-            svg_file = assets / f"{info.asset_name}.svg"
-            return svg_file.read_text(encoding="utf-8")
+            return _load_svg_from_package(info.asset_name, theme)
         except (FileNotFoundError, TypeError):
             # Return a placeholder SVG
             return self._placeholder_svg(info)
 
-    def _process_svg(self, svg_content: str, unique_prefix: str | None = None) -> str:
+    def _process_svg(self, svg_content: str) -> str:
         """Process SVG content for inline use.
 
         - Removes XML declaration
         - Removes unnecessary metadata
         - Adds sizing attributes
-        - Makes IDs unique to avoid conflicts when multiple SVGs are on the same page
 
         Args:
             svg_content: Raw SVG content
-            unique_prefix: Optional prefix to make IDs unique
 
         Returns:
             Processed SVG content
@@ -383,10 +397,6 @@ class MahjongRenderer:
         # Update width/height to our tile size while preserving viewBox
         svg_content = _RE_WIDTH.sub(f'width="{self.tile_width}"', svg_content, count=1)
         svg_content = _RE_HEIGHT.sub(f'height="{self.tile_height}"', svg_content, count=1)
-
-        # Make IDs unique if prefix is provided
-        if unique_prefix:
-            svg_content = self._make_ids_unique(svg_content, unique_prefix)
 
         return svg_content.strip()
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import NamedTuple
+from typing import Final, NamedTuple
 
 
 class TileInfo(NamedTuple):
@@ -12,7 +12,7 @@ class TileInfo(NamedTuple):
     display_name: str
 
 
-TILE_DATABASE: dict[tuple[str, int], TileInfo] = {
+TILE_DATABASE: Final[dict[tuple[str, int], TileInfo]] = {
     # Manzu
     ("m", 1): TileInfo("1m", "1 Man"),
     ("m", 2): TileInfo("2m", "2 Man"),
@@ -57,7 +57,7 @@ TILE_DATABASE: dict[tuple[str, int], TileInfo] = {
     ("z", 7): TileInfo("7z", "Red Dragon"),
 }
 
-SPECIAL_TILES: dict[str, TileInfo] = {
+SPECIAL_TILES: Final[dict[str, TileInfo]] = {
     "back": TileInfo("back", "Face Down"),
     "blank": TileInfo("blank", "Blank"),
     "front": TileInfo("front", "Front"),

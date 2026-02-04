@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Final, Pattern
 
 from .tiles import TileInfo, get_tile_info, is_valid_tile
 
@@ -127,11 +129,11 @@ class MahjongParser:
     """
 
     # Pattern for a group of numbers followed by a suit
-    TILE_GROUP_PATTERN = re.compile(r"([0-9]+)([mpsz])")
+    TILE_GROUP_PATTERN: Final[Pattern[str]] = re.compile(r"([0-9]+)([mpsz])")
 
     # Pattern for melds: (tiles<) or [tiles] with optional source marker inside brackets
     # For added kan, use + to mark the added tile: (111+1m<)
-    MELD_PATTERN = re.compile(r"(\[|\()([0-9]+)(\+)?([0-9])?([mpsz])([<^>])?(\]|\))")
+    MELD_PATTERN: Final[Pattern[str]] = re.compile(r"(\[|\()([0-9]+)(\+)?([0-9])?([mpsz])([<^>])?(\]|\))")
 
     def __init__(self) -> None:
         self.errors: list[str] = []
@@ -162,6 +164,9 @@ class MahjongParser:
 
         # Parse closed tiles
         hand.closed_tiles = self._parse_tiles(closed_part)
+
+        # Validate tile counts (max 4 of each tile type)
+        self._validate_tile_counts(hand)
 
         if self.errors:
             raise ParseError("; ".join(self.errors))
@@ -335,6 +340,32 @@ class MahjongParser:
         numbers = sorted(5 if t.number == 0 else t.number for t in tiles)
 
         return numbers[1] == numbers[0] + 1 and numbers[2] == numbers[1] + 1
+
+    def _validate_tile_counts(self, hand: Hand) -> None:
+        """Validate that no tile appears more than 4 times.
+
+        In Mahjong, there are exactly 4 copies of each tile type.
+        Having more than 4 of the same tile is invalid.
+
+        Args:
+            hand: The Hand object to validate
+        """
+        # Count all tiles including melds
+        # Note: Red 5 (0) and regular 5 are different tiles, so we count them separately
+        all_tiles = list(hand.closed_tiles)
+        for meld in hand.melds:
+            all_tiles.extend(meld.tiles)
+        if hand.draw_tile:
+            all_tiles.append(hand.draw_tile)
+
+        counts = Counter((t.suit, t.number) for t in all_tiles)
+
+        for (suit, number), count in counts.items():
+            if count > 4:
+                tile_notation = f"{number}{suit}"
+                self.errors.append(
+                    f"Invalid tile count: {tile_notation} appears {count} times (max 4)"
+                )
 
 
 def parse_hand(notation: str) -> Hand:
