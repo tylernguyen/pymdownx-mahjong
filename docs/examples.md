@@ -30,7 +30,7 @@ title: "9 Gates"
 
 ````markdown
 ```mahjong
-1112345678p [9999p]
+1112345678s [9999s]
 draw: 0p
 ```
 ````
