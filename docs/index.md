@@ -24,7 +24,7 @@ pip install pymdownx-mahjong
 ```yml
 markdown_extensions:
   - pymdownx_mahjong
-  
+
 extra_css:
   - css/mahjong.css
 ```

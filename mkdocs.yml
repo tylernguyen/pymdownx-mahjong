@@ -34,6 +34,7 @@ theme:
     - navigation.top
     - toc.follow
 
+
 markdown_extensions:
   - pymdownx_mahjong
   - pymdownx.highlight:
@@ -44,8 +45,6 @@ markdown_extensions:
           class: mahjong
           validator: !!python/name:pymdownx_mahjong.superfences_validator
           format: !!python/name:pymdownx_mahjong.superfences_formatter
-  - pymdownx.tabbed:
-      alternate_style: true
   - admonition
   - pymdownx.details
   - pymdownx.snippets
