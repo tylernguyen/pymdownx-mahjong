@@ -52,7 +52,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/tylernguyen/pymdownx-mahjong"
-Documentation = "https://github.com/tylernguyen/pymdownx-mahjong"
+Documentation = "https://tylernguyen.github.io/pymdownx-mahjong/"
 Repository = "https://github.com/tylernguyen/pymdownx-mahjong"
 Issues = "https://github.com/tylernguyen/pymdownx-mahjong/issues"
 
