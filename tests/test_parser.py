@@ -239,7 +239,8 @@ class TestHandProperties:
 
     def test_hand_properties(self):
         """Test Hand helper properties."""
-        hand = parse_hand("123m456p11z (789s<) [1111z]")
+        # Using 2222z in kan instead of 1111z to avoid conflict with closed 11z
+        hand = parse_hand("123m456p11z (789s<) [2222z]")
         assert hand.meld_count == 2
         # closed: 8, chi: 3, kan: 4 = 15 total tiles
         assert hand.total_tile_count == 15
@@ -260,3 +261,76 @@ class TestHandProperties:
         all_tiles = hand.all_tiles
         assert len(all_tiles) == 14
         assert all_tiles[-1].notation == "2z"
+
+
+class TestTileCountValidation:
+    """Tests for tile count validation (max 4 of each tile type)."""
+
+    def test_five_of_same_tile_raises_error(self):
+        """Test that 5 copies of same tile raises ParseError."""
+        parser = MahjongParser()
+        with pytest.raises(ParseError) as exc_info:
+            parser.parse("11111m")
+        assert "1m appears 5 times" in str(exc_info.value)
+
+    def test_six_of_same_tile_raises_error(self):
+        """Test that 6 copies of same tile raises ParseError."""
+        parser = MahjongParser()
+        with pytest.raises(ParseError) as exc_info:
+            parser.parse("111111z")
+        assert "1z appears 6 times" in str(exc_info.value)
+
+    def test_four_of_same_tile_valid(self):
+        """Test that 4 copies of same tile is valid."""
+        hand = parse_hand("1111m")
+        assert len(hand.closed_tiles) == 4
+
+    def test_four_with_meld_total_five_raises_error(self):
+        """Test that 4 closed + 1 in meld = 5 raises error."""
+        parser = MahjongParser()
+        with pytest.raises(ParseError) as exc_info:
+            # 1m appears in closed (11m = 2) and meld (111m = 3) = 5 total
+            parser.parse("111m (111m<)")
+        assert "1m appears 6 times" in str(exc_info.value)
+
+    def test_red_dora_counted_separately(self):
+        """Test that red 5 (0) and regular 5 are counted separately."""
+        # 4 regular 5m + 1 red 5m (0m) should be valid
+        # because they are different tile types
+        hand = parse_hand("55550m")
+        assert len(hand.closed_tiles) == 5
+
+    def test_five_red_dora_raises_error(self):
+        """Test that 5 red dora of same suit raises error."""
+        parser = MahjongParser()
+        with pytest.raises(ParseError) as exc_info:
+            parser.parse("00000m")
+        assert "0m appears 5 times" in str(exc_info.value)
+
+    def test_honor_tiles_validated(self):
+        """Test that honor tiles are also validated."""
+        parser = MahjongParser()
+        with pytest.raises(ParseError) as exc_info:
+            parser.parse("77777z")  # 5 red dragons
+        assert "7z appears 5 times" in str(exc_info.value)
+
+    def test_multiple_violations_reports_all(self):
+        """Test that multiple violations are all reported."""
+        parser = MahjongParser()
+        with pytest.raises(ParseError) as exc_info:
+            parser.parse("11111m22222p")  # 5 of two different tiles
+        error_msg = str(exc_info.value)
+        assert "1m appears 5 times" in error_msg
+        assert "2p appears 5 times" in error_msg
+
+    def test_valid_complete_hand(self):
+        """Test that a normal valid hand passes validation."""
+        # Standard 14-tile hand should be valid
+        hand = parse_hand("123m456p789s11222z")
+        assert hand.total_tile_count == 14
+
+    def test_valid_hand_with_kan(self):
+        """Test that hand with kan (4 of same) is valid."""
+        hand = parse_hand("123m456p [1111z]")
+        assert len(hand.melds) == 1
+        # 1z appears in kan only = 4 times, valid
