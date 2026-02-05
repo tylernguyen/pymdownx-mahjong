@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.5] - 2026-02-05
+
+### Changed
+
+- **Inkscape/Sodipodi metadata removal**: Assets are pre-optimized, removed runtime cleanup code.
+
+### Fixed
+
+- **SVG ID collision across multiple hands**: Changed `_svg_id_counter` from instance variable to module-level global. Fixes tiles (like 1p) rendering incorrectly when the same tile appears in multiple hands.
+
 ## [1.2.4] - 2026-02-05
 
 ### Changed
