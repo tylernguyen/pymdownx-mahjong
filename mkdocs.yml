@@ -29,6 +29,7 @@ theme:
     repo: simple/refinedgithub
   features:
     - content.code.copy
+    - content.code.select
     - navigation.instant
     - navigation.sections
     - navigation.top
@@ -61,7 +62,7 @@ markdown_extensions:
       permalink: true
 
 extra_css:
-  - css/mahjong.css
+  - stylesheets/mahjong.css
 
 nav:
   - README: "index.md"

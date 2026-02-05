@@ -17,11 +17,13 @@ PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong co
 pip install pymdownx-mahjong
 ```
 
+Copy `mahjong.css` to `stylesheets/`.
+
 === "`zensical.toml`"
 
     ``` toml
     [project]
-    extra_css = ["css/mahjong.css"]
+    extra_css = ["stylesheets/mahjong.css"]
     ```
 
 === "`mkdocs.yml`"
@@ -31,7 +33,7 @@ pip install pymdownx-mahjong
       - pymdownx_mahjong
 
     extra_css:
-      - css/mahjong.css
+      - stylesheets/mahjong.css
     ```
 
 
