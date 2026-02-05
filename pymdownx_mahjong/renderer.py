@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Final, Pattern
 
 from .parser import Hand, Meld, MeldType, Tile
-from .tiles import TileInfo, get_special_tile
+from .tiles import TileInfo
 
 # Pre-compiled regex patterns for SVG processing
 _RE_XML_DECL: Final[Pattern[str]] = re.compile(r"<\?xml[^?]*\?>")
@@ -284,16 +284,7 @@ class MahjongRenderer:
         Returns:
             HTML string for a back tile
         """
-        info = get_special_tile("back")
-        if not info:
-            return '<span class="mahjong-tile mahjong-tile-back">?</span>'
-
-        if self.theme == "auto":
-            svg_content = self._get_themed_svg_content(info)
-            return f'<span class="mahjong-tile mahjong-tile-back">{svg_content}</span>'
-        else:
-            svg_content = self._get_svg_content(info)
-            return f'<span class="mahjong-tile mahjong-tile-back">{svg_content}</span>'
+        return '<span class="mahjong-tile mahjong-tile-back"></span>'
 
     def _get_svg_content(self, info: TileInfo, theme: str | None = None) -> str:
         """Get the SVG content for a tile, with unique IDs.

@@ -13,6 +13,7 @@
     --mahjong-tile-border: #8b8b7a;
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.15);
     --mahjong-tile-radius: 4px;
+    --mahjong-tile-back: #e7b246;
 }
 
 [data-md-color-scheme="slate"],
@@ -187,11 +188,10 @@
     gap: var(--mahjong-tile-gap);
 }
 
-/* Back tile - SVG contains full tile design */
+/* Back tile - solid color */
 .mahjong-tile-back {
-    background: none;
+    background: var(--mahjong-tile-back);
     padding: 0;
-    overflow: hidden;
 }
 
 

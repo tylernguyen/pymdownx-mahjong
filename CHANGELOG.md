@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3] - 2026-02-05
+
+### Changed
+
+- **Optimized assets** using `svgo` v4.0
+- Render tile back using a solid color from `mahjong.css` rather than using SVG asset.
+
 ## [1.2.2] - 2026-02-04
 
 ### Removed
@@ -31,8 +38,8 @@
 
 ### Removed
 
-- **show_labels config option**: Tile title attributes are now always shown. 
-- **css_class config option**: CSS class is now fixed to 'mahjong-hand' for blocks and 'mahjong-inline' for inline tiles. 
+- **show_labels config option**: Tile title attributes are now always shown.
+- **css_class config option**: CSS class is now fixed to 'mahjong-hand' for blocks and 'mahjong-inline' for inline tiles.
 
 ## [1.1.0] - 2026-02-04
 

@@ -209,6 +209,13 @@ class TestSvgIdUniqueness:
     def test_multiple_same_tiles_have_unique_ids(self):
         """Test that multiple instances of same tile have unique IDs."""
         renderer = MahjongRenderer(theme="light")
+        
+        # Mock _load_svg to return content with IDs
+        def mock_load_svg(info, theme=None):
+            return '<svg id="root"><g id="layer1"></g></svg>'
+            
+        renderer._load_svg = mock_load_svg
+        
         hand = parse_hand("111m")
         html = renderer.render(hand)
 

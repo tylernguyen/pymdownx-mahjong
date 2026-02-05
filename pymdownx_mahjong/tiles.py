@@ -57,20 +57,9 @@ TILE_DATABASE: Final[dict[tuple[str, int], TileInfo]] = {
     ("z", 7): TileInfo("7z", "Red Dragon"),
 }
 
-SPECIAL_TILES: Final[dict[str, TileInfo]] = {
-    "back": TileInfo("back", "Face Down"),
-}
-
-
 def get_tile_info(suit: str, number: int) -> TileInfo | None:
     """Get tile information for a given suit and number."""
     return TILE_DATABASE.get((suit, number))
-
-
-def get_special_tile(name: str) -> TileInfo | None:
-    """Get special tile information."""
-    return SPECIAL_TILES.get(name.lower())
-
 
 def is_valid_tile(suit: str, number: int) -> bool:
     """Check if a tile notation is valid."""
