@@ -18,6 +18,9 @@ _RE_HEIGHT: Final[Pattern[str]] = re.compile(r'height="[^"]*"')
 # Pattern to find IDs in SVGs
 _RE_ID: Final[Pattern[str]] = re.compile(r'id="([^"]+)"')
 
+# Global counter for unique SVG IDs across all renderer instances
+_svg_id_counter: int = 0
+
 
 @functools.lru_cache(maxsize=128)
 def _load_svg_from_package(asset_name: str, theme: str) -> str:
@@ -76,7 +79,6 @@ class MahjongRenderer:
         self.css_class = css_class
 
         self.closed_kan_style = closed_kan_style
-        self._svg_id_counter = 0
 
     def render(
         self,
@@ -298,9 +300,10 @@ class MahjongRenderer:
         svg_content = self._load_svg(info, theme)
         svg_content = self._process_svg(svg_content)
 
-        # Make IDs unique for this instance
-        self._svg_id_counter += 1
-        return self._make_ids_unique(svg_content, f"mj{self._svg_id_counter}_")
+        # Make IDs unique using global counter
+        global _svg_id_counter
+        _svg_id_counter += 1
+        return self._make_ids_unique(svg_content, f"mj{_svg_id_counter}_")
 
     def _get_themed_svg_content(self, info: TileInfo) -> str:
         """Get SVG content that respects theme switching.
