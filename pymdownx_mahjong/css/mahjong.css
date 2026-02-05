@@ -164,21 +164,14 @@
 /* Rotated tiles inside the stack */
 .mahjong-tile-stack .mahjong-tile-rotated {
     margin: 0;
-    margin-top: calc(
-        -1 * (var(--mahjong-tile-height) - var(--mahjong-tile-width)) / 2
-    );
-    margin-bottom: calc(
-        -1 * (var(--mahjong-tile-height) - var(--mahjong-tile-width)) / 2
-    );
+    margin-top: calc(-1 * (var(--mahjong-tile-height) - var(--mahjong-tile-width)) / 2);
+    margin-bottom: calc(-1 * (var(--mahjong-tile-height) - var(--mahjong-tile-width)) / 2);
     top: 0;
 }
 
 /* Gap between the two stacked tiles */
 .mahjong-tile-stack .mahjong-tile-rotated:first-child {
-    margin-bottom: calc(
-        var(--mahjong-tile-gap) -
-            (var(--mahjong-tile-height) - var(--mahjong-tile-width)) / 2
-    );
+    margin-bottom: calc(var(--mahjong-tile-gap) - (var(--mahjong-tile-height) - var(--mahjong-tile-width)) / 2);
 }
 
 /* Unknown/placeholder tile */
@@ -197,16 +190,11 @@
 /* Back tile - SVG contains full tile design */
 .mahjong-tile-back {
     background: none;
-    border: 0.5px solid transparent;
-    box-shadow: none;
     padding: 0;
-    margin: 0 0.05rem;
+    overflow: hidden;
 }
 
-/* Remove left margin when back tiles are adjacent */
-.mahjong-tile-back + .mahjong-tile-back {
-    margin-left: 0;
-}
+
 
 /* Dora row - contains dora and uradora on same line, above hand */
 .mahjong-dora-row {
@@ -410,6 +398,6 @@
     box-shadow: 0 1px 2px var(--mahjong-tile-shadow);
 }
 
-.mahjong-inline .mahjong-tile + .mahjong-tile {
+.mahjong-inline .mahjong-tile+.mahjong-tile {
     margin-left: 0;
 }
