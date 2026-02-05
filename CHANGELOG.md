@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-02-04
+
+### Removed
+
+- **inline_svg config option**: enforce inline SVG
+
 ## [1.2.0] - 2026-02-04
 
 ### Added

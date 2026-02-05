@@ -147,8 +147,8 @@ Some text between.
         assert 'data-tile="1m"' in result
         assert 'data-tile="4z"' in result
 
-    def test_inline_svg_default(self):
-        """Test that SVG is inlined by default."""
+    def test_svg_rendering(self):
+        """Test that SVG is rendered."""
         md = markdown.Markdown(extensions=["pymdownx_mahjong"])
 
         # Valid 14-tile hand

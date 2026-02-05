@@ -62,7 +62,6 @@ class MahjongRenderer:
     def __init__(
         self,
         theme: str = "light",
-        inline_svg: bool = True,
         assets_path: str | Path | None = None,
         closed_kan_style: str = "outer",
         css_class: str = "mahjong-hand",
@@ -84,7 +83,6 @@ class MahjongRenderer:
         self.tile_gap = self.DEFAULT_TILE_GAP
         self.meld_gap = self.DEFAULT_MELD_GAP
         self.css_class = css_class
-        self.inline_svg = inline_svg
         self.assets_path = Path(assets_path) if assets_path else None
         self.closed_kan_style = closed_kan_style
         self._svg_id_counter = 0
@@ -212,17 +210,12 @@ class MahjongRenderer:
         class_str = " ".join(classes)
         title_attr = f' title="{info.display_name}"'
 
-        if self.inline_svg:
+        if self.theme == "auto":
             svg_content = self._get_themed_svg_content(info)
             return f'<span class="{class_str}" data-tile="{tile.notation}"{title_attr}>{svg_content}</span>'
         else:
-            asset_path = self._get_asset_url(info)
-            return (
-                f'<span class="{class_str}" data-tile="{tile.notation}"{title_attr}>'
-                f'<img src="{asset_path}" alt="{info.display_name}" '
-                f'width="{self.tile_width}" height="{self.tile_height}">'
-                f"</span>"
-            )
+            svg_content = self._get_svg_content(info)
+            return f'<span class="{class_str}" data-tile="{tile.notation}"{title_attr}>{svg_content}</span>'
 
     def _render_meld(self, meld: Meld) -> str:
         """Render a meld (called tile group).
@@ -300,17 +293,12 @@ class MahjongRenderer:
         if not info:
             return '<span class="mahjong-tile mahjong-tile-back">?</span>'
 
-        if self.inline_svg:
+        if self.theme == "auto":
             svg_content = self._get_themed_svg_content(info)
             return f'<span class="mahjong-tile mahjong-tile-back">{svg_content}</span>'
         else:
-            asset_path = self._get_asset_url(info)
-            return (
-                f'<span class="mahjong-tile mahjong-tile-back">'
-                f'<img src="{asset_path}" alt="Face Down" '
-                f'width="{self.tile_width}" height="{self.tile_height}">'
-                f"</span>"
-            )
+            svg_content = self._get_svg_content(info)
+            return f'<span class="mahjong-tile mahjong-tile-back">{svg_content}</span>'
 
     def _get_svg_content(self, info: TileInfo, theme: str | None = None) -> str:
         """Get the SVG content for a tile, with unique IDs.

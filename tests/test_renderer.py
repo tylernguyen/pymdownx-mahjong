@@ -129,22 +129,7 @@ class TestRendererConfiguration:
 
         assert 'title="1 Man"' in html
 
-    def test_inline_svg_true(self):
-        """Test inline SVG mode."""
-        renderer = MahjongRenderer(inline_svg=True)
-        hand = parse_hand("1m")
-        html = renderer.render(hand)
 
-        assert "<svg" in html
-        assert "<img" not in html
-
-    def test_inline_svg_false(self):
-        """Test img tag mode."""
-        renderer = MahjongRenderer(inline_svg=False)
-        hand = parse_hand("1m")
-        html = renderer.render(hand)
-
-        assert "<img" in html
 
     def test_theme_light(self):
         """Test light theme."""

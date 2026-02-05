@@ -41,7 +41,6 @@ class _SuperfencesState:
         if self._renderer is None:
             self._renderer = MahjongRenderer(
                 theme=self._config.get("theme", "auto"),
-                inline_svg=self._config.get("inline_svg", True),
                 closed_kan_style=self._config.get("closed_kan_style", "outer"),
             )
         return self._renderer
@@ -71,7 +70,6 @@ def configure_superfences(**kwargs: Any) -> None:
         **kwargs: Configuration options
             - theme: 'light', 'dark', or 'auto'
             - closed_kan_style: 'outer' or 'inner'
-            - inline_svg: bool
     """
     _state.configure(**kwargs)
 

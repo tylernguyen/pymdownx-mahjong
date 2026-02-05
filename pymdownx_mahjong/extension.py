@@ -52,7 +52,6 @@ class MahjongBlockProcessor(BlockProcessor):
         self.mj_parser = MahjongParser()
         self.renderer = MahjongRenderer(
             theme=config.get("theme", "light"),
-            inline_svg=_to_bool(config.get("inline_svg", True)),
             assets_path=config.get("assets_path"),
             closed_kan_style=config.get("closed_kan_style", "outer"),
         )
@@ -169,7 +168,6 @@ class MahjongExtension(markdown.Extension):
         # Note: Use strings for boolean defaults for YAML compatibility
         self.config = {
             "theme": ["auto", "Color theme: 'light', 'dark', or 'auto'"],
-            "inline_svg": ["true", "Inline SVG content vs img tags"],
             "assets_path": ["", "Custom path to SVG assets"],
             "enable_inline": ["true", "Enable inline tile syntax (:1m:)"],
             "closed_kan_style": ["outer", "Closed kan style: 'outer' or 'inner'"],
