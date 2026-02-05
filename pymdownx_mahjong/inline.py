@@ -20,6 +20,15 @@ if TYPE_CHECKING:
 INLINE_TILE_PATTERN: Final[str] = r":([0-9]+[mpsz])+:"
 
 
+def _to_bool(value: Any) -> bool:
+    """Convert a value to boolean, handling string 'true'/'false'."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("true", "1", "yes")
+    return bool(value)
+
+
 class MahjongInlineProcessor(InlineProcessor):
     """Inline processor for mahjong tile notation.
 
@@ -40,10 +49,9 @@ class MahjongInlineProcessor(InlineProcessor):
         self.parser = MahjongParser()
         self.renderer = MahjongRenderer(
             theme=config.get("theme", "auto"),
-            css_class="mahjong-inline",
-            show_labels=config.get("show_labels", True),
-            inline_svg=config.get("inline_svg", True),
+            inline_svg=_to_bool(config.get("inline_svg", True)),
             assets_path=config.get("assets_path"),
+            css_class="mahjong-inline",
         )
 
     def handleMatch(self, m: re.Match, data: str) -> tuple[str | None, int | None, int | None]:

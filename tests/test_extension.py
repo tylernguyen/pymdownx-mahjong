@@ -109,8 +109,7 @@ invalid notation 8z9z
             extensions=["pymdownx_mahjong"],
             extension_configs={
                 "pymdownx_mahjong": {
-                    "css_class": "custom-mahjong",
-                    "show_labels": False,
+                    "theme": "dark",
                 }
             },
         )
@@ -123,7 +122,7 @@ invalid notation 8z9z
 """
         result = md.convert(source)
 
-        assert "custom-mahjong" in result
+        assert "mahjong-hand" in result
 
     def test_multiple_blocks(self):
         """Test converting multiple mahjong blocks."""
@@ -216,6 +215,6 @@ class TestMakeExtension:
         """Test makeExtension with configuration."""
         from pymdownx_mahjong import makeExtension
 
-        ext = makeExtension(theme="dark", css_class="custom-class")
+        ext = makeExtension(theme="dark", closed_kan_style="inner")
         assert ext.getConfig("theme") == "dark"
-        assert ext.getConfig("css_class") == "custom-class"
+        assert ext.getConfig("closed_kan_style") == "inner"

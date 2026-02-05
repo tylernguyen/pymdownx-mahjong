@@ -19,6 +19,15 @@ if TYPE_CHECKING:
     from markdown.blockparser import BlockParser
 
 
+def _to_bool(value: Any) -> bool:
+    """Convert a value to boolean, handling string 'true'/'false'."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("true", "1", "yes")
+    return bool(value)
+
+
 class MahjongBlockProcessor(BlockProcessor):
     """Block processor that handles ```mahjong fenced code blocks.
 
@@ -43,10 +52,9 @@ class MahjongBlockProcessor(BlockProcessor):
         self.mj_parser = MahjongParser()
         self.renderer = MahjongRenderer(
             theme=config.get("theme", "light"),
-            css_class=config.get("css_class", "mahjong-hand"),
-            show_labels=config.get("show_labels", True),
-            inline_svg=config.get("inline_svg", True),
+            inline_svg=_to_bool(config.get("inline_svg", True)),
             assets_path=config.get("assets_path"),
+            closed_kan_style=config.get("closed_kan_style", "outer"),
         )
 
     def test(self, parent: etree.Element, block: str) -> bool:
@@ -158,13 +166,13 @@ class MahjongExtension(markdown.Extension):
             **kwargs: Configuration options
         """
         # Define configuration options with defaults
+        # Note: Use strings for boolean defaults for YAML compatibility
         self.config = {
             "theme": ["auto", "Color theme: 'light', 'dark', or 'auto'"],
-            "css_class": ["mahjong-hand", "CSS class for container"],
-            "show_labels": [True, "Show tile names as title attributes"],
-            "inline_svg": [True, "Inline SVG content vs img tags"],
+            "inline_svg": ["true", "Inline SVG content vs img tags"],
             "assets_path": ["", "Custom path to SVG assets"],
-            "enable_inline": [True, "Enable inline tile syntax (:1m:)"],
+            "enable_inline": ["true", "Enable inline tile syntax (:1m:)"],
+            "closed_kan_style": ["outer", "Closed kan style: 'outer' or 'inner'"],
         }
         super().__init__(**kwargs)
 
@@ -184,7 +192,7 @@ class MahjongExtension(markdown.Extension):
 
         # Register inline processor if enabled
         # Priority 76 to run before pymdownx.emoji (which uses 75)
-        if config.get("enable_inline", True):
+        if _to_bool(config.get("enable_inline", True)):
             inline_processor = MahjongInlineProcessor(INLINE_TILE_PATTERN, md, config)
             md.inlinePatterns.register(inline_processor, "mahjong_inline", 76)
 

@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.2.0] - 2026-02-04
+
+### Added
+
+- **Closed Kan Style Option**: New `closed_kan_style` configuration option to control back tile placement in closed kan:
+  - `'outer'` (default): back tiles on edges (back, front, front, back)
+  - `'inner'`: back tiles in middle positions (front, back, back, front)
+
+- **Superfences Configuration API**: New `configure_superfences()` function for programmatic configuration of superfences integration.
+
+### Changed
+
+- **Superfences Config Inheritance**: Superfences formatter now auto-detects and inherits configuration from the main `pymdownx_mahjong` extension.
+
+- **YAML Config Compatibility**: Boolean config options (`inline_svg`, `enable_inline`) now use string defaults for proper YAML parsing in MkDocs. Added `_to_bool()` helper for string-to-boolean conversion.
+
+### Removed
+
+- **show_labels config option**: Tile title attributes are now always shown. 
+- **css_class config option**: CSS class is now fixed to 'mahjong-hand' for blocks and 'mahjong-inline' for inline tiles. 
+
 ## [1.1.0] - 2026-02-04
 
 ### Added

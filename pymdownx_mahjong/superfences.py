@@ -17,20 +17,32 @@ class _SuperfencesState:
     """Encapsulates global state for superfences integration.
 
     Uses lazy initialization to create parser/renderer on first use.
+    Allows configuration via configure() method.
     """
 
     def __init__(self) -> None:
         self._renderer: MahjongRenderer | None = None
         self._parser: MahjongParser | None = None
+        self._config: dict[str, Any] = {}
+
+    def configure(self, **kwargs: Any) -> None:
+        """Configure the superfences state.
+
+        Args:
+            **kwargs: Configuration options (theme, closed_kan_style, etc.)
+        """
+        self._config.update(kwargs)
+        # Reset renderer to apply new config
+        self._renderer = None
 
     @property
     def renderer(self) -> MahjongRenderer:
         """Get or create the renderer instance."""
         if self._renderer is None:
             self._renderer = MahjongRenderer(
-                theme="auto",
-                show_labels=True,
-                inline_svg=True,
+                theme=self._config.get("theme", "auto"),
+                inline_svg=self._config.get("inline_svg", True),
+                closed_kan_style=self._config.get("closed_kan_style", "outer"),
             )
         return self._renderer
 
@@ -44,6 +56,24 @@ class _SuperfencesState:
 
 # Single state instance
 _state = _SuperfencesState()
+
+
+def configure_superfences(**kwargs: Any) -> None:
+    """Configure the superfences integration.
+
+    Call this before using superfences to set options like closed_kan_style.
+
+    Example:
+        from pymdownx_mahjong import configure_superfences
+        configure_superfences(closed_kan_style='outer')
+
+    Args:
+        **kwargs: Configuration options
+            - theme: 'light', 'dark', or 'auto'
+            - closed_kan_style: 'outer' or 'inner'
+            - inline_svg: bool
+    """
+    _state.configure(**kwargs)
 
 
 def superfences_validator(
@@ -65,6 +95,14 @@ def superfences_validator(
     Returns:
         True if this is a valid mahjong fence
     """
+    # Try to get config from the markdown instance's extension
+    if hasattr(md, 'registeredExtensions'):
+        for ext in md.registeredExtensions:
+            if hasattr(ext, 'config') and 'closed_kan_style' in ext.config:
+                config = {key: ext.getConfig(key) for key in ext.config}
+                _state.configure(**config)
+                break
+
     return language == "mahjong"
 
 

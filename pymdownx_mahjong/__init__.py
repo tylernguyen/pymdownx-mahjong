@@ -4,7 +4,7 @@ from .extension import MahjongExtension, makeExtension
 from .inline import INLINE_TILE_PATTERN, MahjongInlineProcessor
 from .parser import Hand, MahjongParser, Meld, Tile
 from .renderer import MahjongRenderer
-from .superfences import superfences_formatter, superfences_validator
+from .superfences import configure_superfences, superfences_formatter, superfences_validator
 
 __all__ = [
     "MahjongExtension",
@@ -18,6 +18,7 @@ __all__ = [
     "Hand",
     "superfences_formatter",
     "superfences_validator",
+    "configure_superfences",
 ]
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"

@@ -50,9 +50,8 @@ class MahjongRenderer:
 
     Configuration options:
         theme: 'light', 'dark', or 'auto'
-        css_class: CSS class for the container
-        show_labels: Whether to show tile names as titles
-        inline_svg: Whether to inline SVG or use img tags
+        closed_kan_style: 'outer' (default) or 'inner'
+        inline_svg: Whether to inline SVG content (vs using img tags)
     """
 
     DEFAULT_TILE_WIDTH = 45
@@ -63,19 +62,21 @@ class MahjongRenderer:
     def __init__(
         self,
         theme: str = "light",
-        css_class: str = "mahjong-hand",
-        show_labels: bool = True,
         inline_svg: bool = True,
         assets_path: str | Path | None = None,
+        closed_kan_style: str = "outer",
+        css_class: str = "mahjong-hand",
     ) -> None:
         """Initialize the renderer.
 
         Args:
             theme: Color theme ('light', 'dark', or 'auto')
-            css_class: CSS class for the container element
-            show_labels: Show tile names as title attributes
             inline_svg: Inline SVG content vs img tags
             assets_path: Custom path to SVG assets
+            closed_kan_style: Style for closed kan back tiles:
+                'outer' (default) - back tiles on edges (back, front, front, back)
+                'inner' - back tiles in middle (front, back, back, front)
+            css_class: CSS class for container (internal use)
         """
         self.theme = theme
         self.tile_width = self.DEFAULT_TILE_WIDTH
@@ -83,9 +84,9 @@ class MahjongRenderer:
         self.tile_gap = self.DEFAULT_TILE_GAP
         self.meld_gap = self.DEFAULT_MELD_GAP
         self.css_class = css_class
-        self.show_labels = show_labels
         self.inline_svg = inline_svg
         self.assets_path = Path(assets_path) if assets_path else None
+        self.closed_kan_style = closed_kan_style
         self._svg_id_counter = 0
 
     def render(
@@ -209,7 +210,7 @@ class MahjongRenderer:
             classes.append("mahjong-tile-added")
 
         class_str = " ".join(classes)
-        title_attr = f' title="{info.display_name}"' if self.show_labels else ""
+        title_attr = f' title="{info.display_name}"'
 
         if self.inline_svg:
             svg_content = self._get_themed_svg_content(info)
@@ -271,9 +272,18 @@ class MahjongRenderer:
                 parts.append(self._render_tile(meld.tiles[2]))
         else:
             for i, tile in enumerate(meld.tiles):
-                # For closed kan, show back tiles for middle two
-                if meld.meld_type == MeldType.KAN_CLOSED and i in (1, 2):
-                    parts.append(self._render_back_tile())
+                # For closed kan, show back tiles based on style setting
+                if meld.meld_type == MeldType.KAN_CLOSED:
+                    if self.closed_kan_style == "inner":
+                        # 'inner': back tiles in middle: front, back, back, front
+                        is_back = i in (1, 2)
+                    else:
+                        # Default 'outer': back tiles on edges: back, front, front, back
+                        is_back = i in (0, 3)
+                    if is_back:
+                        parts.append(self._render_back_tile())
+                    else:
+                        parts.append(self._render_tile(tile))
                 else:
                     parts.append(self._render_tile(tile))
 

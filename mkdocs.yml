@@ -36,7 +36,9 @@ theme:
 
 
 markdown_extensions:
-  - pymdownx_mahjong
+  - pymdownx_mahjong:
+      theme: auto
+      closed_kan_style: outer
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences:

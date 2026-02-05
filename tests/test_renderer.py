@@ -113,29 +113,21 @@ class TestMahjongRenderer:
 class TestRendererConfiguration:
     """Tests for renderer configuration options."""
 
-    def test_custom_css_class(self):
-        """Test custom CSS class."""
-        renderer = MahjongRenderer(css_class="custom-mahjong")
+    def test_default_css_class(self):
+        """Test default CSS class is mahjong-hand."""
+        renderer = MahjongRenderer()
         hand = parse_hand("123m")
         html = renderer.render(hand)
 
-        assert 'class="custom-mahjong"' in html
+        assert 'class="mahjong-hand"' in html
 
-    def test_show_labels_true(self):
-        """Test that tile titles are shown when show_labels is True."""
-        renderer = MahjongRenderer(show_labels=True)
+    def test_tile_titles_shown(self):
+        """Test that tile titles are always shown."""
+        renderer = MahjongRenderer()
         hand = parse_hand("1m")
         html = renderer.render(hand)
 
         assert 'title="1 Man"' in html
-
-    def test_show_labels_false(self):
-        """Test that tile titles are hidden when show_labels is False."""
-        renderer = MahjongRenderer(show_labels=False)
-        hand = parse_hand("1m")
-        html = renderer.render(hand)
-
-        assert "title=" not in html
 
     def test_inline_svg_true(self):
         """Test inline SVG mode."""
@@ -173,6 +165,39 @@ class TestRendererConfiguration:
         # Auto theme should include both light and dark tile containers
         assert 'class="mahjong-tile-light"' in html
         assert 'class="mahjong-tile-dark"' in html
+
+    def test_closed_kan_style_inner_default(self):
+        """Test that closed kan defaults to inner style (back tiles in middle)."""
+        renderer = MahjongRenderer(theme="light")
+        hand = parse_hand("[1111z]")
+        html = renderer.render(hand)
+
+        # Inner style: front, back, back, front
+        # Count back tiles - should appear in positions 1,2 (middle)
+        back_count = html.count('class="mahjong-tile mahjong-tile-back"')
+        assert back_count == 2
+
+    def test_closed_kan_style_outer(self):
+        """Test closed kan with outer style (back tiles on edges)."""
+        renderer = MahjongRenderer(theme="light", closed_kan_style="outer")
+        hand = parse_hand("[1111z]")
+        html = renderer.render(hand)
+
+        # Outer style: back, front, front, back
+        back_count = html.count('class="mahjong-tile mahjong-tile-back"')
+        assert back_count == 2
+        # Verify the style is set correctly
+        assert renderer.closed_kan_style == "outer"
+
+    def test_closed_kan_style_inner_explicit(self):
+        """Test closed kan with explicit inner style."""
+        renderer = MahjongRenderer(theme="light", closed_kan_style="inner")
+        hand = parse_hand("[1111z]")
+        html = renderer.render(hand)
+
+        assert renderer.closed_kan_style == "inner"
+        back_count = html.count('class="mahjong-tile mahjong-tile-back"')
+        assert back_count == 2
 
 
 class TestRenderTiles:
@@ -225,6 +250,6 @@ class TestConvenienceFunction:
     def test_render_hand_with_kwargs(self):
         """Test render_hand with configuration kwargs."""
         hand = parse_hand("123m")
-        html = render_hand(hand, theme="dark", css_class="custom")
+        html = render_hand(hand, theme="dark")
 
-        assert 'class="custom"' in html
+        assert 'class="mahjong-hand"' in html
