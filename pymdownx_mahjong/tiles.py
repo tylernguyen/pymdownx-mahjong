@@ -59,8 +59,6 @@ TILE_DATABASE: Final[dict[tuple[str, int], TileInfo]] = {
 
 SPECIAL_TILES: Final[dict[str, TileInfo]] = {
     "back": TileInfo("back", "Face Down"),
-    "blank": TileInfo("blank", "Blank"),
-    "front": TileInfo("front", "Front"),
 }
 
 
