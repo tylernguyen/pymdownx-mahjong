@@ -17,10 +17,6 @@ PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong co
 pip install pymdownx-mahjong
 ```
 
-## Usage
-
-### Configuration
-
 ```yml
 markdown_extensions:
   - pymdownx_mahjong
@@ -28,6 +24,14 @@ markdown_extensions:
 extra_css:
   - css/mahjong.css
 ```
+
+### Configuration
+
+| Key              | Type | Options         | Default | Description                                                         |
+|------------------|------|-----------------|---------|---------------------------------------------------------------------|
+| theme            | str  | `auto` `light` `dark` | `auto` |  |
+| closed_kan_style | str  | `outer` `inner` | `outer` | `outer`: back, front, front, back `inner`: front, back, back, front |
+
 
 ### MPSZ Notation
 
