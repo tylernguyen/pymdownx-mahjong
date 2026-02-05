@@ -49,7 +49,7 @@ class MahjongInlineProcessor(InlineProcessor):
         self.parser = MahjongParser()
         self.renderer = MahjongRenderer(
             theme=config.get("theme", "auto"),
-            assets_path=config.get("assets_path"),
+
             css_class="mahjong-inline",
         )
 

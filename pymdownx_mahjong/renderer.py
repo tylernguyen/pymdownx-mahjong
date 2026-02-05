@@ -56,13 +56,12 @@ class MahjongRenderer:
 
     DEFAULT_TILE_WIDTH = 45
     DEFAULT_TILE_HEIGHT = 60
-    DEFAULT_TILE_GAP = 2
-    DEFAULT_MELD_GAP = 12
+
 
     def __init__(
         self,
         theme: str = "light",
-        assets_path: str | Path | None = None,
+
         closed_kan_style: str = "outer",
         css_class: str = "mahjong-hand",
     ) -> None:
@@ -71,7 +70,7 @@ class MahjongRenderer:
         Args:
             theme: Color theme ('light', 'dark', or 'auto')
             inline_svg: Inline SVG content vs img tags
-            assets_path: Custom path to SVG assets
+
             closed_kan_style: Style for closed kan back tiles:
                 'outer' (default) - back tiles on edges (back, front, front, back)
                 'inner' - back tiles in middle (front, back, back, front)
@@ -80,10 +79,9 @@ class MahjongRenderer:
         self.theme = theme
         self.tile_width = self.DEFAULT_TILE_WIDTH
         self.tile_height = self.DEFAULT_TILE_HEIGHT
-        self.tile_gap = self.DEFAULT_TILE_GAP
-        self.meld_gap = self.DEFAULT_MELD_GAP
+
         self.css_class = css_class
-        self.assets_path = Path(assets_path) if assets_path else None
+
         self.closed_kan_style = closed_kan_style
         self._svg_id_counter = 0
 
@@ -359,10 +357,7 @@ class MahjongRenderer:
         theme = theme or (self.theme if self.theme != "auto" else "light")
 
         # Try custom assets path first (not cached since it's user-specific)
-        if self.assets_path:
-            svg_path = self.assets_path / theme / f"{info.asset_name}.svg"
-            if svg_path.exists():
-                return svg_path.read_text(encoding="utf-8")
+
 
         # Fall back to package assets (uses module-level LRU cache)
         try:
