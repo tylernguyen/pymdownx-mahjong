@@ -51,7 +51,6 @@ class MahjongRenderer:
     Configuration options:
         theme: 'light', 'dark', or 'auto'
         closed_kan_style: 'outer' (default) or 'inner'
-        inline_svg: Whether to inline SVG content (vs using img tags)
     """
 
     DEFAULT_TILE_WIDTH = 45
@@ -69,8 +68,6 @@ class MahjongRenderer:
 
         Args:
             theme: Color theme ('light', 'dark', or 'auto')
-            inline_svg: Inline SVG content vs img tags
-
             closed_kan_style: Style for closed kan back tiles:
                 'outer' (default) - back tiles on edges (back, front, front, back)
                 'inner' - back tiles in middle (front, back, back, front)
@@ -355,9 +352,6 @@ class MahjongRenderer:
             Raw SVG content
         """
         theme = theme or (self.theme if self.theme != "auto" else "light")
-
-        # Try custom assets path first (not cached since it's user-specific)
-
 
         # Fall back to package assets (uses module-level LRU cache)
         try:
