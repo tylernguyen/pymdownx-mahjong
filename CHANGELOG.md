@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.4] - 2026-02-05
+
+### Changed
+
+- **Consolidated `_to_bool()` utility**: Moved duplicate function from `extension.py` and `inline.py` into `utils.py`
+
+### Removed
+
+- **Unused imports**: Removed `TileInfo` from `parser.py`, `Path` from `renderer.py`
+- **Redundant `parse_tiles()` function**: Removed convenience function from `parser.py` - use `MahjongParser().parse_tiles()` instead
+- **Unused `_get_asset_url()` method**: Removed from `renderer.py` (assets loaded via `_load_svg_from_package()`)
+
 ## [1.2.3] - 2026-02-05
 
 ### Changed
