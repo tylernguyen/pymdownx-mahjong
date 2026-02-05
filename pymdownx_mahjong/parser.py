@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Final, Pattern
 
-from .tiles import TileInfo, get_tile_info, is_valid_tile
+from .tiles import get_tile_info, is_valid_tile
 
 
 class MeldType(Enum):
@@ -379,16 +379,3 @@ def parse_hand(notation: str) -> Hand:
     """
     parser = MahjongParser()
     return parser.parse(notation)
-
-
-def parse_tiles(notation: str) -> list[Tile]:
-    """Convenience function to parse tile notation.
-
-    Args:
-        notation: MPSZ notation string
-
-    Returns:
-        List of Tile objects
-    """
-    parser = MahjongParser()
-    return parser.parse_tiles(notation)

@@ -7,6 +7,15 @@ from typing import Any
 from .parser import Hand, MahjongParser, ParseError
 
 
+def _to_bool(value: Any) -> bool:
+    """Convert a value to boolean, handling string 'true'/'false'."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("true", "1", "yes")
+    return bool(value)
+
+
 def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
     """Parse block content into notation and options.
 

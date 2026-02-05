@@ -8,6 +8,7 @@ from markdown.inlinepatterns import InlineProcessor
 
 from .parser import MahjongParser, ParseError
 from .renderer import MahjongRenderer
+from .utils import _to_bool
 
 if TYPE_CHECKING:
     import re
@@ -18,15 +19,6 @@ if TYPE_CHECKING:
 # Must be valid MPSZ: one or more groups of digits followed by m/p/s/z
 # Examples: :1m:, :123p:, :5z:, :0s:, :123m456p:
 INLINE_TILE_PATTERN: Final[str] = r":([0-9]+[mpsz])+:"
-
-
-def _to_bool(value: Any) -> bool:
-    """Convert a value to boolean, handling string 'true'/'false'."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.lower() in ("true", "1", "yes")
-    return bool(value)
 
 
 class MahjongInlineProcessor(InlineProcessor):

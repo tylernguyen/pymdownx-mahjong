@@ -10,7 +10,6 @@ from pymdownx_mahjong.parser import (
     ParseError,
     Tile,
     parse_hand,
-    parse_tiles,
 )
 
 
@@ -53,7 +52,8 @@ class TestMahjongParser:
 
     def test_parse_multiple_suits(self):
         """Test parsing notation with multiple suits."""
-        tiles = parse_tiles("123m456p789s")
+        parser = MahjongParser()
+        tiles = parser.parse_tiles("123m456p789s")
 
         assert len(tiles) == 9
         assert tiles[0].suit == "m"
@@ -62,7 +62,8 @@ class TestMahjongParser:
 
     def test_parse_honors(self):
         """Test parsing honor tiles."""
-        tiles = parse_tiles("1234567z")
+        parser = MahjongParser()
+        tiles = parser.parse_tiles("1234567z")
 
         assert len(tiles) == 7
         assert tiles[0].display_name == "East"
@@ -72,7 +73,8 @@ class TestMahjongParser:
 
     def test_parse_red_dora(self):
         """Test parsing red dora tiles."""
-        tiles = parse_tiles("0m0p0s")
+        parser = MahjongParser()
+        tiles = parser.parse_tiles("0m0p0s")
 
         assert len(tiles) == 3
         assert all(t.number == 0 for t in tiles)
@@ -99,12 +101,14 @@ class TestMahjongParser:
 
     def test_parse_with_spaces(self):
         """Test parsing notation with spaces."""
-        tiles = parse_tiles("123m 456p 789s")
+        parser = MahjongParser()
+        tiles = parser.parse_tiles("123m 456p 789s")
         assert len(tiles) == 9
 
     def test_parse_with_separators(self):
         """Test parsing notation with underscore separators."""
-        tiles = parse_tiles("123m_456p_789s")
+        parser = MahjongParser()
+        tiles = parser.parse_tiles("123m_456p_789s")
         assert len(tiles) == 9
 
     def test_parse_chi_meld(self):
@@ -228,9 +232,10 @@ class TestConvenienceFunctions:
         hand = parse_hand("123m456p789s11222z")
         assert len(hand.closed_tiles) == 14
 
-    def test_parse_tiles_function(self):
-        """Test the parse_tiles convenience function."""
-        tiles = parse_tiles("123m456p")
+    def test_parse_tiles_method(self):
+        """Test the parse_tiles method."""
+        parser = MahjongParser()
+        tiles = parser.parse_tiles("123m456p")
         assert len(tiles) == 6
 
 

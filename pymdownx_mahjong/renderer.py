@@ -6,7 +6,6 @@ import functools
 import html
 import importlib.resources
 import re
-from pathlib import Path
 from typing import Final, Pattern
 
 from .parser import Hand, Meld, MeldType, Tile
@@ -417,18 +416,6 @@ class MahjongRenderer:
   <rect width="300" height="400" fill="#f0f0f0" stroke="#ccc" stroke-width="4" rx="20"/>
   <text x="150" y="220" text-anchor="middle" font-size="48" fill="#999">{info.display_name}</text>
 </svg>"""
-
-    def _get_asset_url(self, info: TileInfo) -> str:
-        """Get the URL for a tile asset.
-
-        Args:
-            info: Tile information
-
-        Returns:
-            Asset URL string
-        """
-        theme = self.theme if self.theme != "auto" else "light"
-        return f"assets/{theme}/{info.asset_name}.svg"
 
     def _escape_html(self, text: str) -> str:
         """Escape HTML special characters.

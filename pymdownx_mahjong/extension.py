@@ -12,20 +12,11 @@ from markdown.blockprocessors import BlockProcessor
 from .inline import INLINE_TILE_PATTERN, MahjongInlineProcessor
 from .parser import MahjongParser, ParseError
 from .renderer import MahjongRenderer
-from .utils import apply_hand_options, parse_block_content
+from .utils import _to_bool, apply_hand_options, parse_block_content
 
 if TYPE_CHECKING:
     from markdown import Markdown
     from markdown.blockparser import BlockParser
-
-
-def _to_bool(value: Any) -> bool:
-    """Convert a value to boolean, handling string 'true'/'false'."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.lower() in ("true", "1", "yes")
-    return bool(value)
 
 
 class MahjongBlockProcessor(BlockProcessor):
