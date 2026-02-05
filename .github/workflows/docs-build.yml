@@ -1,4 +1,4 @@
-name: Documentation
+name: Build GitHub Pages
 on:
   push:
     branches:
@@ -6,7 +6,7 @@ on:
       - main
     tags:
      - "**"
-  workflow_dispatch: 
+  workflow_dispatch:
 permissions:
   contents: read
   pages: write
@@ -23,10 +23,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
-      - run: | 
+      - run: |
           pip install zensical
           pip install pymdownx-mahjong
-      - run: zensical build --clean 
+      - run: zensical build --clean
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site
