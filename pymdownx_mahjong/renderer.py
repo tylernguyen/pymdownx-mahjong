@@ -13,9 +13,6 @@ from .tiles import TileInfo
 
 # Pre-compiled regex patterns for SVG processing
 _RE_XML_DECL: Final[Pattern[str]] = re.compile(r"<\?xml[^?]*\?>")
-_RE_SODIPODI_SELF: Final[Pattern[str]] = re.compile(r"<sodipodi:namedview[^>]*/>")
-_RE_SODIPODI_FULL: Final[Pattern[str]] = re.compile(r"<sodipodi:namedview[^>]*>.*?</sodipodi:namedview>", re.DOTALL)
-_RE_METADATA: Final[Pattern[str]] = re.compile(r"<metadata[^>]*>.*?</metadata>", re.DOTALL)
 _RE_WIDTH: Final[Pattern[str]] = re.compile(r'width="[^"]*"')
 _RE_HEIGHT: Final[Pattern[str]] = re.compile(r'height="[^"]*"')
 # Pattern to find IDs in SVGs
@@ -354,7 +351,6 @@ class MahjongRenderer:
         """Process SVG content for inline use.
 
         - Removes XML declaration
-        - Removes unnecessary metadata
         - Adds sizing attributes
 
         Args:
@@ -365,11 +361,6 @@ class MahjongRenderer:
         """
         # Remove XML declaration
         svg_content = _RE_XML_DECL.sub("", svg_content)
-
-        # Remove Inkscape/Sodipodi metadata namespaces from content
-        svg_content = _RE_SODIPODI_SELF.sub("", svg_content)
-        svg_content = _RE_SODIPODI_FULL.sub("", svg_content)
-        svg_content = _RE_METADATA.sub("", svg_content)
 
         # Update width/height to our tile size while preserving viewBox
         svg_content = _RE_WIDTH.sub(f'width="{self.tile_width}"', svg_content, count=1)
