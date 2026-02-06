@@ -21,27 +21,28 @@ Copy `mahjong.css` to `stylesheets/`.
 
 === "`zensical.toml`"
 
-    ``` toml
+    ```toml
     [project.markdown_extensions.pymdownx_mahjong]
     [project.markdown_extensions.pymdownx.superfences]
     custom_fences = [
       { name = "mahjong", class = "mahjong", format = "pymdownx_mahjong.superfences_formatter" }
     ]
+
     [project]
     extra_css = ["stylesheets/mahjong.css"]
     ```
 
 === "`mkdocs.yml`"
 
-    ```yml
+    ```yaml
     markdown_extensions:
+      - pymdownx_mahjong
       - pymdownx.superfences:
           custom_fences:
             - name: mahjong
               class: mahjong
               validator: !!python/name:pymdownx_mahjong.superfences_validator
               format: !!python/name:pymdownx_mahjong.superfences_formatter
-      - pymdownx_mahjong
 
     extra_css:
       - stylesheets/mahjong.css
