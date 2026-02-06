@@ -49,6 +49,35 @@
     display: contents;
 }
 
+/* Dark tiles in light mode need dark background for contrast */
+.mahjong-theme-dark {
+    --mahjong-tile-bg: #1e1e1e;
+    --mahjong-tile-border: #47473e;
+}
+
+/* Light tiles in dark mode need light background for contrast */
+[data-md-color-scheme="slate"] .mahjong-theme-light,
+[data-theme="dark"] .mahjong-theme-light,
+.dark .mahjong-theme-light {
+    --mahjong-tile-bg: #f5f0eb;
+    --mahjong-tile-border: #8b8b7a;
+}
+
+/* Auto mode: Force dark tiles to have dark background in light mode */
+/* Uses :has() to style parent .mahjong-tile when dark SVG span is visible */
+.mahjong-tile:has(.mahjong-tile-dark:not([style*="display: none"])) {
+    --mahjong-tile-bg: #1e1e1e;
+    --mahjong-tile-border: #47473e;
+}
+
+/* Auto mode: Force light tiles to have light background in dark mode */
+[data-md-color-scheme="slate"] .mahjong-tile:has(.mahjong-tile-light:not([style*="display: none"])),
+[data-theme="dark"] .mahjong-tile:has(.mahjong-tile-light:not([style*="display: none"])),
+.dark .mahjong-tile:has(.mahjong-tile-light:not([style*="display: none"])) {
+    --mahjong-tile-bg: #f5f0eb;
+    --mahjong-tile-border: #8b8b7a;
+}
+
 /* NOTE Main container */
 .mahjong-hand {
     display: block;

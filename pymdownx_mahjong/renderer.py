@@ -199,6 +199,9 @@ class MahjongRenderer:
             classes.append("mahjong-tile-rotated")
         if tile.is_added:
             classes.append("mahjong-tile-added")
+        # Add theme class for explicit themes (not auto)
+        if self.theme in ("light", "dark"):
+            classes.append(f"mahjong-theme-{self.theme}")
 
         class_str = " ".join(classes)
         title_attr = f' title="{info.display_name}"'
