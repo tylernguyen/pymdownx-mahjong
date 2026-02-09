@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pymdownx-mahjong"
+version = "0.1.0"
+description = "Python Markdown extension to render and stylize Mahjong tiles."
+readme = "README.md"
+license = "CC-BY-NC-4.0"
+requires-python = ">=3.9"
+authors = [
+    { name = "Tyler Nguyen" }
+]
+keywords = [
+    "markdown",
+    "mahjong",
+    "riichi",
+    "mkdocs",
+    "pymdown",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Documentation",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+dependencies = [
+    "markdown>=3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+
+[project.urls]
+Homepage = "https://pymdownx-mahjong.tylernguyen.codes/"
+Repository = "https://github.com/tylernguyen/pymdownx-mahjong"
+Issues = "https://github.com/tylernguyen/pymdownx-mahjong/issues"
+
+[project.entry-points."markdown.extensions"]
+pymdownx_mahjong = "pymdownx_mahjong:makeExtension"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pymdownx_mahjong"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/pymdownx_mahjong"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
