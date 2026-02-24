@@ -1,7 +1,7 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/pymdownx-mahjong?logo=python&logoColor=white&label=PyPI)
 
 > [!WARNING]
-> This project was written with assistance from Claude. If that a deal-breaker for you, I understand.
+> This project was written with assistance from Claude. If that's a deal-breaker for you, I understand.
 
 # PyMdown Mahjong
 

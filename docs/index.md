@@ -6,7 +6,7 @@ icon: octicons/markdown-16
 
 !!! warning "LLM Assistance"
 
-    This project was written with assistance from :simple-claude:{ .claude } Claude. If that a deal-breaker for you, I understand.
+    This project was written with assistance from :simple-claude:{ .claude } Claude. If that's a deal-breaker for you, I understand.
 
 ## Purpose
 
