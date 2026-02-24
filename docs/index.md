@@ -4,6 +4,10 @@ icon: octicons/markdown-16
 
 # PyMdown Mahjong
 
+!!! warning "LLM Assistance"
+
+    This project was written with assistance from :simple-claude:{ .claude } Claude. If that a deal-breaker for you, I understand.
+
 ## Purpose
 
 PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong content. Designed with MkDocs and Zensical in mind, the extension offers:
