@@ -276,28 +276,6 @@
     color: var(--mahjong-error-border);
 }
 
-/* Size variants */
-.mahjong-hand-small {
-    --mahjong-tile-width: 30px;
-    --mahjong-tile-height: 40px;
-    --mahjong-tile-gap: 1px;
-    --mahjong-meld-gap: 8px;
-}
-
-.mahjong-hand-large {
-    --mahjong-tile-width: 60px;
-    --mahjong-tile-height: 80px;
-    --mahjong-tile-gap: 3px;
-    --mahjong-meld-gap: 16px;
-}
-
-.mahjong-hand-xlarge {
-    --mahjong-tile-width: 75px;
-    --mahjong-tile-height: 100px;
-    --mahjong-tile-gap: 4px;
-    --mahjong-meld-gap: 20px;
-}
-
 /* Responsive adjustments for mobile devices */
 @media (max-width: 768px) {
     .mahjong-hand {
