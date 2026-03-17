@@ -4,9 +4,8 @@ icon: octicons/markdown-16
 
 # PyMdown Mahjong
 
-!!! warning "LLM Assistance"
-
-    This project was written with assistance from :simple-claude:{ .claude } Claude. If that's a deal-breaker for you, I understand.
+> [!warning] LLM Assistance
+> This project was written with assistance from :simple-claude:{ .claude } Claude. If that's a deal-breaker for you, I understand.
 
 ## Purpose
 
@@ -14,6 +13,10 @@ PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong co
 
 - Inline rendering of individual Mahjong tiles.
 - Complete Mahjong hand rendering, supporting: pon/chi/kan, and dora information.
+
+## Dependency
+
+[SuperFences](https://facelessuser.github.io/pymdown-extensions/extensions/superfences/) :lucide-arrow-up-right: from PyMdown Extensions.
 
 ## Installation
 
@@ -27,6 +30,8 @@ Copy `mahjong.css` to `stylesheets/`.
 
     ```toml
     [project.markdown_extensions.pymdownx_mahjong]
+    theme = "auto"
+    closed_kan_style = "outer"
     [project.markdown_extensions.pymdownx.superfences]
     custom_fences = [
       { name = "mahjong", class = "mahjong", format = "pymdownx_mahjong.superfences_formatter" }
@@ -40,7 +45,9 @@ Copy `mahjong.css` to `stylesheets/`.
 
     ```yaml
     markdown_extensions:
-      - pymdownx_mahjong
+      - pymdownx_mahjong:
+          theme: auto
+          closed_kan_style: outer
       - pymdownx.superfences:
           custom_fences:
             - name: mahjong
