@@ -63,7 +63,8 @@ class MahjongRenderer:
         parts: list[str] = []
 
         data_attr = f' data-notation="{html.escape(notation, quote=True)}"' if notation else ""
-        parts.append(f'<figure class="{self.css_class}"{data_attr}>')
+        theme_class = f" mahjong-theme-{self.theme}" if self.theme in ("light", "dark") else ""
+        parts.append(f'<figure class="{self.css_class}{theme_class}"{data_attr}>')
 
         if hand.dora_indicators or hand.uradora_indicators:
             parts.append('<div class="mahjong-dora-row">')

@@ -1,10 +1,20 @@
 """Tests for the superfences integration."""
 
+import pytest
+
 from pymdownx_mahjong.superfences import (
+    _SuperfencesState,
     _error_block,
     superfences_formatter,
     superfences_validator,
 )
+
+
+@pytest.fixture(autouse=True)
+def reset_superfences_state(monkeypatch):
+    """Isolate each test from module-level _state side-effects."""
+    import pymdownx_mahjong.superfences as sf
+    monkeypatch.setattr(sf, "_state", _SuperfencesState())
 
 
 def _format(source):
@@ -26,7 +36,7 @@ class TestSuperfencesFormatter:
     def test_formatter_renders_simple_hand(self):
         html = _format("123m456p789s11222z")
 
-        assert 'class="mahjong-hand"' in html
+        assert "mahjong-hand" in html
         assert 'data-tile="1m"' in html
 
     def test_formatter_with_yaml_options(self):

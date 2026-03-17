@@ -43,7 +43,7 @@ def configure_superfences(**kwargs: Any) -> None:
 
     Example:
         from pymdownx_mahjong import configure_superfences
-        configure_superfences(closed_kan_style='outer')
+        configure_superfences(theme='dark', closed_kan_style='inner')
     """
     _state.configure(**kwargs)
 
@@ -56,14 +56,6 @@ def superfences_validator(
     md: Any,
 ) -> bool:
     """Validator for superfences custom fence."""
-    # Sync config from the markdown instance's registered extension
-    if hasattr(md, 'registeredExtensions'):
-        for ext in md.registeredExtensions:
-            if hasattr(ext, 'config') and 'closed_kan_style' in ext.config:
-                config = {key: ext.getConfig(key) for key in ext.config}
-                _state.configure(**config)
-                break
-
     return language == "mahjong"
 
 

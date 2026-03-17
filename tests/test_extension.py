@@ -4,87 +4,66 @@ import markdown
 
 
 class TestMahjongExtension:
-    def test_extension_loads(self):
+    def test_block_processor_not_registered(self):
         md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        assert "mahjong" in md.parser.blockprocessors
+        assert "mahjong" not in md.parser.blockprocessors
 
-    def test_simple_block_conversion(self):
+    def test_inline_processor_registered_by_default(self):
         md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        result = md.convert("```mahjong\n123m456p789s11222z\n```")
+        assert "mahjong_inline" in md.inlinePatterns
 
-        assert "mahjong-hand" in result
-        assert 'data-tile="1m"' in result
-        assert "<svg" in result or "svg" in result.lower()
+    def test_inline_processor_disabled(self):
+        md = markdown.Markdown(
+            extensions=["pymdownx_mahjong"],
+            extension_configs={"pymdownx_mahjong": {"enable_inline": "false"}},
+        )
+        assert "mahjong_inline" not in md.inlinePatterns
 
-    def test_extended_block_syntax(self):
+    def test_extension_registered_for_superfences(self):
+        from pymdownx_mahjong import MahjongExtension
+
         md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        result = md.convert("```mahjong\nhand: 123m456p789s11222z\ntitle: Test Hand\n```")
-
-        assert "mahjong-caption" in result
-        assert "Test Hand" in result
-
-    def test_draw_tile_syntax(self):
-        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        result = md.convert("```mahjong\nhand: 123m456p789s1112z\ndraw: 2z\n```")
-
-        assert "mahjong-hand-draw" in result
-        assert 'data-tile="2z"' in result
-
-    def test_error_handling(self):
-        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        result = md.convert("```mahjong\ninvalid notation 8z9z\n```")
-
-        assert "mahjong-error" in result
-
-    def test_empty_block(self):
-        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        result = md.convert("```mahjong\n```")
-
-        assert "mahjong-error" in result
-        assert "No hand notation" in result
-
-    def test_unclosed_block(self):
-        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        result = md.convert("```mahjong\n123m456p789s")
-
-        assert "mahjong-error" in result
-        assert "Unclosed mahjong fence" in result
-
-    def test_multiple_blocks(self):
-        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        source = "```mahjong\n123m456p789s11222z\n```\n\nSome text.\n\n```mahjong\n111m222p333s44455z\n```"
-        result = md.convert(source)
-
-        assert result.count('class="mahjong-hand"') == 2
-
-    def test_preserves_other_content(self):
-        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        source = "# Heading\n\nSome **bold** text.\n\n```mahjong\n123m456p789s11222z\n```\n\nMore content."
-        result = md.convert(source)
-
-        assert "<h1>" in result
-        assert "<strong>bold</strong>" in result
-        assert "mahjong-hand" in result
-        assert "More content" in result
-
-    def test_partial_hands_allowed(self):
-        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        result = md.convert("```mahjong\n123m\n```")
-
-        assert "mahjong-hand" in result
-        assert "mahjong-error" not in result
-
-    def test_invalid_option_reports_error(self):
-        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
-        result = md.convert("```mahjong\nhand: 123m456p789s11222z\ndora: 8z\n```")
-
-        assert "mahjong-error" in result
+        assert any(isinstance(ext, MahjongExtension) for ext in md.registeredExtensions)
 
 
 class TestMakeExtension:
     def test_make_extension_with_config(self):
         from pymdownx_mahjong import makeExtension
 
-        ext = makeExtension(theme="dark", closed_kan_style="inner")
+        ext = makeExtension(theme="dark", enable_inline="false", closed_kan_style="inner")
         assert ext.getConfig("theme") == "dark"
+        assert ext.getConfig("enable_inline") == "false"
         assert ext.getConfig("closed_kan_style") == "inner"
+
+
+class TestConfigPropagation:
+    """Extension config must flow through to the superfences renderer."""
+
+    def test_theme_propagates_to_superfences_state(self):
+        from pymdownx_mahjong.superfences import _state
+
+        markdown.Markdown(
+            extensions=["pymdownx_mahjong"],
+            extension_configs={"pymdownx_mahjong": {"theme": "dark"}},
+        )
+        assert _state._config.get("theme") == "dark"
+
+    def test_closed_kan_style_propagates_to_superfences_state(self):
+        from pymdownx_mahjong.superfences import _state
+
+        markdown.Markdown(
+            extensions=["pymdownx_mahjong"],
+            extension_configs={"pymdownx_mahjong": {"closed_kan_style": "inner"}},
+        )
+        assert _state._config.get("closed_kan_style") == "inner"
+
+    def test_renderer_uses_propagated_config(self):
+        from pymdownx_mahjong.superfences import _state
+
+        markdown.Markdown(
+            extensions=["pymdownx_mahjong"],
+            extension_configs={"pymdownx_mahjong": {"theme": "dark", "closed_kan_style": "inner"}},
+        )
+        renderer = _state.renderer
+        assert renderer.theme == "dark"
+        assert renderer.closed_kan_style == "inner"
