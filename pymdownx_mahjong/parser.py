@@ -96,13 +96,6 @@ class Hand:
             tiles.append(self.draw_tile)
         return tiles
 
-    @property
-    def total_tile_count(self) -> int:
-        count = len(self.closed_tiles) + sum(len(m.tiles) for m in self.melds)
-        if self.draw_tile:
-            count += 1
-        return count
-
 
 class ParseError(Exception):
     """Exception raised when parsing fails."""
