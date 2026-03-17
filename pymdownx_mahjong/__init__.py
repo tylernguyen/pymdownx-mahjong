@@ -1,7 +1,6 @@
 """PyMdown Mahjong - Python Markdown extension to render and stylize Mahjong tiles"""
 
 from .extension import MahjongExtension, makeExtension
-from .inline import INLINE_TILE_PATTERN, MahjongInlineProcessor
 from .parser import Hand, MahjongParser, Meld, Tile
 from .renderer import MahjongRenderer
 from .superfences import configure_superfences, superfences_formatter, superfences_validator
@@ -11,8 +10,6 @@ __all__ = [
     "makeExtension",
     "MahjongParser",
     "MahjongRenderer",
-    "MahjongInlineProcessor",
-    "INLINE_TILE_PATTERN",
     "Tile",
     "Meld",
     "Hand",
