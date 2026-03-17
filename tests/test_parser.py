@@ -151,12 +151,12 @@ class TestHandProperties:
     def test_hand_properties(self):
         hand = parse_hand("123m456p11z (789s<) [2222z]")
         assert len(hand.melds) == 2
-        assert hand.total_tile_count == 15
+        assert len(hand.all_tiles) == 15
 
     def test_hand_with_draw_tile(self):
         hand = parse_hand("123m456p789s1112z")
         hand.draw_tile = Tile(suit="z", number=2)
-        assert hand.total_tile_count == 14
+        assert len(hand.all_tiles) == 14
         assert hand.all_tiles[-1].notation == "2z"
 
 

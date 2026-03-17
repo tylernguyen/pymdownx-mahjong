@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from markdown import Markdown
 
 # Matches :123m:, :1z:, :0m: etc. — one or more digit groups followed by m/p/s/z
-INLINE_TILE_PATTERN: Final[str] = r":([0-9]+[mpsz])+:"
+INLINE_TILE_PATTERN: Final[str] = r":(?:[0-9]+[mpsz])+:"
 
 
 class MahjongInlineProcessor(InlineProcessor):
@@ -36,9 +36,6 @@ class MahjongInlineProcessor(InlineProcessor):
         try:
             tiles = self.parser.parse_tiles(notation)
         except ParseError:
-            return None, None, None
-
-        if not tiles:
             return None, None, None
 
         html = self.renderer.render_tiles(tiles)

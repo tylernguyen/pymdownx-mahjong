@@ -10,7 +10,7 @@ class TestMahjongRenderer:
         hand = parse_hand("123m456p789s11222z")
         html = renderer.render(hand)
 
-        assert 'class="mahjong-hand"' in html
+        assert "mahjong-hand" in html
         assert 'class="mahjong-tiles"' in html
         assert 'data-tile="1m"' in html
 
@@ -99,6 +99,19 @@ class TestRendererConfiguration:
 
         assert 'class="mahjong-tile-light"' in html
         assert 'class="mahjong-tile-dark"' in html
+        # auto theme: no theme class on the container
+        assert "mahjong-theme-" not in html.split(">")[0]
+
+    def test_theme_class_on_container(self):
+        """Figure container should carry the theme class for CSS targeting."""
+        for theme in ("light", "dark"):
+            renderer = MahjongRenderer(theme=theme)
+            hand = parse_hand("1m")
+            html = renderer.render(hand)
+
+            assert f'mahjong-theme-{theme}' in html.split(">")[0], (
+                f"figure should have mahjong-theme-{theme} class"
+            )
 
     def test_closed_kan_styles(self):
         for style in ("outer", "inner"):
