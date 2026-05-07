@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2] - 2026-05-07
+
+### Added
+
+- Add "waits", rendered similar to dora and uradora.
+
 ## [0.1.1] - 2026-03-16
 
 ### Changed

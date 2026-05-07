@@ -66,12 +66,14 @@ class MahjongRenderer:
         theme_class = f" mahjong-theme-{self.theme}" if self.theme in ("light", "dark") else ""
         parts.append(f'<figure class="{self.css_class}{theme_class}"{data_attr}>')
 
-        if hand.dora_indicators or hand.uradora_indicators:
+        if hand.dora_indicators or hand.uradora_indicators or hand.waits:
             parts.append('<div class="mahjong-dora-row">')
             if hand.dora_indicators:
                 parts.extend(self._render_dora_section(hand.dora_indicators, "Dora:"))
             if hand.uradora_indicators:
                 parts.extend(self._render_dora_section(hand.uradora_indicators, "Uradora:", "mahjong-uradora"))
+            if hand.waits:
+                parts.extend(self._render_dora_section(hand.waits, "Waits:", "mahjong-waits"))
             parts.append("</div>")
 
         parts.append('<div class="mahjong-hand-row">')

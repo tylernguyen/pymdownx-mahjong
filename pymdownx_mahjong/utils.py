@@ -29,7 +29,7 @@ def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
 
             if key == "hand":
                 notation = value
-            elif key in ("title", "dora", "uradora", "draw"):
+            elif key in ("title", "dora", "uradora", "waits", "draw"):
                 options[key] = value
         elif not notation:
             notation = line
@@ -79,5 +79,11 @@ def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any
                 hand.draw_tile = tiles[0]
         except ParseError as e:
             errors.append(f"Invalid draw notation: {e}")
+
+    if "waits" in options:
+        try:
+            hand.waits = parser.parse_tiles(options["waits"])
+        except ParseError as e:
+            errors.append(f"Invalid waits notation: {e}")
 
     return errors
