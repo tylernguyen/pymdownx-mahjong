@@ -1,10 +1,15 @@
 # Changelog
 
-## [0.1.2] - 2026-05-07
+## [0.1.2] - 2026-05-08
 
 ### Added
 
-- Add "waits", rendered similar to dora and uradora.
+- Add `waits` section after dora and ura.
+
+### Changed
+
+- Rename `uradora` to `ura` throughout: `Hand.ura_indicators` field, `ura` block option key, CSS class `mahjong-ura`, and display label.
+- Restyle dora/ura/waits indicator labels: stacked above tiles.
 
 ## [0.1.1] - 2026-03-16
 
