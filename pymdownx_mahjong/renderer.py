@@ -66,14 +66,14 @@ class MahjongRenderer:
         theme_class = f" mahjong-theme-{self.theme}" if self.theme in ("light", "dark") else ""
         parts.append(f'<figure class="{self.css_class}{theme_class}"{data_attr}>')
 
-        if hand.dora_indicators or hand.uradora_indicators or hand.waits:
+        if hand.dora_indicators or hand.ura_indicators or hand.waits:
             parts.append('<div class="mahjong-dora-row">')
             if hand.dora_indicators:
-                parts.extend(self._render_dora_section(hand.dora_indicators, "Dora:"))
-            if hand.uradora_indicators:
-                parts.extend(self._render_dora_section(hand.uradora_indicators, "Uradora:", "mahjong-uradora"))
+                parts.extend(self._render_dora_section(hand.dora_indicators, "Dora"))
+            if hand.ura_indicators:
+                parts.extend(self._render_dora_section(hand.ura_indicators, "Ura", "mahjong-ura"))
             if hand.waits:
-                parts.extend(self._render_dora_section(hand.waits, "Waits:", "mahjong-waits"))
+                parts.extend(self._render_dora_section(hand.waits, "Waits", "mahjong-waits"))
             parts.append("</div>")
 
         parts.append('<div class="mahjong-hand-row">')
@@ -118,7 +118,7 @@ class MahjongRenderer:
         return "".join(parts)
 
     def _render_dora_section(self, tiles: list[Tile], label: str, extra_class: str = "") -> list[str]:
-        """Render a dora/uradora indicator section."""
+        """Render a dora/ura indicator section."""
         cls = f"mahjong-dora {extra_class}".strip()
         parts = [f'<div class="{cls}">',
                  f'<span class="mahjong-dora-label">{label}</span>',

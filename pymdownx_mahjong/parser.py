@@ -83,7 +83,7 @@ class Hand:
     closed_tiles: list[Tile] = field(default_factory=list)
     melds: list[Meld] = field(default_factory=list)
     dora_indicators: list[Tile] = field(default_factory=list)
-    uradora_indicators: list[Tile] = field(default_factory=list)
+    ura_indicators: list[Tile] = field(default_factory=list)
     waits: list[Tile] = field(default_factory=list)
     draw_tile: Tile | None = None
 

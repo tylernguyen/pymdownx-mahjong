@@ -29,7 +29,7 @@ def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
 
             if key == "hand":
                 notation = value
-            elif key in ("title", "dora", "uradora", "waits", "draw"):
+            elif key in ("title", "dora", "ura", "waits", "draw"):
                 options[key] = value
         elif not notation:
             notation = line
@@ -58,7 +58,7 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
 
 
 def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any]) -> list[str]:
-    """Apply parsed options (dora, uradora, draw) to a hand. Returns error messages."""
+    """Apply parsed options (dora, ura, draw) to a hand. Returns error messages."""
     errors: list[str] = []
     if "dora" in options:
         try:
@@ -66,11 +66,11 @@ def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any
         except ParseError as e:
             errors.append(f"Invalid dora notation: {e}")
 
-    if "uradora" in options:
+    if "ura" in options:
         try:
-            hand.uradora_indicators = parser.parse_tiles(options["uradora"])
+            hand.ura_indicators = parser.parse_tiles(options["ura"])
         except ParseError as e:
-            errors.append(f"Invalid uradora notation: {e}")
+            errors.append(f"Invalid ura notation: {e}")
 
     if "draw" in options:
         try:
