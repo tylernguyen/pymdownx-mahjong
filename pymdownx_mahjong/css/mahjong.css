@@ -210,10 +210,10 @@
 
 
 
-/* Dora row - contains dora and uradora on same line, above hand */
+/* Dora row - contains dora, ura, and waits on same line, above hand */
 .mahjong-dora-row {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 1.5em;
     margin-bottom: 0.5em;
 }
@@ -224,16 +224,18 @@
     height: calc(var(--mahjong-tile-height) * 0.8);
 }
 
-/* Dora indicators */
+/* Dora/ura/waits indicator section - label stacked above tiles */
 .mahjong-dora {
     display: flex;
+    flex-direction: column;
     align-items: center;
 }
 
 .mahjong-dora-label {
-    font-size: 0.9em;
+    font-size: 0.75em;
     font-weight: 600;
-    margin-right: 0.5em;
+    line-height: 1;
+    margin-bottom: 0.2em;
     color: var(--mahjong-caption-color);
     white-space: nowrap;
 }
@@ -291,10 +293,6 @@
         padding: 1px;
     }
 
-    .mahjong-dora-label {
-        font-size: 0.75em;
-    }
-
     .mahjong-hand-draw::before {
         font-size: 0.65em;
     }
@@ -320,7 +318,6 @@
 
     .mahjong-dora-label {
         font-size: 0.65em;
-        margin-right: 0.25em;
     }
 
     .mahjong-hand-draw::before {
