@@ -64,20 +64,31 @@
     --mahjong-tile-border: #cfcfcf;
 }
 
-/* NOTE Main container */
+/* NOTE Main container — centered by default (hands without melds shrink to their
+   content and auto-margin horizontally). */
 .mahjong-hand {
     display: block;
-    margin: 1.8em;
+    width: fit-content;
+    max-width: 100%;
+    margin: 1.8em auto;
     padding: 0;
     background: var(--mahjong-bg);
     border: 1px solid var(--mahjong-border);
     border-radius: 4px;
 }
 
-/* NOTE Override MkDocs Material/Zensical theme figure defaults. The theme centers
-   figures and sets width: fit-content, which collapses the hand row to content width
-   and leaves no free space for the melds' margin-left: auto to push against. */
+/* NOTE Override MkDocs Material/Zensical theme figure defaults, keeping the centered
+   layout consistent with the base rule. */
 .md-typeset .mahjong-hand {
+    width: fit-content;
+    max-width: 100%;
+    margin: 1.8em auto;
+}
+
+/* NOTE Hands with called melds span full width and left-align, so the melds can
+   right-justify and the draw can center between the hand and the melds. */
+.mahjong-hand:has(.mahjong-hand-melds),
+.md-typeset .mahjong-hand:has(.mahjong-hand-melds) {
     width: auto;
     margin: 1.8em;
 }
