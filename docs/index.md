@@ -4,6 +4,10 @@ icon: octicons/markdown-16
 
 # PyMdown Mahjong
 
+```mahjong
+19p19s19m1234567Xz
+```
+
 > [!warning] LLM Assistance
 > This project was written with assistance from :simple-claude:{ .claude } Claude. If that's a deal-breaker for you, I understand.
 
