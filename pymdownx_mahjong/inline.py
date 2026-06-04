@@ -14,12 +14,13 @@ if TYPE_CHECKING:
 
     from markdown import Markdown
 
-# Matches :123m:, :1z:, :0m:, :Xz: etc. — digit groups + m/p/s/z, or Xz for a face-down tile
-INLINE_TILE_PATTERN: Final[str] = r":((?:[0-9]+[mpsz]|Xz)+):"
+# Matches :123m:, :1z:, :Xz:, :1234567Xz: etc. — rank+suit groups where a rank is a
+# digit or X (X = a face-down tile, e.g. Xz).
+INLINE_TILE_PATTERN: Final[str] = r":((?:[0-9X]+[mpsz])+):"
 # Matches `mj:1112345678999p` — a single-backtick code span prefixed with mj: for whole
 # hands. The lookbehind/lookahead require a lone backtick on each side, so doubling the
 # backticks (``mj:...``) escapes it and renders a literal code span instead.
-INLINE_CODE_TILE_PATTERN: Final[str] = r"(?<!`)`mj:((?:[0-9]+[mpsz]|Xz)+)`(?!`)"
+INLINE_CODE_TILE_PATTERN: Final[str] = r"(?<!`)`mj:((?:[0-9X]+[mpsz])+)`(?!`)"
 
 
 class MahjongInlineProcessor(InlineProcessor):

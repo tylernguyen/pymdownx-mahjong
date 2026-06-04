@@ -114,8 +114,9 @@ class MahjongParser:
     """
 
     TILE_GROUP_PATTERN: Final[re.Pattern[str]] = re.compile(r"([0-9]+)([mpsz])")
-    # Tile groups (digits + suit) or 'Xz' for a face-down tile.
-    _TILE_OR_BACK_PATTERN: Final[re.Pattern[str]] = re.compile(r"([0-9]+)([mpsz])|(Xz)")
+    # Tile groups: ranks + suit, where a rank is a digit or 'X' (a face-down tile).
+    # 'X' is only valid with the z suit (Xz); e.g. 123m, 1234567z, Xz, or 1234567Xz.
+    _TILE_OR_BACK_PATTERN: Final[re.Pattern[str]] = re.compile(r"([0-9X]+)([mpsz])")
 
     # For added kan, use + to mark the added tile: (111+1m<)
     MELD_PATTERN: Final[re.Pattern[str]] = re.compile(r"(\[|\()([0-9]+)(\+)?([0-9])?([mpsz])([<^>])?(\]|\))")
@@ -177,16 +178,18 @@ class MahjongParser:
                 invalid_notation = True
             matched_any = True
 
-            if match.group(3):  # 'Xz' → a face-down tile
-                tiles.append(Tile(suit="", number=0, is_back=True))
-                last_end = match.end()
-                continue
-
-            numbers = match.group(1)
+            ranks = match.group(1)
             suit = match.group(2)
 
-            for num_char in numbers:
-                number = int(num_char)
+            for rank in ranks:
+                if rank == "X":  # face-down tile — only valid with the z suit (Xz)
+                    if suit != "z":
+                        self.errors.append(f"Invalid tile: X{suit}")
+                        continue
+                    tiles.append(Tile(suit="", number=0, is_back=True))
+                    continue
+
+                number = int(rank)
 
                 if get_tile_info(suit, number) is None:
                     self.errors.append(f"Invalid tile: {number}{suit}")
@@ -299,8 +302,9 @@ class MahjongParser:
 
     def _validate_tile_counts(self, hand: Hand) -> None:
         """Validate that no tile appears more than 4 times."""
-        # Red 5 (0) and regular 5 are different tiles
-        counts = Counter((t.suit, t.number) for t in hand.all_tiles)
+        # Red 5 (0) and regular 5 are different tiles; face-down tiles are unknown,
+        # so they don't count toward the per-tile limit.
+        counts = Counter((t.suit, t.number) for t in hand.all_tiles if not t.is_back)
 
         for (suit, number), count in counts.items():
             if count > 4:
