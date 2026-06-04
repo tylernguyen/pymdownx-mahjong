@@ -26,9 +26,9 @@
     --mahjong-error-border: #dc2626;
     --mahjong-error-color: #fca5a5;
     --mahjong-tile-bg: #262626;
-    --mahjong-tile-border: #424242;
+    --mahjong-tile-border: var(--mahjong-tile-side);
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.55);
-    --mahjong-tile-side: #202020;
+    --mahjong-tile-side: #2d2d2d;
 }
 
 /* Theme-specific tile visibility for auto-switching */
@@ -55,8 +55,8 @@
 /* Dark tiles in light mode need dark background for contrast */
 .mahjong-theme-dark {
     --mahjong-tile-bg: #262626;
-    --mahjong-tile-border: #424242;
-    --mahjong-tile-side: #202020;
+    --mahjong-tile-border: var(--mahjong-tile-side);
+    --mahjong-tile-side: #2d2d2d;
 }
 
 /* Light tiles in dark mode need light background for contrast */
@@ -182,13 +182,11 @@
     left: -1px;
     right: -1px;
     height: var(--mahjong-tile-depth);
-    background:
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 7px, transparent 7px),
-        linear-gradient(
-            to bottom,
-            var(--mahjong-tile-bg) 7px,
-            var(--mahjong-tile-back) 7px
-        );
+    background: linear-gradient(
+        to bottom,
+        var(--mahjong-tile-side) 7px,
+        var(--mahjong-tile-back) 7px
+    );
     border-radius: 0 0 3px 3px;
     box-sizing: border-box;
     box-shadow: 0 4px 3px var(--mahjong-tile-shadow);
@@ -230,13 +228,11 @@
     right: auto;
     height: auto;
     width: var(--mahjong-tile-depth);
-    background:
-        linear-gradient(to right, rgba(0, 0, 0, 0.15) 7px, transparent 7px),
-        linear-gradient(
-            to right,
-            var(--mahjong-tile-bg) 7px,
-            var(--mahjong-tile-back) 7px
-        );
+    background: linear-gradient(
+        to right,
+        var(--mahjong-tile-side) 7px,
+        var(--mahjong-tile-back) 7px
+    );
     box-shadow: 3px 0 3px var(--mahjong-tile-shadow);
 }
 
@@ -289,15 +285,13 @@
     padding: 0;
 }
 
-/* Back tile bottom strip shows tile material, not back color */
+/* Back tile bottom strip shows tile material (the side), not the back color */
 .mahjong-tile-back::before {
-    background:
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.28) 6px, transparent 6px),
-        linear-gradient(
-            to bottom,
-            var(--mahjong-tile-back) 6px,
-            var(--mahjong-tile-bg) 6px
-        );
+    background: linear-gradient(
+        to bottom,
+        var(--mahjong-tile-back) 6px,
+        var(--mahjong-tile-side) 6px
+    );
 }
 
 /* Dora row - contains dora, ura, and waits on same line, above hand.
