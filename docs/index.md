@@ -68,38 +68,44 @@ Copy `mahjong.css` to `stylesheets/`.
 | closed_kan_style | str  | `outer` `inner` | `outer` | `outer`: back, front, front, back `inner`: front, back, back, front |
 
 
-### MPSZ Notation
+## Inline Syntax
 
-The extension uses standard MPSZ notation for tiles.
+Inline tiles individually by using their shortname, e.g. `:1p:` will render as :1p:.
 
-| Notation | Tile                 | Tile (Emoji)   |
-| -------- | -------------------- | -------------- |
-| `1m`, `2m`, ...  | Manzu        | :1m: :2m: :3m: |
-| `1p`, `2p`, ...  | Pinzu        | :1p: :2p: :3p: |
-| `1s`, `2s`, ...  | Souzu        | :1s: :2s: :3s: |
-| `0m` `0p` `0s`   | Akadora      | :0m: :0p: :0s: |
-| `1z`     | East / Ton           | :1z:           |
-| `2z`     | South / Nan          | :2z:           |
-| `3z`     | West / Sha           | :3z:           |
-| `4z`     | North / Pei          | :4z:           |
-| `5z`     | White Dragon / Haku  | :5z:           |
-| `6z`     | Green Dragon / Hatsu | :6z:           |
-| `7z`     | Red Dragon / Chun    | :7z:           |
+Additionally, you can inline tile groups or entire hand using the prefix `mj:`, such that
 
-### Hand Syntax
+```markdown
+`mj:123456789m`
+```
+
+will render `mj:123456789m` inline.
+
+> [!failure] Inline Melds
+> Currently, the renderer does __NOT__ support inline melds.
+
+## Block Syntax
 
 Hands are written in a fenced codeblock, with additional YAML-like options for dora, uradora, and title.
 
-~~~markdown
+````markdown
 ```mahjong
-hand: 123m456p789s11z
-dora: 2m
-uradora: 2m
-title: "Pinfu"
+5511122z [3333z] (444+4z>)
+draw: 2z
+waits: 52z
+dora: 5z
+title: Daisuushii Tsuuiisou
 ```
-~~~
+````
 
-### Syntax for Melds
+```mahjong
+5511122z [3333z] (444+4z>)
+draw: 2z
+waits: 52z
+dora: 5z
+title: Daisuushii Tsuuiisou
+```
+
+## Syntax for Melds
 
 Parenthesis `()` for open melds. `<` `^` `>` to indicate direction of meld.
 
@@ -115,3 +121,22 @@ Brackets `[]` for closed kan.
 Additional sign `+` to indicate added kan.
 
 - `(666+6z^)` - Added Kan
+
+## Tile Notation
+
+The extension uses standard MPSZ notation, and extends on it with the __Xz__ notation for an unknown tile.
+
+| Notation | Tile                 | Tile (Emoji)   |
+| -------- | -------------------- | -------------- |
+| `1m`, `2m`, ...  | Manzu        | :1m: :2m: :3m: |
+| `1p`, `2p`, ...  | Pinzu        | :1p: :2p: :3p: |
+| `1s`, `2s`, ...  | Souzu        | :1s: :2s: :3s: |
+| `0m` `0p` `0s`   | Akadora      | :0m: :0p: :0s: |
+| `1z`     | East / Ton           | :1z:           |
+| `2z`     | South / Nan          | :2z:           |
+| `3z`     | West / Sha           | :3z:           |
+| `4z`     | North / Pei          | :4z:           |
+| `5z`     | White Dragon / Haku  | :5z:           |
+| `6z`     | Green Dragon / Hatsu | :6z:           |
+| `7z`     | Red Dragon / Chun    | :7z:           |
+| `Xz`     | Unknown              | :Xz:           |

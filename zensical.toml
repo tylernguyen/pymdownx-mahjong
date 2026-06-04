@@ -10,7 +10,6 @@ edit_uri = "edit/main/docs/"
 
 NAV = [
     {"README" = "index.md" },
-    "examples.md",
     "changelog.md",
     "license.md",
 ]
