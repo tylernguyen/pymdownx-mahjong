@@ -72,13 +72,9 @@ Copy `mahjong.css` to `stylesheets/`.
 
 Inline tiles individually by using their shortname, e.g. `:1p:` will render as :1p:.
 
-Additionally, you can inline tile groups or entire hand using the prefix `mj:`, such that
+Additionally, you can render tile groups or entire hand inline using the prefix `mj:`. 
 
-```markdown
-`mj:123456789m`
-```
-
-will render `mj:123456789m` inline.
+For example, ``mj:123456789m`` will render `mj:123456789m` inline.
 
 > [!failure] Inline Melds
 > Currently, the renderer does __NOT__ support inline melds.
