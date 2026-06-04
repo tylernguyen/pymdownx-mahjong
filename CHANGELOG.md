@@ -1,14 +1,28 @@
 # Changelog
 
+## [0.2.0] - 2026-06-04
+
+### Added
+
+- feat: backtick inline syntax `mj:...` to render tile groups or a whole hand inline.
+- feat: `Xz` notation for a face-down tile (e.g. `:Xz:`).
+
+### Changed
+
+- css: style tiles with a depth/side face.
+- css: slightly rounded corners; lighter tile background and border in dark mode.
+- css: left-align the block with symmetric margins, right-justify called melds, and center the draw tile between the hand and the melds.
+- css: scale the dora/ura/waits indicator row to 90%.
+
 ## [0.1.2] - 2026-05-08
 
 ### Added
 
-- Add `waits` section after dora and ura.
+- feat: add `waits` section after dora and ura.
 
 ### Changed
 
-- Rename `uradora` to `ura` throughout: `Hand.ura_indicators` field, `ura` block option key, CSS class `mahjong-ura`, and display label.
+- refactor: rename `uradora` to `ura` throughout: `Hand.ura_indicators` field, `ura` block option key, CSS class `mahjong-ura`, and display label.
 - Restyle dora/ura/waits indicator labels: stacked above tiles.
 
 ## [0.1.1] - 2026-03-16
