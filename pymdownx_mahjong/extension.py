@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import markdown
 
-from .inline import INLINE_TILE_PATTERN, MahjongInlineProcessor
+from .inline import INLINE_CODE_TILE_PATTERN, INLINE_TILE_PATTERN, MahjongInlineProcessor
 
 if TYPE_CHECKING:
     from markdown import Markdown
@@ -29,10 +29,14 @@ class MahjongExtension(markdown.Extension):
         from .superfences import _state  # lazy import avoids circular dependency
         _state.configure(**config)
 
-        # Priority 76: before pymdownx.emoji (75)
         if str(config.get("enable_inline", "true")).lower() in ("true", "1", "yes"):
+            # Priority 76: before pymdownx.emoji (75)
             inline_processor = MahjongInlineProcessor(INLINE_TILE_PATTERN, md, config)
             md.inlinePatterns.register(inline_processor, "mahjong_inline", 76)
+
+            # Priority 195: before the built-in backtick code span processor (190)
+            code_processor = MahjongInlineProcessor(INLINE_CODE_TILE_PATTERN, md, config)
+            md.inlinePatterns.register(code_processor, "mahjong_inline_code", 195)
 
         md.registerExtension(self)
 

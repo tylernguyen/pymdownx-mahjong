@@ -44,10 +44,11 @@ _SOURCE_MAP: Final[dict[str, MeldSource]] = {
 class Tile:
     """Represents a single mahjong tile."""
 
-    suit: str  # m, p, s, z
+    suit: str  # m, p, s, z (empty for a face-down tile)
     number: int  # 0-9 for suited, 1-7 for honors
     is_rotated: bool = False
     is_added: bool = False
+    is_back: bool = False  # face-down tile (notation: Xz)
 
     @property
     def notation(self) -> str:
@@ -113,6 +114,8 @@ class MahjongParser:
     """
 
     TILE_GROUP_PATTERN: Final[re.Pattern[str]] = re.compile(r"([0-9]+)([mpsz])")
+    # Tile groups (digits + suit) or 'Xz' for a face-down tile.
+    _TILE_OR_BACK_PATTERN: Final[re.Pattern[str]] = re.compile(r"([0-9]+)([mpsz])|(Xz)")
 
     # For added kan, use + to mark the added tile: (111+1m<)
     MELD_PATTERN: Final[re.Pattern[str]] = re.compile(r"(\[|\()([0-9]+)(\+)?([0-9])?([mpsz])([<^>])?(\]|\))")
@@ -169,10 +172,16 @@ class MahjongParser:
         last_end = 0
         matched_any = False
 
-        for match in self.TILE_GROUP_PATTERN.finditer(clean):
+        for match in self._TILE_OR_BACK_PATTERN.finditer(clean):
             if match.start() != last_end:
                 invalid_notation = True
             matched_any = True
+
+            if match.group(3):  # 'Xz' → a face-down tile
+                tiles.append(Tile(suit="", number=0, is_back=True))
+                last_end = match.end()
+                continue
+
             numbers = match.group(1)
             suit = match.group(2)
 

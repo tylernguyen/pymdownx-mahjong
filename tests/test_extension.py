@@ -12,12 +12,42 @@ class TestMahjongExtension:
         md = markdown.Markdown(extensions=["pymdownx_mahjong"])
         assert "mahjong_inline" in md.inlinePatterns
 
+    def test_inline_code_processor_registered_by_default(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        assert "mahjong_inline_code" in md.inlinePatterns
+
     def test_inline_processor_disabled(self):
         md = markdown.Markdown(
             extensions=["pymdownx_mahjong"],
             extension_configs={"pymdownx_mahjong": {"enable_inline": "false"}},
         )
         assert "mahjong_inline" not in md.inlinePatterns
+        assert "mahjong_inline_code" not in md.inlinePatterns
+
+    def test_inline_code_renders_hand_as_tiles(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert("A hand `mj:1112345678999p` here")
+        assert "mahjong-inline" in out
+        assert "<code" not in out
+
+    def test_inline_face_down_tile(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert("a :Xz: b")
+        assert out.count("mahjong-tile-back") == 1
+        assert "mahjong-inline" in out
+
+    def test_inline_face_down_mixed_with_tiles(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert(":1mXz3m:")
+        assert out.count("mahjong-tile-back") == 1
+        assert out.count('data-tile="1m"') == 1
+        assert out.count('data-tile="3m"') == 1
+
+    def test_plain_code_span_is_not_rendered(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert("Plain `123m` code")
+        assert "<code>123m</code>" in out
+        assert "mahjong-inline" not in out
 
     def test_extension_registered_for_superfences(self):
         from pymdownx_mahjong import MahjongExtension

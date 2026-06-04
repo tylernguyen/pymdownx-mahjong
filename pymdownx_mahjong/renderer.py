@@ -130,6 +130,9 @@ class MahjongRenderer:
 
     def _render_tile(self, tile: Tile) -> str:
         """Render a single tile as HTML with inline SVG."""
+        if tile.is_back:
+            return self._BACK_TILE_HTML
+
         info = tile.info
         if not info:
             return f'<span class="mahjong-tile mahjong-tile-unknown" data-tile="{tile.notation}">?</span>'

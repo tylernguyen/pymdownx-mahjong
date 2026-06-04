@@ -14,12 +14,14 @@ if TYPE_CHECKING:
 
     from markdown import Markdown
 
-# Matches :123m:, :1z:, :0m: etc. — one or more digit groups followed by m/p/s/z
-INLINE_TILE_PATTERN: Final[str] = r":(?:[0-9]+[mpsz])+:"
+# Matches :123m:, :1z:, :0m:, :Xz: etc. — digit groups + m/p/s/z, or Xz for a face-down tile
+INLINE_TILE_PATTERN: Final[str] = r":((?:[0-9]+[mpsz]|Xz)+):"
+# Matches `mj:1112345678999p` — a backtick code span prefixed with mj: for whole hands
+INLINE_CODE_TILE_PATTERN: Final[str] = r"`mj:((?:[0-9]+[mpsz]|Xz)+)`"
 
 
 class MahjongInlineProcessor(InlineProcessor):
-    """Renders inline tile notation like :1m:, :123m456p: as SVG tiles."""
+    """Renders inline tile notation like :1m:, :123m456p:, or `mj:123m` as SVG tiles."""
 
     def __init__(self, pattern: str, md: Markdown, config: dict) -> None:
         super().__init__(pattern, md)
@@ -30,8 +32,7 @@ class MahjongInlineProcessor(InlineProcessor):
         )
 
     def handleMatch(self, m: re.Match, data: str) -> tuple[str | None, int | None, int | None]:
-        full_match = m.group(0)
-        notation = full_match[1:-1]  # Strip colons
+        notation = m.group(1)
 
         try:
             tiles = self.parser.parse_tiles(notation)
