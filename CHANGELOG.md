@@ -4,6 +4,8 @@
 
 ### Changed
 
+- css: center render when there are no melds
+- fix: restrict X as a tile of the z suit
 - fix: match `mj:` ONLY when it's delimited by a __single__ backtick
 
 ## [0.2.0] - 2026-06-04
