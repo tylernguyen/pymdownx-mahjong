@@ -43,6 +43,12 @@ class TestMahjongExtension:
         assert out.count('data-tile="1m"') == 1
         assert out.count('data-tile="3m"') == 1
 
+    def test_double_backtick_escapes_mj_code(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert("``mj:123456789m``")
+        assert "mahjong-inline" not in out
+        assert "<code>mj:123456789m</code>" in out
+
     def test_plain_code_span_is_not_rendered(self):
         md = markdown.Markdown(extensions=["pymdownx_mahjong"])
         out = md.convert("Plain `123m` code")

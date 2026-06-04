@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] - 2026-06-04
+
+### Changed
+
+- fix: match `mj:` ONLY when it's delimited by a __single__ backtick
+
 ## [0.2.0] - 2026-06-04
 
 ### Added
