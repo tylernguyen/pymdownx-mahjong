@@ -15,6 +15,7 @@
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.35);
     --mahjong-tile-radius: 4px;
     --mahjong-tile-back: #e7b246;
+    --mahjong-tile-side: #d0ccc8;
 }
 
 [data-md-color-scheme="slate"],
@@ -27,6 +28,7 @@
     --mahjong-tile-bg: #262626;
     --mahjong-tile-border: #424242;
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.55);
+    --mahjong-tile-side: #202020;
 }
 
 /* Theme-specific tile visibility for auto-switching */
@@ -54,6 +56,7 @@
 .mahjong-theme-dark {
     --mahjong-tile-bg: #262626;
     --mahjong-tile-border: #424242;
+    --mahjong-tile-side: #202020;
 }
 
 /* Light tiles in dark mode need light background for contrast */
@@ -62,6 +65,7 @@
 .dark .mahjong-theme-light {
     --mahjong-tile-bg: #f5f0eb;
     --mahjong-tile-border: #cfcfcf;
+    --mahjong-tile-side: #d0ccc8;
 }
 
 /* NOTE Main container — centered by default (hands without melds shrink to their
@@ -159,11 +163,15 @@
     flex-shrink: 0;
     background: var(--mahjong-tile-bg);
     border: 1px solid var(--mahjong-tile-border);
-    border-radius: 3px 3px 0 0;
+    border-radius: 3px;
     padding: 2px;
     box-sizing: border-box;
     position: relative;
     margin-bottom: var(--mahjong-tile-depth);
+    /* Fill the face's rounded bottom corners with the tile-edge color so they read as
+       a beveled edge, not a see-through notch. A box-shadow paints above any ancestor
+       background (unlike z-index: -1), so this works inline and inside table cells. */
+    box-shadow: 0 3px 0 var(--mahjong-tile-side);
 }
 
 /* Bottom face of tile — grey side face with yellow back strip at bottom */
@@ -202,6 +210,8 @@
     transform: rotate(90deg);
     will-change: transform;
     backface-visibility: hidden;
+    /* Depth is on the element-right (= screen-bottom after rotation), so fill that side */
+    box-shadow: 3px 0 0 var(--mahjong-tile-side);
     margin-left: calc(var(--mahjong-tile-gap) * 6);
     margin-right: calc(var(--mahjong-tile-gap) * 6);
     margin-bottom: 0;
@@ -274,6 +284,8 @@
     /* No visible border on face-down tiles, but keep the 1px border box so their
        size and depth-face alignment stay consistent with bordered face-up tiles */
     border-color: transparent;
+    /* Face-down tiles show the back color (not the side) in the corner notch */
+    box-shadow: 0 3px 0 var(--mahjong-tile-back);
     padding: 0;
 }
 
@@ -365,7 +377,7 @@
 
     .mahjong-tile {
         border-width: 1px;
-        border-radius: 3px 3px 0 0;
+        border-radius: 3px;
         padding: 1px;
     }
 
@@ -384,7 +396,7 @@
 
     .mahjong-tile {
         border-width: 1px;
-        border-radius: 3px 3px 0 0;
+        border-radius: 3px;
         padding: 0.5px;
     }
 
@@ -415,7 +427,7 @@
 
     .mahjong-tile {
         border-width: 1px;
-        border-radius: 3px 3px 0 0;
+        border-radius: 3px;
         padding: 0;
     }
 
@@ -458,7 +470,7 @@
     margin: 0 0.05em;
     margin-bottom: var(--mahjong-tile-depth);
     border-width: 1px;
-    border-radius: 3px 3px 0 0;
+    border-radius: 3px;
     padding: 1px;
 }
 
