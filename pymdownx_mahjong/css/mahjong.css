@@ -367,6 +367,30 @@
         --mahjong-tile-height: 1.87rem;
         --mahjong-tile-gap: 1px;
         --mahjong-meld-gap: 0.5rem;
+        /* Safety net: if a wide hand still overflows after the tiles shrink, scroll it
+           horizontally instead of spilling past the block / breaking the page. The
+           small vertical padding keeps the floating Draw label and the 3D drop shadow
+           from being clipped (overflow-x forces overflow-y to auto). */
+        overflow-x: auto;
+        padding-block: 0.75em;
+    }
+
+    /* The content column (.md-content__inner) has ~0.8rem side gutters on mobile, which
+       eats width. Break the hand out toward the viewport edges and use full width so
+       tiles get maximum room (combined with overflow-x above for anything still wider). */
+    .mahjong-hand,
+    .md-typeset .mahjong-hand,
+    .mahjong-hand:has(.mahjong-hand-melds),
+    .md-typeset .mahjong-hand:has(.mahjong-hand-melds) {
+        width: auto;
+        max-width: none;
+        margin-left: -0.6rem;
+        margin-right: -0.6rem;
+    }
+
+    /* No-meld hands: keep the tiles centered within the now full-width block */
+    .mahjong-hand:not(:has(.mahjong-hand-melds)) .mahjong-hand-row {
+        justify-content: center;
     }
 
     .mahjong-tile {
