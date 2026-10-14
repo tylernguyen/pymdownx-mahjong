@@ -52,6 +52,18 @@ class TestParseBlockContent:
         assert options["title"] == "Uppercase Keys"
         assert options["dora"] == "5m"
 
+    def test_unknown_key_rejected(self):
+        with pytest.raises(ParseError, match="Unknown option 'doras'"):
+            parse_block_content("123m\ndoras: 5z")
+
+    def test_second_notation_line_rejected(self):
+        with pytest.raises(ParseError, match="Hand notation given more than once: 456p"):
+            parse_block_content("123m\n456p")
+
+    def test_notation_line_and_hand_key_rejected(self):
+        with pytest.raises(ParseError, match="Hand notation given more than once"):
+            parse_block_content("123m\nhand: 456p")
+
 
 class TestParseHandBlock:
     def test_draw_counted_toward_tile_limit(self):
