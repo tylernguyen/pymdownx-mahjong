@@ -132,3 +132,78 @@ class TestRenderTiles:
 
         assert 'data-tile="1m"' in html
         assert 'data-tile="3m"' in html
+
+
+class TestSprite:
+    def test_symbols_embedded_once_per_call(self):
+        renderer = MahjongRenderer(theme="light")
+        html = renderer.render(parse_hand("111m"))
+
+        assert html.count('<symbol id="mj-light-1m"') == 1
+        assert html.count('<use href="#mj-light-1m"/>') == 3
+
+    def test_auto_theme_references_both_themes(self):
+        html = MahjongRenderer(theme="auto").render(parse_hand("1m"))
+
+        assert '<symbol id="mj-light-1m"' in html
+        assert '<symbol id="mj-dark-1m"' in html
+
+    def test_shared_sprite_is_not_embedded(self):
+        from pymdownx_mahjong.sprite import TileSprite
+
+        sprite = TileSprite()
+        html = MahjongRenderer(theme="light").render(parse_hand("1m2p"), sprite=sprite)
+
+        assert "<symbol" not in html
+        assert 'href="#mj-light-1m"' in html
+        assert '<symbol id="mj-light-1m"' in sprite.render()
+        assert '<symbol id="mj-light-2p"' in sprite.render()
+
+    def test_output_is_deterministic(self):
+        renderer = MahjongRenderer(theme="auto")
+        first = renderer.render(parse_hand("123p (111+1z<)"))
+        second = renderer.render(parse_hand("123p (111+1z<)"))
+
+        assert first == second
+
+    def test_internal_ids_are_namespaced(self):
+        import re
+
+        html = MahjongRenderer(theme="light").render(parse_hand("1p2p"))
+        ids = re.findall(r'id="([^"]+)"', html)
+
+        assert len(ids) == len(set(ids))
+        assert all(i.startswith(("mj-light-1p", "mj-light-2p")) for i in ids)
+        assert "xlink:href" not in html
+
+
+class TestAccessibility:
+    def test_tiles_are_labelled_images(self):
+        html = MahjongRenderer(theme="light").render(parse_hand("1m"))
+
+        assert 'role="img" aria-label="1 Man"' in html
+        assert 'aria-hidden="true"' in html
+
+    def test_face_down_tile_labelled(self):
+        html = MahjongRenderer().render(parse_hand("[1111z]"))
+
+        assert 'aria-label="Face-down tile"' in html
+
+    def test_meld_group_labelled(self):
+        html = MahjongRenderer().render(parse_hand("(111p^) [1111z]"))
+
+        assert 'role="group" aria-label="Pon from across"' in html
+        assert 'role="group" aria-label="Closed kan"' in html
+
+    def test_draw_group_labelled(self):
+        hand = parse_hand("123m")
+        hand.draw_tile = Tile(suit="z", number=2)
+        html = MahjongRenderer().render(hand)
+
+        assert 'class="mahjong-hand-draw" role="group" aria-label="Draw"' in html
+
+    def test_figure_label_only_without_caption(self):
+        renderer = MahjongRenderer()
+
+        assert 'aria-label="Mahjong hand"' in renderer.render(parse_hand("1m"))
+        assert 'aria-label="Mahjong hand"' not in renderer.render(parse_hand("1m"), title="T")
