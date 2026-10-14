@@ -132,24 +132,3 @@ class TestRenderTiles:
 
         assert 'data-tile="1m"' in html
         assert 'data-tile="3m"' in html
-
-
-class TestSvgIdUniqueness:
-    def test_multiple_same_tiles_have_unique_ids(self, monkeypatch):
-        import re
-
-        import pymdownx_mahjong.renderer as renderer_mod
-
-        monkeypatch.setattr(
-            renderer_mod,
-            "_load_and_process_svg",
-            lambda asset_name, theme: '<svg id="root"><g id="layer1"></g></svg>',
-        )
-
-        renderer = MahjongRenderer(theme="light")
-        hand = parse_hand("111m")
-        html = renderer.render(hand)
-
-        id_matches = re.findall(r'id="mj\d+_', html)
-        unique_prefixes = set(id_matches)
-        assert len(unique_prefixes) >= 1

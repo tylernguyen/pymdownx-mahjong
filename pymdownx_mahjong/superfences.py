@@ -10,6 +10,7 @@ from typing import Any
 
 from .parser import MahjongParser, ParseError
 from .renderer import MahjongRenderer
+from .sprite import TileSprite
 from .utils import parse_hand_block
 
 
@@ -82,7 +83,21 @@ def superfences_formatter(
         hand,
         title=block_options.get("title"),
         notation=notation,
+        sprite=_page_sprite(md),
     )
+
+
+def _page_sprite(md: Any) -> TileSprite | None:
+    """Return the page-wide sprite when the extension is registered on ``md``.
+
+    Without it, the renderer embeds the symbols each block uses alongside that block.
+    """
+    from .extension import MahjongExtension  # lazy import mirrors extension.py
+
+    for ext in getattr(md, "registeredExtensions", ()):
+        if isinstance(ext, MahjongExtension):
+            return ext.sprite
+    return None
 
 
 def _error_block(message: str) -> str:
