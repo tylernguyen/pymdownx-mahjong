@@ -82,3 +82,11 @@ url_download= true
 anchor_linenums = true
 line_spans = "__span"
 pygments_lang_class = true
+
+
+[project.plugins.meta]
+
+[project.plugins.minify]
+minify_html = true
+minify_js = true
+minify_css = true
