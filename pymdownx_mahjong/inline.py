@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
     from markdown import Markdown
 
+    from .sprite import TileSprite
+
 # Matches :123m:, :1z:, :Xz:, :1234567Xz: etc. — rank+suit groups where a rank is a
 # digit or X (X = a face-down tile, e.g. Xz).
 INLINE_TILE_PATTERN: Final[str] = r":((?:[0-9X]+[mpsz])+):"
@@ -26,8 +28,9 @@ INLINE_CODE_TILE_PATTERN: Final[str] = r"(?<!`)`mj:((?:[0-9X]+[mpsz])+)`(?!`)"
 class MahjongInlineProcessor(InlineProcessor):
     """Renders inline tile notation like :1m:, :123m456p:, or `mj:123m` as SVG tiles."""
 
-    def __init__(self, pattern: str, md: Markdown, config: dict) -> None:
+    def __init__(self, pattern: str, md: Markdown, config: dict, sprite: TileSprite | None = None) -> None:
         super().__init__(pattern, md)
+        self.sprite = sprite
         self.parser = MahjongParser()
         self.renderer = MahjongRenderer(
             theme=config.get("theme", "auto"),
@@ -42,7 +45,7 @@ class MahjongInlineProcessor(InlineProcessor):
         except ParseError:
             return None, None, None
 
-        html = self.renderer.render_tiles(tiles)
+        html = self.renderer.render_tiles(tiles, sprite=self.sprite)
         placeholder = self.md.htmlStash.store(html)
 
         return placeholder, m.start(0), m.end(0)
