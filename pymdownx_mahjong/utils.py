@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
 from .parser import Hand, MahjongParser, ParseError
+
+_OPTION_KEYS: Final[tuple[str, ...]] = ("title", "dora", "ura", "waits", "draw")
 
 
 def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
     """Parse block content into notation and options.
 
     Supports simple notation, YAML-style key: value pairs, or a mix of both.
+
+    Raises:
+        ParseError: On an unknown option key or a second hand notation
     """
     options: dict[str, Any] = {}
     notation = ""
@@ -28,10 +33,17 @@ def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
             value = value.strip().strip("\"'")
 
             if key == "hand":
+                if notation:
+                    raise ParseError(f"Hand notation given more than once: {line}")
                 notation = value
-            elif key in ("title", "dora", "ura", "waits", "draw"):
+            elif key in _OPTION_KEYS:
                 options[key] = value
-        elif not notation:
+            else:
+                expected = ", ".join(("hand", *_OPTION_KEYS))
+                raise ParseError(f"Unknown option '{key}' (expected one of: {expected})")
+        elif notation:
+            raise ParseError(f"Hand notation given more than once: {line}")
+        else:
             notation = line
 
     return notation, options
