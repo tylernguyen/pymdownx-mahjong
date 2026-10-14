@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.2] - 2026-10-14
+
+### Changed
+
+- perf: emit each tile's SVG once per page as a `<symbol>` and reference it with `<use>`, instead of inlining the full SVG for every tile (and twice with `theme: auto`).
+- fix: deterministic SVG IDs, so rebuilding a page produces identical HTML.
+- feat(a11y): label tiles (`role="img"`, `aria-label`), face-down tiles, melds, the draw tile, and uncaptioned hands for screen readers.
+- chore(CI): only publish to PyPI from a published release
+- fix: reject invalid melds: pon/kan of non-identical tiles, chi called from `^` or `>`, added kan without a source marker, and closed melds that aren't a kan.
+- fix: count red 5s toward the 4-per-tile limit (`55550m` is now an error).
+- fix: count the `draw:` tile toward the 4-per-tile limit, and reject a `draw:` of more than one tile.
+- fix: reject unknown block options (e.g. `doras:`) and a second hand notation line instead of silently ignoring them.
+- chore: add tests for extension and renderer
+
 ## [0.2.1] - 2026-06-04
 
 ### Changed
