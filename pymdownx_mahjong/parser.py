@@ -99,6 +99,11 @@ class Hand:
         return tiles
 
 
+def _rank(tile: Tile) -> int:
+    """A tile's rank, with a red 5 (0) ranked as a 5."""
+    return 5 if tile.number == 0 else tile.number
+
+
 class ParseError(Exception):
     """Exception raised when parsing fails."""
 
@@ -243,23 +248,8 @@ class MahjongParser:
             if not tiles:
                 continue
 
-            is_closed = open_bracket == "[" and close_bracket == "]"
-            tile_count = len(tiles)
-
-            if is_closed and source_char:
-                self.errors.append(f"Closed kan cannot have source marker: {match.group(0)}")
-                continue
-
-            if is_added_kan and tile_count == 4:
-                meld_type = MeldType.KAN_ADDED
-            elif is_closed and tile_count == 4:
-                meld_type = MeldType.KAN_CLOSED
-            elif tile_count == 4:
-                meld_type = MeldType.KAN_OPEN
-            elif tile_count == 3:
-                meld_type = MeldType.CHI if self._is_sequence(tiles) else MeldType.PON
-            else:
-                self.errors.append(f"Invalid meld size: {tile_count} tiles")
+            meld_type = self._classify_meld(match.group(0), tiles, open_bracket == "[", is_added_kan, source_char)
+            if meld_type is None:
                 continue
 
             source = _SOURCE_MAP.get(source_char, MeldSource.SELF)
@@ -286,6 +276,44 @@ class MahjongParser:
 
         return melds
 
+    def _classify_meld(
+        self, meld: str, tiles: list[Tile], is_closed: bool, is_added_kan: bool, source_char: str
+    ) -> MeldType | None:
+        """Determine a meld's type, recording an error and returning None if it is invalid."""
+        tile_count = len(tiles)
+        identical = len({(t.suit, _rank(t)) for t in tiles}) == 1
+
+        if is_closed and source_char:
+            error = "Closed kan cannot have source marker"
+        elif is_closed and is_added_kan:
+            error = "Closed kan cannot be an added kan"
+        elif is_closed and tile_count != 4:
+            error = "Closed meld must be a kan of 4 tiles"
+        elif is_added_kan and tile_count != 4:
+            error = "Added kan must have 4 tiles"
+        elif is_added_kan and not source_char:
+            error = "Added kan requires a source marker (<, ^, or >)"
+        elif tile_count == 4:
+            if identical:
+                if is_added_kan:
+                    return MeldType.KAN_ADDED
+                return MeldType.KAN_CLOSED if is_closed else MeldType.KAN_OPEN
+            error = "Kan must be 4 identical tiles"
+        elif tile_count == 3:
+            if self._is_sequence(tiles):
+                if source_char in ("", "<"):
+                    return MeldType.CHI
+                error = "Chi can only be called from the left (<)"
+            elif identical:
+                return MeldType.PON
+            else:
+                error = "Meld must be a sequence or 3 identical tiles"
+        else:
+            error = f"Invalid meld size: {tile_count} tiles"
+
+        self.errors.append(f"{error}: {meld}")
+        return None
+
     def _is_sequence(self, tiles: list[Tile]) -> bool:
         """Check if tiles form a consecutive sequence (chi)."""
         if len(tiles) != 3:
@@ -295,8 +323,7 @@ class MahjongParser:
         if len(suits) != 1 or "z" in suits:
             return False
 
-        # Red dora 0 is treated as 5
-        numbers = sorted(5 if t.number == 0 else t.number for t in tiles)
+        numbers = sorted(_rank(t) for t in tiles)
 
         return numbers[1] == numbers[0] + 1 and numbers[2] == numbers[1] + 1
 

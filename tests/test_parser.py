@@ -1,5 +1,7 @@
 """Tests for the MPSZ notation parser."""
 
+import re
+
 import pytest
 
 from pymdownx_mahjong.parser import (
@@ -145,6 +147,43 @@ class TestMahjongParser:
 
         hand = parser.parse("123m (222p<)")
         assert hand.melds[0].meld_type == MeldType.PON
+
+
+class TestMeldValidation:
+    @pytest.mark.parametrize(
+        ("notation", "message"),
+        [
+            ("(124m<)", "Meld must be a sequence or 3 identical tiles"),
+            ("(123z<)", "Meld must be a sequence or 3 identical tiles"),
+            ("(5678m^)", "Kan must be 4 identical tiles"),
+            ("(123m^)", "Chi can only be called from the left"),
+            ("(123m>)", "Chi can only be called from the left"),
+            ("(111+1m)", "Added kan requires a source marker"),
+            ("[111+1m]", "Closed kan cannot be an added kan"),
+            ("(11+1m<)", "Added kan must have 4 tiles"),
+            ("[111m]", "Closed meld must be a kan of 4 tiles"),
+            ("[1234m]", "Kan must be 4 identical tiles"),
+            ("(12m<)", "Invalid meld size: 2 tiles"),
+        ],
+    )
+    def test_invalid_meld_rejected(self, notation, message):
+        with pytest.raises(ParseError, match=re.escape(f"{message}")):
+            MahjongParser().parse(notation)
+
+    @pytest.mark.parametrize(
+        ("notation", "meld_type"),
+        [
+            ("(123m<)", MeldType.CHI),
+            ("(406p<)", MeldType.CHI),
+            ("(123m)", MeldType.CHI),
+            ("(505s^)", MeldType.PON),
+            ("(5550m>)", MeldType.KAN_OPEN),
+            ("[0555p]", MeldType.KAN_CLOSED),
+            ("(555+0m^)", MeldType.KAN_ADDED),
+        ],
+    )
+    def test_valid_meld_accepted(self, notation, meld_type):
+        assert MahjongParser().parse(notation).melds[0].meld_type == meld_type
 
 
 class TestHandProperties:
