@@ -54,6 +54,10 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
     if option_errors:
         raise ParseError("; ".join(option_errors))
 
+    if hand.draw_tile:
+        # parse() checked tile counts before the draw tile was added.
+        parser.validate(hand)
+
     return hand, options, notation
 
 
@@ -75,7 +79,9 @@ def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any
     if "draw" in options:
         try:
             tiles = parser.parse_tiles(options["draw"])
-            if tiles:
+            if len(tiles) > 1:
+                errors.append(f"Invalid draw notation: expected 1 tile, got {len(tiles)}")
+            elif tiles:
                 hand.draw_tile = tiles[0]
         except ParseError as e:
             errors.append(f"Invalid draw notation: {e}")
