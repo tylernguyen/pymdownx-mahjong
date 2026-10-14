@@ -208,13 +208,21 @@ class TestTileCountValidation:
         with pytest.raises(ParseError, match="1m appears 6 times"):
             MahjongParser().parse("111m (111m<)")
 
-    def test_red_dora_counted_separately(self):
-        # Red 5 (0) and regular 5 are different tile types
-        hand = parse_hand("55550m")
-        assert len(hand.closed_tiles) == 5
+    def test_red_five_counts_as_five(self):
+        # A red 5 replaces one of the four 5s
+        with pytest.raises(ParseError, match=r"5m appears 5 times \(max 4, including red 5s\)"):
+            MahjongParser().parse("55550m")
+
+    def test_four_fives_including_red_allowed(self):
+        hand = parse_hand("5550m")
+        assert len(hand.closed_tiles) == 4
+
+    def test_red_fives_in_melds_counted(self):
+        with pytest.raises(ParseError, match="5p appears 5 times"):
+            MahjongParser().parse("55p (505p<)")
 
     def test_five_red_dora_raises_error(self):
-        with pytest.raises(ParseError, match="0m appears 5 times"):
+        with pytest.raises(ParseError, match="5m appears 5 times"):
             MahjongParser().parse("00000m")
 
     def test_multiple_violations_reports_all(self):

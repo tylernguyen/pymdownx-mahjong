@@ -329,15 +329,17 @@ class MahjongParser:
 
     def _validate_tile_counts(self, hand: Hand) -> None:
         """Validate that no tile appears more than 4 times."""
-        # Red 5 (0) and regular 5 are different tiles; face-down tiles are unknown,
-        # so they don't count toward the per-tile limit.
-        counts = Counter((t.suit, t.number) for t in hand.all_tiles if not t.is_back)
+        # A red 5 (0) replaces one of the four 5s, so it counts as a 5. Face-down tiles
+        # are unknown, so they don't count toward the per-tile limit.
+        tiles = [t for t in hand.all_tiles if not t.is_back]
+        counts = Counter((t.suit, _rank(t)) for t in tiles)
+        has_red = {t.suit for t in tiles if t.number == 0}
 
         for (suit, number), count in counts.items():
             if count > 4:
-                tile_notation = f"{number}{suit}"
+                red_note = ", including red 5s" if number == 5 and suit in has_red else ""
                 self.errors.append(
-                    f"Invalid tile count: {tile_notation} appears {count} times (max 4)"
+                    f"Invalid tile count: {number}{suit} appears {count} times (max 4{red_note})"
                 )
 
 
