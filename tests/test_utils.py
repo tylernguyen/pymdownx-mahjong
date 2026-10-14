@@ -1,7 +1,9 @@
 """Tests for utility functions."""
 
-from pymdownx_mahjong.parser import Hand, MahjongParser, Tile
-from pymdownx_mahjong.utils import apply_hand_options, parse_block_content
+import pytest
+
+from pymdownx_mahjong.parser import Hand, MahjongParser, ParseError
+from pymdownx_mahjong.utils import apply_hand_options, parse_block_content, parse_hand_block
 
 
 class TestParseBlockContent:
@@ -51,6 +53,17 @@ class TestParseBlockContent:
         assert options["dora"] == "5m"
 
 
+class TestParseHandBlock:
+    def test_draw_counted_toward_tile_limit(self):
+        with pytest.raises(ParseError, match="1m appears 5 times"):
+            parse_hand_block("1111m\ndraw: 1m", MahjongParser())
+
+    def test_draw_within_limit_accepted(self):
+        hand, _, _ = parse_hand_block("111m\ndraw: 1m", MahjongParser())
+        assert hand.draw_tile is not None
+        assert hand.draw_tile.notation == "1m"
+
+
 class TestApplyHandOptions:
     def test_apply_all_options(self):
         hand = Hand()
@@ -75,4 +88,11 @@ class TestApplyHandOptions:
         errors = apply_hand_options(hand, MahjongParser(), {"draw": "9z"})
 
         assert "Invalid draw notation" in errors[0]
+        assert hand.draw_tile is None
+
+    def test_multi_tile_draw_reports_error(self):
+        hand = Hand()
+        errors = apply_hand_options(hand, MahjongParser(), {"draw": "45m"})
+
+        assert errors == ["Invalid draw notation: expected 1 tile, got 2"]
         assert hand.draw_tile is None

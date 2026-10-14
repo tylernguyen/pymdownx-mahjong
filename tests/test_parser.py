@@ -225,6 +225,13 @@ class TestTileCountValidation:
         with pytest.raises(ParseError, match="5m appears 5 times"):
             MahjongParser().parse("00000m")
 
+    def test_validate_checks_hand_changed_after_parse(self):
+        parser = MahjongParser()
+        hand = parser.parse("1111m")
+        hand.draw_tile = Tile(suit="m", number=1)
+        with pytest.raises(ParseError, match="1m appears 5 times"):
+            parser.validate(hand)
+
     def test_multiple_violations_reports_all(self):
         with pytest.raises(ParseError) as exc_info:
             MahjongParser().parse("11111m22222p")

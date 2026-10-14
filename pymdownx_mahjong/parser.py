@@ -327,6 +327,17 @@ class MahjongParser:
 
         return numbers[1] == numbers[0] + 1 and numbers[2] == numbers[1] + 1
 
+    def validate(self, hand: Hand) -> None:
+        """Validate tile counts for a hand changed after parse(), e.g. with a draw tile.
+
+        Raises:
+            ParseError: If any tile appears more than 4 times
+        """
+        self.errors = []
+        self._validate_tile_counts(hand)
+        if self.errors:
+            raise ParseError("; ".join(self.errors))
+
     def _validate_tile_counts(self, hand: Hand) -> None:
         """Validate that no tile appears more than 4 times."""
         # A red 5 (0) replaces one of the four 5s, so it counts as a 5. Face-down tiles
