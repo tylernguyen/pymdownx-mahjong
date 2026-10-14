@@ -3,9 +3,23 @@
 from __future__ import annotations
 
 import html
+from typing import Final
 
-from .parser import Hand, Meld, MeldType, Tile
+from .parser import Hand, Meld, MeldSource, MeldType, Tile
 from .sprite import TILE_HEIGHT, TILE_WIDTH, TileSprite
+
+_MELD_NAMES: Final[dict[MeldType, str]] = {
+    MeldType.CHI: "Chi",
+    MeldType.PON: "Pon",
+    MeldType.KAN_OPEN: "Open kan",
+    MeldType.KAN_CLOSED: "Closed kan",
+    MeldType.KAN_ADDED: "Added kan",
+}
+_SOURCE_NAMES: Final[dict[MeldSource, str]] = {
+    MeldSource.LEFT: "from left",
+    MeldSource.ACROSS: "from across",
+    MeldSource.RIGHT: "from right",
+}
 
 
 class MahjongRenderer:
@@ -21,7 +35,10 @@ class MahjongRenderer:
 
     DEFAULT_TILE_WIDTH = TILE_WIDTH
     DEFAULT_TILE_HEIGHT = TILE_HEIGHT
-    _BACK_TILE_HTML = '<span class="mahjong-tile mahjong-tile-back"></span>'
+    _BACK_TILE_HTML = (
+        '<span class="mahjong-tile mahjong-tile-back" role="img" '
+        'aria-label="Face-down tile" title="Face-down tile"></span>'
+    )
 
     def __init__(
         self,
@@ -47,7 +64,9 @@ class MahjongRenderer:
 
         data_attr = f' data-notation="{html.escape(notation, quote=True)}"' if notation else ""
         theme_class = f" mahjong-theme-{self.theme}" if self.theme in ("light", "dark") else ""
-        parts.append(f'<figure class="{self.css_class}{theme_class}"{data_attr}>')
+        # A figcaption names the figure; otherwise give it a generic accessible name.
+        label_attr = "" if title else ' aria-label="Mahjong hand"'
+        parts.append(f'<figure class="{self.css_class}{theme_class}"{data_attr}{label_attr}>')
 
         if hand.dora_indicators or hand.ura_indicators or hand.waits:
             parts.append('<div class="mahjong-dora-row">')
@@ -69,7 +88,8 @@ class MahjongRenderer:
         parts.append("</div>")
 
         if hand.draw_tile:
-            parts.append('<div class="mahjong-hand-draw">')
+            # The visible "Draw" label is CSS generated content, so name the group too.
+            parts.append('<div class="mahjong-hand-draw" role="group" aria-label="Draw">')
             parts.append('<div class="mahjong-tiles">')
             parts.append(self._render_tile(hand.draw_tile, sprite))
             parts.append("</div>")
@@ -130,7 +150,10 @@ class MahjongRenderer:
 
         info = tile.info
         if not info:
-            return f'<span class="mahjong-tile mahjong-tile-unknown" data-tile="{tile.notation}">?</span>'
+            return (
+                f'<span class="mahjong-tile mahjong-tile-unknown" data-tile="{tile.notation}" '
+                f'role="img" aria-label="Unknown tile">?</span>'
+            )
 
         classes = ["mahjong-tile"]
         if tile.is_rotated:
@@ -141,7 +164,7 @@ class MahjongRenderer:
             classes.append(f"mahjong-theme-{self.theme}")
 
         class_str = " ".join(classes)
-        title_attr = f' title="{info.display_name}"'
+        label = html.escape(info.display_name, quote=True)
         if self.theme == "auto":
             svg_content = (
                 f'<span class="mahjong-tile-light">{sprite.use(info.asset_name, "light")}</span>'
@@ -149,13 +172,17 @@ class MahjongRenderer:
             )
         else:
             svg_content = sprite.use(info.asset_name, self.theme)
-        return f'<span class="{class_str}" data-tile="{tile.notation}"{title_attr}>{svg_content}</span>'
+        return (
+            f'<span class="{class_str}" data-tile="{tile.notation}" role="img" '
+            f'aria-label="{label}" title="{label}">{svg_content}</span>'
+        )
 
     def _render_meld(self, meld: Meld, sprite: TileSprite) -> str:
         """Render a meld (called tile group)."""
         state = "open" if meld.is_open else "closed"
         class_str = f"mahjong-meld mahjong-meld-{state}"
-        parts = [f'<span class="{class_str}">']
+        label = " ".join(filter(None, [_MELD_NAMES[meld.meld_type], _SOURCE_NAMES.get(meld.source)]))
+        parts = [f'<span class="{class_str}" role="group" aria-label="{label}">']
 
         if meld.meld_type == MeldType.KAN_ADDED:
             parts.extend(self._render_added_kan(meld, sprite))
