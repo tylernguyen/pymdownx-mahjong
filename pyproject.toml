@@ -8,7 +8,7 @@ version = "0.2.1"
 description = "Python Markdown extension to render and stylize Mahjong tiles."
 readme = "README.md"
 license = "CC-BY-NC-4.0"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     { name = "Tyler Nguyen" }
 ]
@@ -25,7 +25,6 @@ classifiers = [
     "License :: Other/Proprietary License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -67,7 +66,7 @@ line-length = 120
 select = ["E", "F", "W", "I", "UP", "B", "C4"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
