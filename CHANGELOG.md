@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- fix: fenced blocks use their own Markdown instance's config; it overrides `configure_superfences()`.
+- fix: raise `ValueError` on invalid `theme` or `closed_kan_style`.
+- fix: keep unpaired quotes in block options (`title: The players'`).
+- docs: register `pymdownx_mahjong` alongside SuperFences.
+- refactor: stateless parser; remove unused constants.
+- chore: single-source version; add Python 3.14.
+- chore(CI): run pytest and mypy.
+
 ## [0.2.2] - 2026-10-14
 
 ### Added
