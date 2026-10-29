@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.3] - 2026-10-29
 
 ### Added
 
@@ -16,6 +16,7 @@
 - refactor: stateless parser; remove unused constants.
 - chore: single-source version; add Python 3.14.
 - chore(CI): run pytest and mypy.
+- chore(CI): add ruff format and lint checks
 
 ## [0.2.2] - 2026-10-14
 
