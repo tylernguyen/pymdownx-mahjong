@@ -9,6 +9,7 @@ import markdown
 from markdown.treeprocessors import Treeprocessor
 
 from .inline import INLINE_CODE_TILE_PATTERN, INLINE_TILE_PATTERN, MahjongInlineProcessor
+from .renderer import MahjongRenderer
 from .sprite import SPRITE_CLASS, SPRITE_STYLE, TileSprite
 
 if TYPE_CHECKING:
@@ -29,11 +30,10 @@ class MahjongExtension(markdown.Extension):
     def extendMarkdown(self, md: Markdown) -> None:
         config = {key: self.getConfig(key) for key in self.config}
 
-        # Push config to superfences state eagerly so the formatter always has
-        # the correct theme/closed_kan_style even when md is unavailable there.
-        from .superfences import _state  # lazy import avoids circular dependency
-
-        _state.configure(**config)
+        # The superfences formatter finds this extension on md and renders with this
+        # renderer, so each Markdown instance keeps its own theme/closed_kan_style.
+        # Constructing it here also rejects invalid config when the extension loads.
+        self.renderer = MahjongRenderer(theme=config["theme"], closed_kan_style=config["closed_kan_style"])
 
         if str(config.get("enable_inline", "true")).lower() in ("true", "1", "yes"):
             # Priority 76: before pymdownx.emoji (75)

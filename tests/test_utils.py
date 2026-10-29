@@ -36,6 +36,11 @@ class TestParseBlockContent:
         assert notation == "123m456p"
         assert options["title"] == "Mixed Style"
 
+    def test_unpaired_quotes_kept(self):
+        assert parse_block_content("title: The players'")[1]["title"] == "The players'"
+        assert parse_block_content("title: 'Tis riichi")[1]["title"] == "'Tis riichi"
+        assert parse_block_content("title: \"Mixed'")[1]["title"] == "\"Mixed'"
+
     def test_quoted_titles(self):
         assert parse_block_content('title: "Quoted"')[1]["title"] == "Quoted"
         assert parse_block_content("title: 'Single'")[1]["title"] == "Single"

@@ -1,6 +1,7 @@
 """Tests for the Markdown extension."""
 
 import markdown
+import pytest
 
 
 class TestMahjongExtension:
@@ -130,33 +131,50 @@ class TestMakeExtension:
 
 
 class TestConfigPropagation:
-    """Extension config must flow through to the superfences renderer."""
+    """Extension config must flow through to the superfences renderer of the same Markdown instance."""
 
-    def test_theme_propagates_to_superfences_state(self):
-        from pymdownx_mahjong.superfences import _state
+    @staticmethod
+    def _md(**config):
+        from pymdownx_mahjong import superfences_formatter, superfences_validator
 
-        markdown.Markdown(
-            extensions=["pymdownx_mahjong"],
-            extension_configs={"pymdownx_mahjong": {"theme": "dark"}},
+        fences = [
+            {
+                "name": "mahjong",
+                "class": "mahjong",
+                "format": superfences_formatter,
+                "validator": superfences_validator,
+            }
+        ]
+        return markdown.Markdown(
+            extensions=["pymdownx_mahjong", "pymdownx.superfences"],
+            extension_configs={"pymdownx_mahjong": config, "pymdownx.superfences": {"custom_fences": fences}},
         )
-        assert _state._config.get("theme") == "dark"
 
-    def test_closed_kan_style_propagates_to_superfences_state(self):
-        from pymdownx_mahjong.superfences import _state
+    def test_fence_uses_extension_config(self):
+        out = self._md(theme="dark", closed_kan_style="inner").convert("```mahjong\n[1111z]\n```")
+        assert "mahjong-theme-dark" in out
+        # inner: front, back, back, front
+        assert out.count("mahjong-tile-back") == 2
 
-        markdown.Markdown(
-            extensions=["pymdownx_mahjong"],
-            extension_configs={"pymdownx_mahjong": {"closed_kan_style": "inner"}},
-        )
-        assert _state._config.get("closed_kan_style") == "inner"
+    def test_config_does_not_leak_between_instances(self):
+        dark = self._md(theme="dark")
+        self._md(theme="light")
+        out = dark.convert("```mahjong\n123m\n```")
+        assert "mahjong-theme-dark" in out
+        assert "mahjong-theme-light" not in out
 
-    def test_renderer_uses_propagated_config(self):
-        from pymdownx_mahjong.superfences import _state
 
-        markdown.Markdown(
-            extensions=["pymdownx_mahjong"],
-            extension_configs={"pymdownx_mahjong": {"theme": "dark", "closed_kan_style": "inner"}},
-        )
-        renderer = _state.renderer
-        assert renderer.theme == "dark"
-        assert renderer.closed_kan_style == "inner"
+class TestConfigValidation:
+    def test_invalid_theme_rejected(self):
+        with pytest.raises(ValueError, match="theme"):
+            markdown.Markdown(
+                extensions=["pymdownx_mahjong"],
+                extension_configs={"pymdownx_mahjong": {"theme": "Dark"}},
+            )
+
+    def test_invalid_closed_kan_style_rejected(self):
+        with pytest.raises(ValueError, match="closed_kan_style"):
+            markdown.Markdown(
+                extensions=["pymdownx_mahjong"],
+                extension_configs={"pymdownx_mahjong": {"closed_kan_style": "inside"}},
+            )

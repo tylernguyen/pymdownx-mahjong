@@ -64,6 +64,9 @@ Copy `mahjong.css` to `stylesheets/`.
     ```
 
 
+> [!note]
+> Register `pymdownx_mahjong` alongside SuperFences even if you only use fenced blocks. The extension supplies the fence's `theme` and `closed_kan_style`, and emits each tile's artwork once per page. Without it, every block embeds its own copy, producing duplicate element IDs.
+
 ### Configuration
 
 | Key              | Type | Options         | Default | Description                                                         |

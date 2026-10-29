@@ -5,6 +5,7 @@ import pytest
 from pymdownx_mahjong.superfences import (
     _error_block,
     _SuperfencesState,
+    configure_superfences,
     superfences_formatter,
     superfences_validator,
 )
@@ -71,6 +72,16 @@ class TestSuperfencesFormatter:
             html = _format(source)
             assert "mahjong-error" in html
             assert "No hand notation" in html
+
+
+class TestConfigureSuperfences:
+    def test_configure_applies_without_extension(self):
+        configure_superfences(theme="dark")
+        assert "mahjong-theme-dark" in _format("123m")
+
+    def test_configure_rejects_invalid_theme(self):
+        with pytest.raises(ValueError, match="theme"):
+            configure_superfences(theme="Dark")
 
 
 class TestErrorBlock:

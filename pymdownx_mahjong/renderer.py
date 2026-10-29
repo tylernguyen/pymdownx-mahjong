@@ -6,7 +6,10 @@ import html
 from typing import Final
 
 from .parser import Hand, Meld, MeldSource, MeldType, Tile
-from .sprite import TILE_HEIGHT, TILE_WIDTH, TileSprite
+from .sprite import TileSprite
+
+THEMES: Final[tuple[str, ...]] = ("auto", "light", "dark")
+CLOSED_KAN_STYLES: Final[tuple[str, ...]] = ("outer", "inner")
 
 _MELD_NAMES: Final[dict[MeldType, str]] = {
     MeldType.CHI: "Chi",
@@ -33,8 +36,6 @@ class MahjongRenderer:
         closed_kan_style: 'outer' (default) or 'inner'
     """
 
-    DEFAULT_TILE_WIDTH = TILE_WIDTH
-    DEFAULT_TILE_HEIGHT = TILE_HEIGHT
     _BACK_TILE_HTML = (
         '<span class="mahjong-tile mahjong-tile-back" role="img" '
         'aria-label="Face-down tile" title="Face-down tile"></span>'
@@ -46,6 +47,12 @@ class MahjongRenderer:
         closed_kan_style: str = "outer",
         css_class: str = "mahjong-hand",
     ) -> None:
+        if theme not in THEMES:
+            raise ValueError(f"Invalid theme {theme!r} (expected one of: {', '.join(THEMES)})")
+        if closed_kan_style not in CLOSED_KAN_STYLES:
+            raise ValueError(
+                f"Invalid closed_kan_style {closed_kan_style!r} (expected one of: {', '.join(CLOSED_KAN_STYLES)})"
+            )
         self.theme = theme
         self.css_class = css_class
         self.closed_kan_style = closed_kan_style

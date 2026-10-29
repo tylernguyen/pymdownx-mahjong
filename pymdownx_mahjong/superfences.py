@@ -6,16 +6,18 @@ Provides custom fence formatter and validator for use with pymdownx.superfences.
 from __future__ import annotations
 
 from html import escape
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .parser import MahjongParser, ParseError
 from .renderer import MahjongRenderer
-from .sprite import TileSprite
 from .utils import parse_hand_block
+
+if TYPE_CHECKING:
+    from .extension import MahjongExtension
 
 
 class _SuperfencesState:
-    """Global state for superfences integration with lazy renderer creation."""
+    """Fallback state for the superfences formatter when the extension isn't registered."""
 
     def __init__(self) -> None:
         self.parser = MahjongParser()
@@ -25,6 +27,8 @@ class _SuperfencesState:
     def configure(self, **kwargs: Any) -> None:
         self._config.update(kwargs)
         self._renderer = None
+        # Build eagerly so invalid config is rejected here rather than on first render.
+        _ = self.renderer
 
     @property
     def renderer(self) -> MahjongRenderer:
@@ -40,7 +44,9 @@ _state = _SuperfencesState()
 
 
 def configure_superfences(**kwargs: Any) -> None:
-    """Configure the superfences integration.
+    """Configure the superfences integration when used without the extension.
+
+    When the pymdownx_mahjong extension is registered, its own config is used instead.
 
     Example:
         from pymdownx_mahjong import configure_superfences
@@ -70,7 +76,8 @@ def superfences_formatter(
 ) -> str:
     """Formatter for superfences custom fence."""
     parser = _state.parser
-    renderer = _state.renderer
+    ext = _find_extension(md)
+    renderer = ext.renderer if ext else _state.renderer
 
     content = source.strip()
 
@@ -83,20 +90,18 @@ def superfences_formatter(
         hand,
         title=block_options.get("title"),
         notation=notation,
-        sprite=_page_sprite(md),
+        # Without the extension's page-wide sprite, each block embeds the symbols it uses.
+        sprite=ext.sprite if ext else None,
     )
 
 
-def _page_sprite(md: Any) -> TileSprite | None:
-    """Return the page-wide sprite when the extension is registered on ``md``.
-
-    Without it, the renderer embeds the symbols each block uses alongside that block.
-    """
-    from .extension import MahjongExtension  # lazy import mirrors extension.py
+def _find_extension(md: Any) -> MahjongExtension | None:
+    """Return the MahjongExtension registered on ``md``, if any."""
+    from .extension import MahjongExtension  # lazy import avoids circular dependency
 
     for ext in getattr(md, "registeredExtensions", ()):
         if isinstance(ext, MahjongExtension):
-            return ext.sprite
+            return ext
     return None
 
 

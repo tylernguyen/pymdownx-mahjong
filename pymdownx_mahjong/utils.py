@@ -30,7 +30,7 @@ def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
         if ":" in line:
             key, _, value = line.partition(":")
             key = key.strip().lower()
-            value = value.strip().strip("\"'")
+            value = _unquote(value.strip())
 
             if key == "hand":
                 if notation:
@@ -47,6 +47,13 @@ def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
             notation = line
 
     return notation, options
+
+
+def _unquote(value: str) -> str:
+    """Remove one pair of matching surrounding quotes, leaving unpaired quotes intact."""
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
 
 
 def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[str, Any], str]:

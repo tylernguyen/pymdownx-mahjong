@@ -1,5 +1,7 @@
 """Tests for the Mahjong renderer."""
 
+import pytest
+
 from pymdownx_mahjong.parser import Tile, parse_hand
 from pymdownx_mahjong.renderer import MahjongRenderer
 
@@ -205,3 +207,13 @@ class TestAccessibility:
 
         assert 'aria-label="Mahjong hand"' in renderer.render(parse_hand("1m"))
         assert 'aria-label="Mahjong hand"' not in renderer.render(parse_hand("1m"), title="T")
+
+
+class TestRendererValidation:
+    def test_invalid_theme(self):
+        with pytest.raises(ValueError, match="theme"):
+            MahjongRenderer(theme="Dark")
+
+    def test_invalid_closed_kan_style(self):
+        with pytest.raises(ValueError, match="closed_kan_style"):
+            MahjongRenderer(closed_kan_style="inside")
