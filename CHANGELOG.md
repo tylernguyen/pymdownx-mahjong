@@ -2,11 +2,14 @@
 
 ## [0.2.2] - 2026-10-14
 
+### Added
+
+- feat(a11y): label tiles (`role="img"`, `aria-label`), face-down tiles, melds, the draw tile, and uncaptioned hands for screen readers.
+
 ### Changed
 
 - perf: emit each tile's SVG once per page as a `<symbol>` and reference it with `<use>`, instead of inlining the full SVG for every tile (and twice with `theme: auto`).
 - fix: deterministic SVG IDs, so rebuilding a page produces identical HTML.
-- feat(a11y): label tiles (`role="img"`, `aria-label`), face-down tiles, melds, the draw tile, and uncaptioned hands for screen readers.
 - chore(CI): only publish to PyPI from a published release
 - fix: reject invalid melds: pon/kan of non-identical tiles, chi called from `^` or `>`, added kan without a source marker, and closed melds that aren't a kan.
 - fix: count red 5s toward the 4-per-tile limit (`55550m` is now an error).
@@ -45,7 +48,7 @@
 ### Changed
 
 - refactor: rename `uradora` to `ura` throughout: `Hand.ura_indicators` field, `ura` block option key, CSS class `mahjong-ura`, and display label.
-- Restyle dora/ura/waits indicator labels: stacked above tiles.
+- css: restyle dora/ura/waits indicator labels: stacked above tiles.
 
 ## [0.1.1] - 2026-03-16
 
