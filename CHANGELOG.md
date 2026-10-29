@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- feat: `discards:` block option renders a discard pile (rows of 6, 6, rest) above an optional hand, with `r` (riichi), `t` (tsumogiri) and `c` (called) markers.
+
 ### Changed
 
 - fix: align sideways tiles' 3D edge with upright tiles.

@@ -49,6 +49,8 @@ class Tile:
     is_rotated: bool = False
     is_added: bool = False
     is_back: bool = False  # face-down tile (notation: Xz)
+    is_tsumogiri: bool = False  # discarded straight from the draw (discard marker: t)
+    is_called: bool = False  # discard called by another player (discard marker: c)
 
     @property
     def notation(self) -> str:
@@ -87,6 +89,7 @@ class Hand:
     ura_indicators: list[Tile] = field(default_factory=list)
     waits: list[Tile] = field(default_factory=list)
     draw_tile: Tile | None = None
+    discards: list[Tile] = field(default_factory=list)
 
     @property
     def all_tiles(self) -> list[Tile]:
@@ -121,6 +124,10 @@ class MahjongParser:
     # Tile groups: ranks + suit, where a rank is a digit or 'X' (a face-down tile).
     # 'X' is only valid with the z suit (Xz); e.g. 123m, 1234567z, Xz, or 1234567Xz.
     _TILE_OR_BACK_PATTERN: Final[re.Pattern[str]] = re.compile(r"([0-9X]+)([mpsz])")
+
+    # Discards also allow per-tile prefix markers before a rank: r (riichi, rotated),
+    # t (tsumogiri), c (called away); e.g. 1r9m, rt5p, c7z.
+    _DISCARD_PATTERN: Final[re.Pattern[str]] = re.compile(r"((?:[rtc]*[0-9X])+)([mpsz])")
 
     # For added kan, use + to mark the added tile: (111+1m<)
     MELD_PATTERN: Final[re.Pattern[str]] = re.compile(r"(\[|\()([0-9]+)(\+)?([0-9])?([mpsz])([<^>])?(\]|\))")
@@ -162,9 +169,22 @@ class MahjongParser:
             raise ParseError("; ".join(errors))
         return tiles
 
-    def _parse_tiles(self, notation: str, errors: list[str]) -> list[Tile]:
+    def parse_discards(self, notation: str) -> list[Tile]:
+        """Parse discard pile notation, which allows r/t/c markers before a rank.
+
+        Raises:
+            ParseError: If the notation is invalid
+        """
+        errors: list[str] = []
+        tiles = self._parse_tiles(notation, errors, discards=True)
+        if errors:
+            raise ParseError("; ".join(errors))
+        return tiles
+
+    def _parse_tiles(self, notation: str, errors: list[str], *, discards: bool = False) -> list[Tile]:
         """Parse tile notation into a list of Tile objects, appending any problems to errors."""
         tiles: list[Tile] = []
+        pattern = self._DISCARD_PATTERN if discards else self._TILE_OR_BACK_PATTERN
 
         clean = notation.replace("_", "").replace(" ", "").replace("|", "")
         if not clean:
@@ -174,7 +194,7 @@ class MahjongParser:
         last_end = 0
         matched_any = False
 
-        for match in self._TILE_OR_BACK_PATTERN.finditer(clean):
+        for match in pattern.finditer(clean):
             if match.start() != last_end:
                 invalid_notation = True
             matched_any = True
@@ -182,21 +202,31 @@ class MahjongParser:
             ranks = match.group(1)
             suit = match.group(2)
 
+            markers = ""
             for rank in ranks:
+                if rank in "rtc":
+                    markers += rank
+                    continue
+
                 if rank == "X":  # face-down tile — only valid with the z suit (Xz)
                     if suit != "z":
                         errors.append(f"Invalid tile: X{suit}")
-                        continue
-                    tiles.append(Tile(suit="", number=0, is_back=True))
+                    else:
+                        tile = Tile(suit="", number=0, is_back=True)
+                        self._apply_markers(tile, markers)
+                        tiles.append(tile)
+                    markers = ""
                     continue
 
                 number = int(rank)
 
                 if get_tile_info(suit, number) is None:
                     errors.append(f"Invalid tile: {number}{suit}")
-                    continue
-
-                tiles.append(Tile(suit=suit, number=number))
+                else:
+                    tile = Tile(suit=suit, number=number)
+                    self._apply_markers(tile, markers)
+                    tiles.append(tile)
+                markers = ""
 
             last_end = match.end()
 
@@ -207,6 +237,13 @@ class MahjongParser:
             errors.append(f"Invalid tile notation: {clean}")
 
         return tiles
+
+    @staticmethod
+    def _apply_markers(tile: Tile, markers: str) -> None:
+        """Set discard marker flags (r, t, c) on a tile."""
+        tile.is_rotated = "r" in markers
+        tile.is_tsumogiri = "t" in markers
+        tile.is_called = "c" in markers
 
     def _parse_melds(self, notation: str, errors: list[str]) -> list[Meld]:
         """Parse meld notation from a hand string.
@@ -326,7 +363,7 @@ class MahjongParser:
         return numbers[1] == numbers[0] + 1 and numbers[2] == numbers[1] + 1
 
     def validate(self, hand: Hand) -> None:
-        """Validate tile counts for a hand changed after parse(), e.g. with a draw tile.
+        """Validate tile counts for a hand changed after parse(), e.g. with a draw tile or discards.
 
         Raises:
             ParseError: If any tile appears more than 4 times
@@ -340,7 +377,7 @@ class MahjongParser:
         """Validate that no tile appears more than 4 times."""
         # A red 5 (0) replaces one of the four 5s, so it counts as a 5. Face-down tiles
         # are unknown, so they don't count toward the per-tile limit.
-        tiles = [t for t in hand.all_tiles if not t.is_back]
+        tiles = [t for t in hand.all_tiles + hand.discards if not t.is_back]
         counts = Counter((t.suit, _rank(t)) for t in tiles)
         has_red = {t.suit for t in tiles if t.number == 0}
 

@@ -6,7 +6,7 @@ from typing import Any, Final
 
 from .parser import Hand, MahjongParser, ParseError
 
-_OPTION_KEYS: Final[tuple[str, ...]] = ("title", "dora", "ura", "waits", "draw")
+_OPTION_KEYS: Final[tuple[str, ...]] = ("title", "dora", "ura", "waits", "draw", "discards")
 
 
 def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
@@ -64,24 +64,27 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
     """
     notation, options = parse_block_content(content)
 
-    if not notation:
+    if notation:
+        hand = parser.parse(notation)
+    elif "discards" in options:
+        # A discard pile may be shown on its own, without a hand underneath.
+        hand = Hand()
+    else:
         raise ParseError("No hand notation provided")
-
-    hand = parser.parse(notation)
 
     option_errors = apply_hand_options(hand, parser, options)
     if option_errors:
         raise ParseError("; ".join(option_errors))
 
-    if hand.draw_tile:
-        # parse() checked tile counts before the draw tile was added.
+    if hand.draw_tile or hand.discards:
+        # parse() checked tile counts before the draw tile and discards were added.
         parser.validate(hand)
 
     return hand, options, notation
 
 
 def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any]) -> list[str]:
-    """Apply parsed options (dora, ura, draw) to a hand. Returns error messages."""
+    """Apply parsed options (dora, ura, draw, waits, discards) to a hand. Returns error messages."""
     errors: list[str] = []
     if "dora" in options:
         try:
@@ -110,5 +113,11 @@ def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any
             hand.waits = parser.parse_tiles(options["waits"])
         except ParseError as e:
             errors.append(f"Invalid waits notation: {e}")
+
+    if "discards" in options:
+        try:
+            hand.discards = parser.parse_discards(options["discards"])
+        except ParseError as e:
+            errors.append(f"Invalid discards notation: {e}")
 
     return errors

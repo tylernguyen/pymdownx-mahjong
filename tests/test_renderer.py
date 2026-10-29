@@ -2,7 +2,7 @@
 
 import pytest
 
-from pymdownx_mahjong.parser import Tile, parse_hand
+from pymdownx_mahjong.parser import Hand, MahjongParser, Tile, parse_hand
 from pymdownx_mahjong.renderer import MahjongRenderer
 
 
@@ -217,3 +217,52 @@ class TestRendererValidation:
     def test_invalid_closed_kan_style(self):
         with pytest.raises(ValueError, match="closed_kan_style"):
             MahjongRenderer(closed_kan_style="inside")
+
+
+class TestDiscards:
+    @staticmethod
+    def _render(discards: str, hand: str = "") -> str:
+        parser = MahjongParser()
+        parsed = parser.parse(hand) if hand else Hand()
+        parsed.discards = parser.parse_discards(discards)
+        return MahjongRenderer().render(parsed)
+
+    @staticmethod
+    def _row_sizes(html: str) -> list[int]:
+        rows = html.split('<div class="mahjong-discard-row">')[1:]
+        return [row.split("</div>")[0].count("data-tile=") for row in rows]
+
+    @pytest.mark.parametrize(
+        ("discards", "sizes"),
+        [
+            ("12345m", [5]),
+            ("123456m", [6]),
+            ("123456789m1234p", [6, 6, 1]),
+            ("123456789m123456789p1234s", [6, 6, 10]),
+        ],
+    )
+    def test_row_split(self, discards, sizes):
+        assert self._row_sizes(self._render(discards)) == sizes
+
+    def test_markers(self):
+        html = self._render("r1m t2m c3m")
+
+        assert 'class="mahjong-tile mahjong-tile-rotated mahjong-theme-light"' in html
+        assert 'aria-label="1 Man (riichi)"' in html
+        assert 'class="mahjong-tile mahjong-tile-tsumogiri mahjong-theme-light"' in html
+        assert 'aria-label="2 Man (tsumogiri)"' in html
+        assert 'class="mahjong-tile mahjong-tile-called mahjong-theme-light"' in html
+        assert 'aria-label="3 Man (called)"' in html
+
+    def test_discards_only_has_no_hand_row(self):
+        html = self._render("123m")
+
+        assert 'class="mahjong-discards"' in html
+        assert "mahjong-hand-row" not in html
+
+    def test_discards_above_hand(self):
+        html = self._render("123m", "456p (789s<)")
+
+        assert html.index("mahjong-discards") < html.index("mahjong-hand-row")
+        # The riichi note only applies to discards, not to rotated meld tiles.
+        assert "(riichi)" not in html

@@ -11,6 +11,9 @@ from .sprite import TileSprite
 THEMES: Final[tuple[str, ...]] = ("auto", "light", "dark")
 CLOSED_KAN_STYLES: Final[tuple[str, ...]] = ("outer", "inner")
 
+# The first two discard rows hold 6 tiles each; the third holds the rest.
+_DISCARD_ROW_SIZE: Final = 6
+
 _MELD_NAMES: Final[dict[MeldType, str]] = {
     MeldType.CHI: "Chi",
     MeldType.PON: "Pon",
@@ -85,7 +88,22 @@ class MahjongRenderer:
                 parts.extend(self._render_dora_section(hand.waits, sprite, "Waits", "mahjong-waits"))
             parts.append("</div>")
 
-        parts.append('<div class="mahjong-hand-row">')
+        if hand.discards:
+            parts.extend(self._render_discards(hand.discards, sprite))
+
+        if hand.closed_tiles or hand.melds or hand.draw_tile:
+            parts.extend(self._render_hand_row(hand, sprite))
+
+        if title:
+            parts.append(f'<figcaption class="mahjong-caption">{html.escape(title, quote=True)}</figcaption>')
+
+        parts.append("</figure>")
+
+        return self._join(parts, sprite, page_sprite)
+
+    def _render_hand_row(self, hand: Hand, sprite: TileSprite) -> list[str]:
+        """Render the closed tiles, draw tile and melds."""
+        parts = ['<div class="mahjong-hand-row">']
 
         parts.append('<div class="mahjong-hand-left">')
         parts.append('<div class="mahjong-tiles">')
@@ -109,13 +127,23 @@ class MahjongRenderer:
             parts.append("</div>")
 
         parts.append("</div>")
+        return parts
 
-        if title:
-            parts.append(f'<figcaption class="mahjong-caption">{html.escape(title, quote=True)}</figcaption>')
-
-        parts.append("</figure>")
-
-        return self._join(parts, sprite, page_sprite)
+    def _render_discards(self, tiles: list[Tile], sprite: TileSprite) -> list[str]:
+        """Render a discard pile: two rows of up to 6 tiles, then a row with the rest."""
+        rows = [
+            tiles[:_DISCARD_ROW_SIZE],
+            tiles[_DISCARD_ROW_SIZE : 2 * _DISCARD_ROW_SIZE],
+            tiles[2 * _DISCARD_ROW_SIZE :],
+        ]
+        parts = ['<div class="mahjong-discards" role="group" aria-label="Discards">']
+        for row in rows:
+            if row:
+                parts.append('<div class="mahjong-discard-row">')
+                parts.extend(self._render_tile(tile, sprite, discard=True) for tile in row)
+                parts.append("</div>")
+        parts.append("</div>")
+        return parts
 
     def render_tiles(self, tiles: list[Tile], sprite: TileSprite | None = None) -> str:
         """Render a simple list of tiles as HTML."""
@@ -148,7 +176,7 @@ class MahjongRenderer:
         parts.extend(["</span>", "</div>"])
         return parts
 
-    def _render_tile(self, tile: Tile, sprite: TileSprite) -> str:
+    def _render_tile(self, tile: Tile, sprite: TileSprite, discard: bool = False) -> str:
         """Render a single tile as HTML with an SVG referencing the sprite."""
         if tile.is_back:
             return self._BACK_TILE_HTML
@@ -165,11 +193,15 @@ class MahjongRenderer:
             classes.append("mahjong-tile-rotated")
         if tile.is_added:
             classes.append("mahjong-tile-added")
+        if tile.is_tsumogiri:
+            classes.append("mahjong-tile-tsumogiri")
+        if tile.is_called:
+            classes.append("mahjong-tile-called")
         if self.theme in ("light", "dark"):
             classes.append(f"mahjong-theme-{self.theme}")
 
         class_str = " ".join(classes)
-        label = html.escape(info.display_name, quote=True)
+        label = html.escape(info.display_name + (self._discard_note(tile) if discard else ""), quote=True)
         if self.theme == "auto":
             svg_content = (
                 f'<span class="mahjong-tile-light">{sprite.use(info.asset_name, "light")}</span>'
@@ -181,6 +213,18 @@ class MahjongRenderer:
             f'<span class="{class_str}" data-tile="{tile.notation}" role="img" '
             f'aria-label="{label}" title="{label}">{svg_content}</span>'
         )
+
+    @staticmethod
+    def _discard_note(tile: Tile) -> str:
+        """Describe a tile's discard markers for its accessible name, e.g. ' (riichi, called)'."""
+        notes = []
+        if tile.is_rotated:
+            notes.append("riichi")
+        if tile.is_tsumogiri:
+            notes.append("tsumogiri")
+        if tile.is_called:
+            notes.append("called")
+        return f" ({', '.join(notes)})" if notes else ""
 
     def _render_meld(self, meld: Meld, sprite: TileSprite) -> str:
         """Render a meld (called tile group)."""

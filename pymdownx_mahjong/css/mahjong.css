@@ -330,6 +330,40 @@
     gap: var(--mahjong-tile-gap);
 }
 
+/* NOTE Discard pile - centered above the hand, with its rows left-aligned to each
+   other. Rows are split by the renderer (6, 6, rest); rows never wrap, so the last
+   row extends to the right as it grows. */
+.mahjong-discards {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    /* Smaller tiles than the hand. zoom (unlike transform) also shrinks the layout box,
+       so centering and spacing follow the scaled size. */
+    zoom: var(--mahjong-discard-scale, 0.9);
+    gap: var(--mahjong-discard-row-gap, 0.15em);
+    margin-bottom: 0.75em;
+}
+
+.mahjong-discard-row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: var(--mahjong-tile-gap);
+}
+
+/* Tsumogiri (discarded straight from the draw) - dimmed */
+.mahjong-tile-tsumogiri {
+    filter: brightness(0.75);
+}
+
+/* Called away by another player - faded */
+.mahjong-tile-called {
+    opacity: 0.35;
+}
+
 /* Caption/title below the hand */
 .mahjong-caption {
     display: block;

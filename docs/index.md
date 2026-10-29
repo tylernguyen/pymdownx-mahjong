@@ -17,6 +17,7 @@ PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong co
 
 - Inline rendering of individual Mahjong tiles.
 - Complete Mahjong hand rendering, supporting: pon/chi/kan, and dora information.
+- Discard pile rendering.
 
 ## Dependency
 
@@ -92,6 +93,7 @@ Hands are written in a fenced codeblock, with additional YAML-like options for d
 
 ````markdown
 ```mahjong
+discards: 1m 8p t3m t0m 0p t7m t0s t7z
 5511122z [3333z] (444+4z>)
 draw: 2z
 waits: 52z
@@ -101,6 +103,7 @@ title: Daisuushii Tsuuiisou
 ````
 
 ```mahjong
+discards: 1m 8p t3m t0m 0p t7m t0s t7z
 5511122z [3333z] (444+4z>)
 draw: 2z
 waits: 52z
@@ -108,7 +111,7 @@ dora: 5z
 title: Daisuushii Tsuuiisou
 ```
 
-## Syntax for Melds
+## Meld Syntax
 
 Parenthesis `()` for open melds. `<` `^` `>` to indicate direction of meld.
 
@@ -124,6 +127,19 @@ Brackets `[]` for closed kan.
 Additional sign `+` to indicate added kan.
 
 - `(666+6z^)` - Added Kan
+
+## Discard Syntax
+
+Add `discards:` to a block to render a discard pile above the hand.
+
+Syntax can be combined, `rt5p` is tsumogiri riichi on :5p:.
+
+| Syntax | Tilte                         | Example |
+| ------ | ----------------------------- | ------- |
+| `r`    | Riichi marker                 | `r1m`   |
+| `t`    | Tsumogiri (dimmed)            | `t1m`   |
+| `c`    | Called by another player      | `c1m`   |
+
 
 ## Tile Notation
 

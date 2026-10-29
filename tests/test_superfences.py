@@ -73,6 +73,12 @@ class TestSuperfencesFormatter:
             assert "mahjong-error" in html
             assert "No hand notation" in html
 
+    def test_discards_with_hand(self):
+        html = _format("discards: 19m r4z\nhand: 123m (456p<)")
+
+        assert 'class="mahjong-discards"' in html
+        assert 'class="mahjong-hand-row"' in html
+
 
 class TestConfigureSuperfences:
     def test_configure_applies_without_extension(self):

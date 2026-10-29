@@ -242,3 +242,36 @@ class TestTileCountValidation:
     def test_valid_hand_with_kan(self):
         hand = parse_hand("123m456p [1111z]")
         assert len(hand.melds) == 1
+
+
+class TestDiscards:
+    def test_plain_discards(self):
+        tiles = MahjongParser().parse_discards("19m 4z")
+        assert [t.notation for t in tiles] == ["1m", "9m", "4z"]
+        assert not any(t.is_rotated or t.is_tsumogiri or t.is_called for t in tiles)
+
+    def test_markers(self):
+        one, riichi, tsumogiri_riichi, called = MahjongParser().parse_discards("1r9m rt5p c7z")
+        assert not one.is_rotated
+        assert riichi.notation == "9m" and riichi.is_rotated
+        assert tsumogiri_riichi.notation == "5p" and tsumogiri_riichi.is_rotated and tsumogiri_riichi.is_tsumogiri
+        assert called.notation == "7z" and called.is_called and not called.is_rotated
+
+    @pytest.mark.parametrize("notation", ["5mr", "rm", "r", "5m t"])
+    def test_dangling_marker(self, notation):
+        with pytest.raises(ParseError, match="Invalid tile notation"):
+            MahjongParser().parse_discards(notation)
+
+    @pytest.mark.parametrize("notation", ["1r9m", "t5p", "c7z"])
+    def test_markers_rejected_outside_discards(self, notation):
+        with pytest.raises(ParseError, match="Invalid tile notation"):
+            MahjongParser().parse_tiles(notation)
+        with pytest.raises(ParseError, match="Invalid tile notation"):
+            parse_hand(notation)
+
+    def test_discards_count_toward_tile_limit(self):
+        parser = MahjongParser()
+        hand = parser.parse("5555m")
+        hand.discards = parser.parse_discards("0m")
+        with pytest.raises(ParseError, match=r"5m appears 5 times \(max 4, including red 5s\)"):
+            parser.validate(hand)

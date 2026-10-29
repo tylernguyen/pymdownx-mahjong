@@ -113,3 +113,32 @@ class TestApplyHandOptions:
 
         assert errors == ["Invalid draw notation: expected 1 tile, got 2"]
         assert hand.draw_tile is None
+
+
+class TestDiscardsOption:
+    def test_discards_with_hand(self):
+        hand, options, notation = parse_hand_block("discards: 19m r4z\nhand: 123m", MahjongParser())
+
+        assert notation == "123m"
+        assert options["discards"] == "19m r4z"
+        assert [t.notation for t in hand.discards] == ["1m", "9m", "4z"]
+        assert hand.discards[2].is_rotated
+
+    def test_discards_only(self):
+        hand, _, notation = parse_hand_block("discards: 19m4z", MahjongParser())
+
+        assert notation == ""
+        assert hand.closed_tiles == []
+        assert len(hand.discards) == 3
+
+    def test_no_hand_or_discards(self):
+        with pytest.raises(ParseError, match="No hand notation provided"):
+            parse_hand_block("dora: 1m", MahjongParser())
+
+    def test_invalid_discards(self):
+        with pytest.raises(ParseError, match="Invalid discards notation"):
+            parse_hand_block("discards: 1x", MahjongParser())
+
+    def test_combined_tile_count(self):
+        with pytest.raises(ParseError, match="1z appears 5 times"):
+            parse_hand_block("hand: 111z\ndiscards: 1z1z", MahjongParser())
