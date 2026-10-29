@@ -4,6 +4,7 @@
 
 ### Changed
 
+- fix: align sideways tiles' 3D edge with upright tiles.
 - fix: fenced blocks use their own Markdown instance's config; it overrides `configure_superfences()`.
 - fix: raise `ValueError` on invalid `theme` or `closed_kan_style`.
 - fix: keep unpaired quotes in block options (`title: The players'`).

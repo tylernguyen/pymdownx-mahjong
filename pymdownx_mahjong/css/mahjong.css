@@ -220,11 +220,13 @@
     );
 }
 
-/* Raised face moves to element-right (= screen-bottom after 90deg clockwise rotation) */
+/* Raised face moves to element-right (= screen-bottom after 90deg clockwise rotation).
+   left: 100% overlaps the border like the upright tile's top: 100%, so the depth
+   strip sits level with upright tiles. */
 .mahjong-tile-rotated::before {
     top: -1px;
     bottom: -1px;
-    left: calc(100% + 1px);
+    left: 100%;
     right: auto;
     height: auto;
     width: var(--mahjong-tile-depth);
@@ -233,7 +235,7 @@
         var(--mahjong-tile-side) 7px,
         var(--mahjong-tile-back) 7px
     );
-    box-shadow: 3px 0 3px var(--mahjong-tile-shadow);
+    box-shadow: 4px 0 3px var(--mahjong-tile-shadow);
 }
 
 /* Stacked tiles container for added kan (shouminkan) */
