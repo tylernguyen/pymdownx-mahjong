@@ -106,4 +106,3 @@ class TileSprite:
 
     def reset(self) -> None:
         self._symbols.clear()
-

@@ -14,8 +14,13 @@ class TileInfo(NamedTuple):
 
 _SUIT_NAMES: Final[dict[str, str]] = {"m": "Man", "p": "Pin", "s": "Sou"}
 _HONOR_NAMES: Final[dict[int, str]] = {
-    1: "East", 2: "South", 3: "West", 4: "North",
-    5: "White Dragon", 6: "Green Dragon", 7: "Red Dragon",
+    1: "East",
+    2: "South",
+    3: "West",
+    4: "North",
+    5: "White Dragon",
+    6: "Green Dragon",
+    7: "Red Dragon",
 }
 
 
@@ -28,6 +33,7 @@ def _build_tile_database() -> dict[tuple[str, int], TileInfo]:
     for n, name in _HONOR_NAMES.items():
         db[("z", n)] = TileInfo(f"{n}z", name)
     return db
+
 
 TILE_DATABASE: Final[dict[tuple[str, int], TileInfo]] = _build_tile_database()
 

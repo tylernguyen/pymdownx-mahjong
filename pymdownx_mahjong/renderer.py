@@ -135,9 +135,11 @@ class MahjongRenderer:
     ) -> list[str]:
         """Render a dora/ura indicator section."""
         cls = f"mahjong-dora {extra_class}".strip()
-        parts = [f'<div class="{cls}">',
-                 f'<span class="mahjong-dora-label">{label}</span>',
-                 '<span class="mahjong-dora-tiles">']
+        parts = [
+            f'<div class="{cls}">',
+            f'<span class="mahjong-dora-label">{label}</span>',
+            '<span class="mahjong-dora-tiles">',
+        ]
         for tile in tiles:
             parts.append(self._render_tile(tile, sprite))
         parts.extend(["</span>", "</div>"])

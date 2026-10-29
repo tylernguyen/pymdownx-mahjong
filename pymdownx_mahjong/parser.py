@@ -349,9 +349,7 @@ class MahjongParser:
         for (suit, number), count in counts.items():
             if count > 4:
                 red_note = ", including red 5s" if number == 5 and suit in has_red else ""
-                self.errors.append(
-                    f"Invalid tile count: {number}{suit} appears {count} times (max 4{red_note})"
-                )
+                self.errors.append(f"Invalid tile count: {number}{suit} appears {count} times (max 4{red_note})")
 
 
 def parse_hand(notation: str) -> Hand:

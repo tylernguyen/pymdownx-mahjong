@@ -3,8 +3,8 @@
 import pytest
 
 from pymdownx_mahjong.superfences import (
-    _SuperfencesState,
     _error_block,
+    _SuperfencesState,
     superfences_formatter,
     superfences_validator,
 )
@@ -14,6 +14,7 @@ from pymdownx_mahjong.superfences import (
 def reset_superfences_state(monkeypatch):
     """Isolate each test from module-level _state side-effects."""
     import pymdownx_mahjong.superfences as sf
+
     monkeypatch.setattr(sf, "_state", _SuperfencesState())
 
 

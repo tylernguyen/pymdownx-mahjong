@@ -32,6 +32,7 @@ class MahjongExtension(markdown.Extension):
         # Push config to superfences state eagerly so the formatter always has
         # the correct theme/closed_kan_style even when md is unavailable there.
         from .superfences import _state  # lazy import avoids circular dependency
+
         _state.configure(**config)
 
         if str(config.get("enable_inline", "true")).lower() in ("true", "1", "yes"):

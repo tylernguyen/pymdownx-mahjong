@@ -109,9 +109,7 @@ class TestRendererConfiguration:
             hand = parse_hand("1m")
             html = renderer.render(hand)
 
-            assert f'mahjong-theme-{theme}' in html.split(">")[0], (
-                f"figure should have mahjong-theme-{theme} class"
-            )
+            assert f"mahjong-theme-{theme}" in html.split(">")[0], f"figure should have mahjong-theme-{theme} class"
 
     def test_closed_kan_styles(self):
         for style in ("outer", "inner"):
