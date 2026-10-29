@@ -82,8 +82,7 @@ class MahjongRenderer:
 
         parts.append('<div class="mahjong-hand-left">')
         parts.append('<div class="mahjong-tiles">')
-        for tile in hand.closed_tiles:
-            parts.append(self._render_tile(tile, sprite))
+        parts.extend(self._render_tile(tile, sprite) for tile in hand.closed_tiles)
         parts.append("</div>")
         parts.append("</div>")
 
@@ -98,8 +97,7 @@ class MahjongRenderer:
         if hand.melds:
             parts.append('<div class="mahjong-hand-melds">')
             parts.append('<div class="mahjong-tiles">')
-            for meld in hand.melds:
-                parts.append(self._render_meld(meld, sprite))
+            parts.extend(self._render_meld(meld, sprite) for meld in hand.melds)
             parts.append("</div>")
             parts.append("</div>")
 
@@ -117,8 +115,7 @@ class MahjongRenderer:
         page_sprite = sprite
         sprite = sprite or TileSprite()
         parts = [f'<span class="{self.css_class}">']
-        for tile in tiles:
-            parts.append(self._render_tile(tile, sprite))
+        parts.extend(self._render_tile(tile, sprite) for tile in tiles)
         parts.append("</span>")
         return self._join(parts, sprite, page_sprite)
 
@@ -140,8 +137,7 @@ class MahjongRenderer:
             f'<span class="mahjong-dora-label">{label}</span>',
             '<span class="mahjong-dora-tiles">',
         ]
-        for tile in tiles:
-            parts.append(self._render_tile(tile, sprite))
+        parts.extend(self._render_tile(tile, sprite) for tile in tiles)
         parts.extend(["</span>", "</div>"])
         return parts
 
@@ -209,10 +205,8 @@ class MahjongRenderer:
         parts: list[str] = []
         for i, tile in enumerate(meld.tiles):
             if meld.meld_type == MeldType.KAN_CLOSED:
-                if self.closed_kan_style == "inner":
-                    is_back = i in (1, 2)  # front, back, back, front
-                else:
-                    is_back = i in (0, 3)  # back, front, front, back
+                # inner: front, back, back, front; outer: back, front, front, back
+                is_back = i in (1, 2) if self.closed_kan_style == "inner" else i in (0, 3)
                 if is_back:
                     parts.append(self._BACK_TILE_HTML)
                 else:

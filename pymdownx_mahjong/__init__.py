@@ -6,16 +6,16 @@ from .renderer import MahjongRenderer
 from .superfences import configure_superfences, superfences_formatter, superfences_validator
 
 __all__ = [
+    "Hand",
     "MahjongExtension",
-    "makeExtension",
     "MahjongParser",
     "MahjongRenderer",
-    "Tile",
     "Meld",
-    "Hand",
+    "Tile",
+    "configure_superfences",
+    "makeExtension",
     "superfences_formatter",
     "superfences_validator",
-    "configure_superfences",
 ]
 
 __version__ = "0.2.2"

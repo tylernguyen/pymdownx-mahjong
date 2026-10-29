@@ -63,7 +63,7 @@ include = ["/pymdownx_mahjong"]
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "C4"]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "RUF", "SIM", "PERF"]
 
 [tool.mypy]
 python_version = "3.10"
