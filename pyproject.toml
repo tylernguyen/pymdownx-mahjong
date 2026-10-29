@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pymdownx-mahjong"
-version = "0.2.2"
+dynamic = ["version"]
 description = "Python Markdown extension to render and stylize Mahjong tiles."
 readme = "README.md"
 license = "CC-BY-NC-4.0"
@@ -29,6 +29,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Documentation",
     "Topic :: Text Processing :: Markup :: Markdown",
 ]
@@ -52,6 +53,9 @@ Issues = "https://github.com/tylernguyen/pymdownx-mahjong/issues"
 
 [project.entry-points."markdown.extensions"]
 pymdownx_mahjong = "pymdownx_mahjong:makeExtension"
+
+[tool.hatch.version]
+path = "pymdownx_mahjong/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["pymdownx_mahjong"]

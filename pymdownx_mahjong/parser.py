@@ -115,10 +115,9 @@ class MahjongParser:
     - Basic: 123m456p789s1122z
     - Red dora: 1230m (0 = red 5)
     - Melds: (123m<) for chi, [1111m] for closed kan
-    - Separators: | before melds, _ for gaps
+    - Separators: |, _, and spaces are ignored and may be used for readability
     """
 
-    TILE_GROUP_PATTERN: Final[re.Pattern[str]] = re.compile(r"([0-9]+)([mpsz])")
     # Tile groups: ranks + suit, where a rank is a digit or 'X' (a face-down tile).
     # 'X' is only valid with the z suit (Xz); e.g. 123m, 1234567z, Xz, or 1234567Xz.
     _TILE_OR_BACK_PATTERN: Final[re.Pattern[str]] = re.compile(r"([0-9X]+)([mpsz])")
@@ -126,31 +125,28 @@ class MahjongParser:
     # For added kan, use + to mark the added tile: (111+1m<)
     MELD_PATTERN: Final[re.Pattern[str]] = re.compile(r"(\[|\()([0-9]+)(\+)?([0-9])?([mpsz])([<^>])?(\]|\))")
 
-    def __init__(self) -> None:
-        self.errors: list[str] = []
-
     def parse(self, notation: str) -> Hand:
         """Parse a hand notation string into a Hand object.
 
         Raises:
             ParseError: If the notation is invalid
         """
-        self.errors = []
+        errors: list[str] = []
         hand = Hand()
 
         notation = notation.strip()
 
         # Extract melds first (they're unambiguous with brackets)
-        hand.melds = self._parse_melds(notation)
+        hand.melds = self._parse_melds(notation, errors)
 
         # Remove meld notation to get closed tiles
         closed_part = self.MELD_PATTERN.sub("", notation).strip()
-        hand.closed_tiles = self._parse_tiles(closed_part)
+        hand.closed_tiles = self._parse_tiles(closed_part, errors)
 
-        self._validate_tile_counts(hand)
+        self._validate_tile_counts(hand, errors)
 
-        if self.errors:
-            raise ParseError("; ".join(self.errors))
+        if errors:
+            raise ParseError("; ".join(errors))
 
         return hand
 
@@ -160,14 +156,14 @@ class MahjongParser:
         Raises:
             ParseError: If the notation is invalid
         """
-        self.errors = []
-        tiles = self._parse_tiles(notation)
-        if self.errors:
-            raise ParseError("; ".join(self.errors))
+        errors: list[str] = []
+        tiles = self._parse_tiles(notation, errors)
+        if errors:
+            raise ParseError("; ".join(errors))
         return tiles
 
-    def _parse_tiles(self, notation: str) -> list[Tile]:
-        """Parse tile notation into a list of Tile objects."""
+    def _parse_tiles(self, notation: str, errors: list[str]) -> list[Tile]:
+        """Parse tile notation into a list of Tile objects, appending any problems to errors."""
         tiles: list[Tile] = []
 
         clean = notation.replace("_", "").replace(" ", "").replace("|", "")
@@ -189,7 +185,7 @@ class MahjongParser:
             for rank in ranks:
                 if rank == "X":  # face-down tile — only valid with the z suit (Xz)
                     if suit != "z":
-                        self.errors.append(f"Invalid tile: X{suit}")
+                        errors.append(f"Invalid tile: X{suit}")
                         continue
                     tiles.append(Tile(suit="", number=0, is_back=True))
                     continue
@@ -197,7 +193,7 @@ class MahjongParser:
                 number = int(rank)
 
                 if get_tile_info(suit, number) is None:
-                    self.errors.append(f"Invalid tile: {number}{suit}")
+                    errors.append(f"Invalid tile: {number}{suit}")
                     continue
 
                 tiles.append(Tile(suit=suit, number=number))
@@ -208,11 +204,11 @@ class MahjongParser:
             invalid_notation = True
 
         if invalid_notation:
-            self.errors.append(f"Invalid tile notation: {clean}")
+            errors.append(f"Invalid tile notation: {clean}")
 
         return tiles
 
-    def _parse_melds(self, notation: str) -> list[Meld]:
+    def _parse_melds(self, notation: str, errors: list[str]) -> list[Meld]:
         """Parse meld notation from a hand string.
 
         For added kan (shouminkan), use + before the added tile: (111+1m<)
@@ -229,11 +225,11 @@ class MahjongParser:
             close_bracket = match.group(7)
 
             if (open_bracket == "[" and close_bracket != "]") or (open_bracket == "(" and close_bracket != ")"):
-                self.errors.append(f"Mismatched brackets in meld: {match.group(0)}")
+                errors.append(f"Mismatched brackets in meld: {match.group(0)}")
                 continue
 
             if plus_marker and not added_number:
-                self.errors.append(f"Added kan notation requires digit after '+': {match.group(0)}")
+                errors.append(f"Added kan notation requires digit after '+': {match.group(0)}")
                 continue
 
             if plus_marker and added_number:
@@ -243,12 +239,14 @@ class MahjongParser:
                 tile_notation = base_numbers + suit
                 is_added_kan = False
 
-            tiles = self._parse_tiles(tile_notation)
+            tiles = self._parse_tiles(tile_notation, errors)
 
             if not tiles:
                 continue
 
-            meld_type = self._classify_meld(match.group(0), tiles, open_bracket == "[", is_added_kan, source_char)
+            meld_type = self._classify_meld(
+                match.group(0), tiles, open_bracket == "[", is_added_kan, source_char, errors
+            )
             if meld_type is None:
                 continue
 
@@ -277,7 +275,7 @@ class MahjongParser:
         return melds
 
     def _classify_meld(
-        self, meld: str, tiles: list[Tile], is_closed: bool, is_added_kan: bool, source_char: str
+        self, meld: str, tiles: list[Tile], is_closed: bool, is_added_kan: bool, source_char: str, errors: list[str]
     ) -> MeldType | None:
         """Determine a meld's type, recording an error and returning None if it is invalid."""
         tile_count = len(tiles)
@@ -311,7 +309,7 @@ class MahjongParser:
         else:
             error = f"Invalid meld size: {tile_count} tiles"
 
-        self.errors.append(f"{error}: {meld}")
+        errors.append(f"{error}: {meld}")
         return None
 
     def _is_sequence(self, tiles: list[Tile]) -> bool:
@@ -333,12 +331,12 @@ class MahjongParser:
         Raises:
             ParseError: If any tile appears more than 4 times
         """
-        self.errors = []
-        self._validate_tile_counts(hand)
-        if self.errors:
-            raise ParseError("; ".join(self.errors))
+        errors: list[str] = []
+        self._validate_tile_counts(hand, errors)
+        if errors:
+            raise ParseError("; ".join(errors))
 
-    def _validate_tile_counts(self, hand: Hand) -> None:
+    def _validate_tile_counts(self, hand: Hand, errors: list[str]) -> None:
         """Validate that no tile appears more than 4 times."""
         # A red 5 (0) replaces one of the four 5s, so it counts as a 5. Face-down tiles
         # are unknown, so they don't count toward the per-tile limit.
@@ -349,7 +347,7 @@ class MahjongParser:
         for (suit, number), count in counts.items():
             if count > 4:
                 red_note = ", including red 5s" if number == 5 and suit in has_red else ""
-                self.errors.append(f"Invalid tile count: {number}{suit} appears {count} times (max 4{red_note})")
+                errors.append(f"Invalid tile count: {number}{suit} appears {count} times (max 4{red_note})")
 
 
 def parse_hand(notation: str) -> Hand:
