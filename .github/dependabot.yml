@@ -9,11 +9,9 @@ updates:
     labels:
       - "fix:github_actions"
 
-  # Maintain dependencies for pip
-  - package-ecosystem: "pip"
+  # Maintain dependencies for uv
+  - package-ecosystem: "uv"
     directory: "/"
-    ignore:
-      - dependency-name: "mkdocs-material"
     schedule:
       interval: "weekly"
     labels:
