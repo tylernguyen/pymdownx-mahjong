@@ -5,14 +5,40 @@ from __future__ import annotations
 import html
 from typing import Final
 
-from .parser import Hand, Meld, MeldSource, MeldType, Tile
-from .sprite import TileSprite
+from .parser import MAX_DORA_INDICATORS, OPPONENT_SEATS, SEAT_WINDS, Hand, Meld, MeldSource, MeldType, Tile
+from .sprite import MARKER_THEME, TileSprite
 
 THEMES: Final[tuple[str, ...]] = ("auto", "light", "dark")
 CLOSED_KAN_STYLES: Final[tuple[str, ...]] = ("outer", "inner")
 
 # The first two discard rows hold 6 tiles each; the third holds the rest.
 _DISCARD_ROW_SIZE: Final = 6
+
+# Point sticks (tenbou) shown above the hand: Hand attribute, asset name, label.
+_STICKS: Final[tuple[tuple[str, str, str], ...]] = (
+    ("riichi", "1000", "Riichi sticks"),
+    ("honba", "100", "Honba"),
+)
+_SEAT_WIND_KANJI: Final[dict[str, str]] = {"east": "東", "south": "南", "west": "西", "north": "北"}
+_ROUND_NUMBER_KANJI: Final[dict[int, str]] = {1: "一", 2: "二", 3: "三", 4: "四"}
+
+# Accessible names for the players on a table: the bottom player, then the others in turn order.
+_PLAYER_NAMES: Final[dict[str, str]] = {
+    "self": "Bottom player",
+    "shimo": "Shimocha (right)",
+    "toimen": "Toimen (across)",
+    "kami": "Kamicha (left)",
+}
+
+# Intrinsic size of the stick artwork (65.45 x 7.3 mm); CSS sets the rendered size.
+_STICK_WIDTH: Final = 72
+_STICK_HEIGHT: Final = 8
+
+# Round markers kept by the original dealer: round wind -> asset (assets/<name>.png), and the
+# artwork's intrinsic size; CSS sets the rendered size. West and north rounds have none.
+_ROUND_MARKERS: Final[dict[str, str]] = {"east": "East", "south": "South"}
+_MARKER_WIDTH: Final = 45  # the artwork is 567 x 374; this keeps it tile-sized without the CSS
+_MARKER_HEIGHT: Final = 30
 
 _MELD_NAMES: Final[dict[MeldType, str]] = {
     MeldType.CHI: "Chi",
@@ -43,6 +69,13 @@ class MahjongRenderer:
         '<span class="mahjong-tile mahjong-tile-back" role="img" '
         'aria-label="Face-down tile" title="Face-down tile"></span>'
     )
+    # The other players' hidden hand tiles, drawn standing up (see the CSS for .mahjong-tile-standing).
+    _STANDING_BACK_TILE_HTML = (
+        '<span class="mahjong-tile mahjong-tile-back mahjong-tile-standing" role="img" '
+        'aria-label="Face-down tile" title="Face-down tile"></span>'
+    )
+    # Decorative filler in the dead wall next to the dora indicators.
+    _WALL_BACK_TILE_HTML = '<span class="mahjong-tile mahjong-tile-back" aria-hidden="true"></span>'
 
     def __init__(
         self,
@@ -78,17 +111,39 @@ class MahjongRenderer:
         label_attr = "" if title else ' aria-label="Mahjong hand"'
         parts.append(f'<figure class="{self.css_class}{theme_class}"{data_attr}{label_attr}>')
 
-        if hand.dora_indicators:
-            parts.append('<div class="mahjong-dora-row">')
-            if hand.dora_indicators:
-                parts.extend(self._render_dora_section(hand.dora_indicators, sprite, "Dora"))
+        # With other players, the same pieces sit on a square table: the dora row in the
+        # center, and each player's discards, status and hand along their own edge.
+        on_table = bool(hand.opponents)
+        players = [("self", hand), *((seat, hand.opponents[seat]) for seat in OPPONENT_SEATS if seat in hand.opponents)]
+        # The riichi and honba sticks sit with the dealer (east), or the bottom player when
+        # no one is east; the round marker with the original dealer, found from the round.
+        dealer = next((seat for seat, player in players if player.seat_wind == "east"), "self")
+        marker_wind = self._original_dealer_wind(hand)
+
+        if on_table:
+            parts.append('<div class="mahjong-table">')
+        parts.extend(self._render_dora_row(hand, sprite))
+        for seat, player in players:
+            if on_table and seat == "self" and not self._has_content(player, hand, dealer, marker_wind):
+                # A table given only the other players: no empty area for the bottom player.
+                continue
+            body = self._render_player(
+                player,
+                sprite,
+                sticks=hand if seat == dealer else None,
+                marker=hand.round_wind if marker_wind and player.seat_wind == marker_wind else None,
+                standing=seat != "self",
+            )
+            if on_table:
+                name = _PLAYER_NAMES[seat]
+                body = [
+                    f'<div class="mahjong-player mahjong-player-{seat}" role="group" aria-label="{name}">',
+                    *body,
+                    "</div>",
+                ]
+            parts.extend(body)
+        if on_table:
             parts.append("</div>")
-
-        if hand.discards:
-            parts.extend(self._render_discards(hand.discards, sprite))
-
-        if hand.closed_tiles or hand.melds or hand.draw_tile:
-            parts.extend(self._render_hand_row(hand, sprite))
 
         if title:
             parts.append(f'<figcaption class="mahjong-caption">{html.escape(title, quote=True)}</figcaption>')
@@ -97,21 +152,112 @@ class MahjongRenderer:
 
         return self._join(parts, sprite, page_sprite)
 
-    def _render_hand_row(self, hand: Hand, sprite: TileSprite) -> list[str]:
-        """Render the closed tiles, draw tile and melds."""
+    def _render_dora_row(self, hand: Hand, sprite: TileSprite) -> list[str]:
+        """Render the dora indicators, with the round and tiles remaining beside them."""
+        has_round_info = hand.round_wind is not None or hand.remaining is not None
+        if not (hand.dora_indicators or has_round_info):
+            return []
+        parts = ['<div class="mahjong-dora-row">']
+        if hand.dora_indicators:
+            parts.extend(self._render_dora_section(hand.dora_indicators, sprite))
+        if has_round_info:
+            parts.extend(self._render_round_info(hand))
+        parts.append("</div>")
+        return parts
+
+    @staticmethod
+    def _has_content(player: Hand, hand: Hand, dealer: str, marker_wind: str | None) -> bool:
+        """Whether the bottom player has anything to show: tiles, discards, a seat or score,
+        the sticks (as dealer) or the round marker."""
+        return bool(
+            player.closed_tiles
+            or player.melds
+            or player.draw_tile
+            or player.discards
+            or player.seat_wind
+            or player.score is not None
+            or (dealer == "self" and (hand.riichi or hand.honba))
+            or (marker_wind and player.seat_wind == marker_wind)
+        )
+
+    @staticmethod
+    def _original_dealer_wind(hand: Hand) -> str | None:
+        """The original dealer's seat wind this hand, for a round with a marker: the deal
+        passes one seat each hand, so in hand N they sit N - 1 winds before east, e.g. north
+        in East 2."""
+        if hand.round_wind not in _ROUND_MARKERS or hand.round_number is None:
+            return None
+        return SEAT_WINDS[(1 - hand.round_number) % len(SEAT_WINDS)]
+
+    def _render_player(
+        self, hand: Hand, sprite: TileSprite, sticks: Hand | None, marker: str | None, standing: bool
+    ) -> list[str]:
+        """Render one player: discards, then the status row (with the riichi and honba sticks
+        from ``sticks`` and the round ``marker``, if given), then the hand, whose face-down
+        tiles stand up for the other players."""
+        parts: list[str] = []
+        if hand.discards:
+            parts.extend(self._render_discards(hand.discards, sprite))
+
+        sticks = sticks if sticks is not None and (sticks.riichi or sticks.honba) else None
+        if hand.seat_wind or hand.score is not None or sticks or marker:
+            parts.append('<div class="mahjong-status">')
+            if hand.seat_wind or hand.score is not None:
+                parts.extend(self._render_seat(hand))
+            if sticks:
+                parts.extend(self._render_sticks(sticks, sprite))
+            if marker:
+                parts.append(self._render_round_marker(marker, sprite))
+            parts.append("</div>")
+
+        if hand.closed_tiles or hand.melds or hand.draw_tile:
+            parts.extend(self._render_hand_row(hand, sprite, standing=standing))
+        return parts
+
+    @staticmethod
+    def _render_round_marker(round_wind: str, sprite: TileSprite) -> str:
+        """Render the round marker (East or South) at the right of the status row."""
+        name = round_wind.capitalize()
+        label = f"Round marker: {name}"
+        artwork = sprite.use(_ROUND_MARKERS[round_wind], MARKER_THEME, _MARKER_WIDTH, _MARKER_HEIGHT)
+        return f'<span class="mahjong-round-marker" role="img" aria-label="{label}" title="{label}">{artwork}</span>'
+
+    @staticmethod
+    def _render_round_info(hand: Hand) -> list[str]:
+        """Render the round (e.g. 南二局) and the tiles remaining in the wall (e.g. 残 35)."""
+        parts = ['<span class="mahjong-round-info">']
+        if hand.round_wind is not None and hand.round_number is not None:
+            name = f"{hand.round_wind.capitalize()} {hand.round_number}"
+            kanji = f"{_SEAT_WIND_KANJI[hand.round_wind]}{_ROUND_NUMBER_KANJI[hand.round_number]}局"
+            parts.append(
+                f'<span class="mahjong-round" lang="ja" role="img" aria-label="Round: {name}" title="{name}">'
+                f"{kanji}</span>"
+            )
+        if hand.remaining is not None:
+            label = f"{hand.remaining} tiles remaining"
+            parts.append(
+                f'<span class="mahjong-remaining" lang="ja" role="img" aria-label="{label}" title="{label}">'
+                f"残 {hand.remaining}</span>"
+            )
+        parts.append("</span>")
+        return parts
+
+    def _render_hand_row(self, hand: Hand, sprite: TileSprite, standing: bool = False) -> list[str]:
+        """Render the closed tiles, draw tile and melds; ``standing`` draws face-down closed
+        and draw tiles standing up (melds' face-down tiles stay lying down)."""
         parts = ['<div class="mahjong-hand-row">']
 
         parts.append('<div class="mahjong-hand-left">')
         parts.append('<div class="mahjong-tiles">')
-        parts.extend(self._render_tile(tile, sprite) for tile in hand.closed_tiles)
+        parts.extend(self._render_tile(tile, sprite, standing=standing) for tile in hand.closed_tiles)
         parts.append("</div>")
         parts.append("</div>")
 
         if hand.draw_tile:
-            # The visible "Draw" label is CSS generated content, so name the group too.
+            # Name the group so the draw tile is distinguishable from the closed tiles.
             parts.append('<div class="mahjong-hand-draw" role="group" aria-label="Draw">')
             parts.append('<div class="mahjong-tiles">')
-            parts.append(self._render_tile(hand.draw_tile, sprite))
+            parts.append(self._render_tile(hand.draw_tile, sprite, standing=standing))
             parts.append("</div>")
             parts.append("</div>")
 
@@ -158,24 +304,76 @@ class MahjongRenderer:
             parts.insert(1, sprite.render())
         return "".join(parts)
 
-    def _render_dora_section(
-        self, tiles: list[Tile], sprite: TileSprite, label: str, extra_class: str = ""
-    ) -> list[str]:
-        """Render a dora indicator section."""
-        cls = f"mahjong-dora {extra_class}".strip()
+    def _render_dora_section(self, tiles: list[Tile], sprite: TileSprite) -> list[str]:
+        """Render the dora indicators as a stretch of the dead wall: two-high stacks, with
+        face-down tiles filling the 5 slots to the left of the indicators."""
+        label = "Dora indicator" if len(tiles) == 1 else "Dora indicators"
         parts = [
-            f'<div class="{cls}">',
-            f'<span class="mahjong-dora-label">{label}</span>',
-            '<span class="mahjong-dora-tiles">',
+            f'<div class="mahjong-dora" role="group" aria-label="{label}">',
+            '<span class="mahjong-dora-tiles mahjong-dora-wall">',
         ]
+        parts.extend([self._WALL_BACK_TILE_HTML] * (MAX_DORA_INDICATORS - len(tiles)))
         parts.extend(self._render_tile(tile, sprite) for tile in tiles)
         parts.extend(["</span>", "</div>"])
         return parts
 
-    def _render_tile(self, tile: Tile, sprite: TileSprite, discard: bool = False) -> str:
+    @staticmethod
+    def _render_seat(hand: Hand) -> list[str]:
+        """Render the seat wind kanji and score at the left of the status row."""
+        parts = ['<div class="mahjong-seat">']
+        if hand.seat_wind:
+            name = hand.seat_wind.capitalize()
+            parts.append(
+                f'<span class="mahjong-seat-wind" lang="ja" role="img" '
+                f'aria-label="Seat wind: {name}" title="{name}">{_SEAT_WIND_KANJI[hand.seat_wind]}</span>'
+            )
+        if hand.score is not None:
+            parts.append(
+                f'<span class="mahjong-score" role="img" aria-label="Score: {hand.score}">'
+                f"{MahjongRenderer._score_digits(hand.score)}</span>"
+            )
+        parts.append("</div>")
+        return parts
+
+    @staticmethod
+    def _score_digits(score: int) -> str:
+        """Format a score with comma separators and split off its last three digits (with
+        their comma), so the thousands can stand out, e.g. 25000 -> 25 and ,000; below 1000
+        there's no thousands part."""
+        sign = "-" if score < 0 else ""
+        digits = f"{abs(score):,}"
+        if abs(score) < 1000:
+            # No thousands part: the sign stays with the digits, e.g. -500.
+            thousands, hundreds = "", sign + digits
+        else:
+            thousands, hundreds = sign + digits[:-4], digits[-4:]
+        parts = []
+        if thousands:
+            parts.append(f'<span class="mahjong-score-thousands">{thousands}</span>')
+        parts.append(f'<span class="mahjong-score-hundreds">{hundreds}</span>')
+        return "".join(parts)
+
+    @staticmethod
+    def _render_sticks(hand: Hand, sprite: TileSprite) -> list[str]:
+        """Render riichi and honba sticks, each followed by its count, at the right of the status row."""
+        parts = ['<div class="mahjong-sticks">']
+        for attr, asset_name, name in _STICKS:
+            count = getattr(hand, attr)
+            if count:
+                label = f"{name}: {count}"
+                parts.append(
+                    f'<span class="mahjong-stick mahjong-stick-{attr}" role="img" '
+                    f'aria-label="{label}" title="{label}">'
+                    f"{sprite.use(asset_name, 'tenbou', _STICK_WIDTH, _STICK_HEIGHT)}"
+                    f'<span class="mahjong-stick-count">&times;{count}</span></span>'
+                )
+        parts.append("</div>")
+        return parts
+
+    def _render_tile(self, tile: Tile, sprite: TileSprite, discard: bool = False, standing: bool = False) -> str:
         """Render a single tile as HTML with an SVG referencing the sprite."""
         if tile.is_back:
-            return self._BACK_TILE_HTML
+            return self._STANDING_BACK_TILE_HTML if standing else self._BACK_TILE_HTML
 
         info = tile.info
         if not info:

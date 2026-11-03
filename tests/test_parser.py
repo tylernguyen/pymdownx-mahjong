@@ -292,3 +292,17 @@ class TestDiscards:
         hand.discards = parser.parse_discards("0m")
         with pytest.raises(ParseError, match=r"5m appears 5 times \(max 4, including red 5s\)"):
             parser.validate(hand)
+
+
+class TestFaceDownCount:
+    """Bare numbers aren't face-down tiles: digits with no suit are a likely forgotten suit."""
+
+    @pytest.mark.parametrize("notation", ["13", "11", "10 (777z<)", "13|", "1 3"])
+    def test_bare_number_rejected_with_hint(self, notation):
+        with pytest.raises(ParseError, match=r"Invalid tile notation: 1[013] \(did you forget a suit\?\)"):
+            parse_hand(notation)
+
+    def test_back_notation_still_works(self):
+        hand = parse_hand("XXX123z")
+
+        assert [t.is_back for t in hand.closed_tiles] == [True, True, True, False, False, False]

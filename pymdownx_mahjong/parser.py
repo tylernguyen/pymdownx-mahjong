@@ -33,6 +33,16 @@ class MeldSource(Enum):
     SELF = ""  # Self-drawn
 
 
+# Seat winds, in turn order.
+SEAT_WINDS: Final = ("east", "south", "west", "north")
+
+# The other players on a board, in turn order from the bottom player: right, across, left.
+OPPONENT_SEATS: Final = ("shimo", "toimen", "kami")
+
+# One dora indicator plus up to four kan dora.
+MAX_DORA_INDICATORS: Final = 5
+
+
 _SOURCE_MAP: Final[dict[str, MeldSource]] = {
     "<": MeldSource.LEFT,
     "^": MeldSource.ACROSS,
@@ -88,6 +98,14 @@ class Hand:
     dora_indicators: list[Tile] = field(default_factory=list)
     draw_tile: Tile | None = None
     discards: list[Tile] = field(default_factory=list)
+    honba: int = 0
+    riichi: int = 0  # riichi sticks on the table
+    seat_wind: str | None = None  # one of SEAT_WINDS
+    score: int | None = None
+    round_wind: str | None = None  # one of SEAT_WINDS
+    round_number: int | None = None  # 1-4
+    remaining: int | None = None  # tiles left in the wall
+    opponents: dict[str, Hand] = field(default_factory=dict)  # keyed by OPPONENT_SEATS
 
     @property
     def all_tiles(self) -> list[Tile]:
@@ -98,6 +116,18 @@ class Hand:
         if self.draw_tile:
             tiles.append(self.draw_tile)
         return tiles
+
+
+def parse_int(text: str, *, signed: bool = False) -> int | None:
+    """Parse a plain ASCII integer (with a leading '-' if ``signed``), or None if ``text``
+    isn't one; e.g. rejects '+1', '1.5', '25,000' and full-width digits."""
+    digits = text.removeprefix("-") if signed else text
+    return int(text) if digits.isascii() and digits.isdigit() else None
+
+
+def face_down_tiles(count: int) -> list[Tile]:
+    """Make ``count`` face-down tiles."""
+    return [Tile(suit="", number=0, is_back=True) for _ in range(count)]
 
 
 def _rank(tile: Tile) -> int:
@@ -117,6 +147,7 @@ class MahjongParser:
     - Red dora: 1230m (0 = red 5)
     - Melds: (123m<) for chi, [1111m] for closed kan
     - Separators: |, _, and spaces are ignored and may be used for readability
+    - Face-down count: a bare number of closed tiles, e.g. 13 or 10 (777z<)
     """
 
     # Tile groups: ranks + suit, where a rank is a digit or 'X' (a face-down tile).
@@ -146,7 +177,12 @@ class MahjongParser:
 
         # Remove meld notation to get closed tiles
         closed_part = self.MELD_PATTERN.sub("", notation).strip()
-        hand.closed_tiles = self._parse_tiles(closed_part, errors)
+        number = parse_int(closed_part.replace("_", "").replace(" ", "").replace("|", ""))
+        if number is not None:
+            # Digits with no suit: most likely a forgotten suit.
+            errors.append(f"Invalid tile notation: {number} (did you forget a suit?)")
+        else:
+            hand.closed_tiles = self._parse_tiles(closed_part, errors)
 
         self._validate_tile_counts(hand, errors)
 
@@ -217,7 +253,7 @@ class MahjongParser:
                     if suit != "z":
                         errors.append(f"Invalid tile: X{suit}")
                     else:
-                        tile = Tile(suit="", number=0, is_back=True)
+                        tile = face_down_tiles(1)[0]
                         self._apply_markers(tile, markers)
                         tiles.append(tile)
                     markers = ""
@@ -367,22 +403,39 @@ class MahjongParser:
 
         return numbers[1] == numbers[0] + 1 and numbers[2] == numbers[1] + 1
 
-    def validate(self, hand: Hand) -> None:
-        """Validate tile counts for a hand changed after parse(), e.g. with a draw tile or discards.
+    def validate_table(self, hand: Hand) -> None:
+        """Validate tile counts for a hand changed after parse() (e.g. with a draw tile,
+        discards or dora indicators) and any other players on its table: every hand and
+        discard pile, plus the dora indicators.
+
+        A called discard (``c``) moved into the caller's meld, so it's counted there rather
+        than in the pile; this also keeps a caller shown on the table from counting it twice.
 
         Raises:
             ParseError: If any tile appears more than 4 times
         """
+        tiles = list(hand.dora_indicators)
+        for player in (hand, *hand.opponents.values()):
+            tiles.extend(player.all_tiles)
+            tiles.extend(tile for tile in player.discards if not tile.is_called)
         errors: list[str] = []
-        self._validate_tile_counts(hand, errors)
+        self._validate_tile_list(tiles, errors)
         if errors:
             raise ParseError("; ".join(errors))
 
+    # The original name for validate_table, kept for existing callers.
+    validate = validate_table
+
     def _validate_tile_counts(self, hand: Hand, errors: list[str]) -> None:
         """Validate that no tile appears more than 4 times."""
+        self._validate_tile_list(hand.all_tiles + hand.discards, errors)
+
+    @staticmethod
+    def _validate_tile_list(tiles: list[Tile], errors: list[str]) -> None:
+        """Record an error for each tile that appears more than 4 times."""
         # A red 5 (0) replaces one of the four 5s, so it counts as a 5. Face-down tiles
         # are unknown, so they don't count toward the per-tile limit.
-        tiles = [t for t in hand.all_tiles + hand.discards if not t.is_back]
+        tiles = [t for t in tiles if not t.is_back]
         counts = Counter((t.suit, _rank(t)) for t in tiles)
         has_red = {t.suit for t in tiles if t.number == 0}
 

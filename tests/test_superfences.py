@@ -73,6 +73,13 @@ class TestSuperfencesFormatter:
             assert "mahjong-error" in html
             assert "No hand notation" in html
 
+    def test_honba_and_riichi(self):
+        html = _format("123m\nriichi: 1\nhonba: 2")
+
+        assert 'class="mahjong-sticks"' in html
+        assert 'aria-label="Riichi sticks: 1"' in html
+        assert 'aria-label="Honba: 2"' in html
+
     def test_discards_with_hand(self):
         html = _format("discards: 19m r4z\nhand: 123m (456p<)")
 
@@ -98,3 +105,18 @@ class TestErrorBlock:
         assert "<strong>Mahjong Error:</strong>" in html
         assert "&lt;script&gt;" in html
         assert "<script>" not in html
+
+
+class TestTableBlock:
+    def test_table_block_renders(self):
+        html = _format("123m\nseat: south\ndora: 1z\nround: E1\nshimo.hand:\ntoimen.hand:\nkami.hand:")
+
+        assert '<div class="mahjong-table">' in html
+        assert html.count('class="mahjong-player ') == 4
+        assert ">東一局</span>" in html
+
+    def test_table_block_error(self):
+        html = _format("123m\nshimo.hand: 15")
+
+        assert 'class="mahjong-error"' in html
+        assert "shimo: Invalid tile notation: 15 (did you forget a suit?)" in html
