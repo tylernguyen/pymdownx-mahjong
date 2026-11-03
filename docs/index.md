@@ -89,14 +89,13 @@ For example, ``mj:123456789m`` will render `mj:123456789m` inline.
 
 ## Block Syntax
 
-Hands are written in a fenced codeblock, with additional YAML-like options for dora, waits, and title.
+Hands are written in a fenced codeblock, with additional YAML-like options for dora and title.
 
 ````markdown
 ```mahjong
 discards: 1m 8p t3m t0m 0p t7m t0s t7z
 5511122z [3333z] (444+4z>)
 draw: 2z
-waits: 52z
 dora: 5z
 title: Daisuushii Tsuuiisou
 ```
@@ -106,7 +105,6 @@ title: Daisuushii Tsuuiisou
 discards: 1m 8p t3m t0m 0p t7m t0s t7z
 5511122z [3333z] (444+4z>)
 draw: 2z
-waits: 52z
 dora: 5z
 title: Daisuushii Tsuuiisou
 ```
