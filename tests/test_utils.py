@@ -20,13 +20,12 @@ class TestParseBlockContent:
         assert options == {}
 
     def test_all_options_combined(self):
-        content = "hand: 123m\ntitle: Complete Hand\ndora: 5m\nura: 3p\ndraw: 1z"
+        content = "hand: 123m\ntitle: Complete Hand\ndora: 5m\ndraw: 1z"
         notation, options = parse_block_content(content)
 
         assert notation == "123m"
         assert options["title"] == "Complete Hand"
         assert options["dora"] == "5m"
-        assert options["ura"] == "3p"
         assert options["draw"] == "1z"
 
     def test_mixed_notation_first(self):
@@ -85,11 +84,10 @@ class TestApplyHandOptions:
     def test_apply_all_options(self):
         hand = Hand()
         parser = MahjongParser()
-        errors = apply_hand_options(hand, parser, {"dora": "5m3p", "ura": "3p", "draw": "1z"})
+        errors = apply_hand_options(hand, parser, {"dora": "5m3p", "draw": "1z"})
 
         assert errors == []
         assert len(hand.dora_indicators) == 2
-        assert len(hand.ura_indicators) == 1
         assert hand.draw_tile is not None
         assert hand.draw_tile.notation == "1z"
 

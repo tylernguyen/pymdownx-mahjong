@@ -6,7 +6,7 @@ from typing import Any, Final
 
 from .parser import Hand, MahjongParser, ParseError
 
-_OPTION_KEYS: Final[tuple[str, ...]] = ("title", "dora", "ura", "waits", "draw", "discards")
+_OPTION_KEYS: Final[tuple[str, ...]] = ("title", "dora", "waits", "draw", "discards")
 
 
 def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
@@ -84,19 +84,13 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
 
 
 def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any]) -> list[str]:
-    """Apply parsed options (dora, ura, draw, waits, discards) to a hand. Returns error messages."""
+    """Apply parsed options (dora, draw, waits, discards) to a hand. Returns error messages."""
     errors: list[str] = []
     if "dora" in options:
         try:
             hand.dora_indicators = parser.parse_tiles(options["dora"])
         except ParseError as e:
             errors.append(f"Invalid dora notation: {e}")
-
-    if "ura" in options:
-        try:
-            hand.ura_indicators = parser.parse_tiles(options["ura"])
-        except ParseError as e:
-            errors.append(f"Invalid ura notation: {e}")
 
     if "draw" in options:
         try:

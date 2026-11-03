@@ -78,12 +78,10 @@ class MahjongRenderer:
         label_attr = "" if title else ' aria-label="Mahjong hand"'
         parts.append(f'<figure class="{self.css_class}{theme_class}"{data_attr}{label_attr}>')
 
-        if hand.dora_indicators or hand.ura_indicators or hand.waits:
+        if hand.dora_indicators or hand.waits:
             parts.append('<div class="mahjong-dora-row">')
             if hand.dora_indicators:
                 parts.extend(self._render_dora_section(hand.dora_indicators, sprite, "Dora"))
-            if hand.ura_indicators:
-                parts.extend(self._render_dora_section(hand.ura_indicators, sprite, "Ura", "mahjong-ura"))
             if hand.waits:
                 parts.extend(self._render_dora_section(hand.waits, sprite, "Waits", "mahjong-waits"))
             parts.append("</div>")
@@ -165,7 +163,7 @@ class MahjongRenderer:
     def _render_dora_section(
         self, tiles: list[Tile], sprite: TileSprite, label: str, extra_class: str = ""
     ) -> list[str]:
-        """Render a dora/ura indicator section."""
+        """Render a dora or waits indicator section."""
         cls = f"mahjong-dora {extra_class}".strip()
         parts = [
             f'<div class="{cls}">',

@@ -296,7 +296,7 @@
     );
 }
 
-/* Dora row - contains dora, ura, and waits on same line, above hand.
+/* Dora row - contains dora and waits on same line, above hand.
    The whole row (tiles, labels, and inter-group gaps) is scaled to 90%,
    anchored bottom-left so it stays aligned with the hand below. */
 .mahjong-dora-row {
@@ -308,7 +308,7 @@
     transform-origin: left bottom;
 }
 
-/* Dora/ura/waits indicator section - label stacked above tiles */
+/* Dora/waits indicator section - label stacked above tiles */
 .mahjong-dora {
     display: flex;
     flex-direction: column;

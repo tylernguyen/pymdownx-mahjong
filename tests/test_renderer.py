@@ -73,17 +73,14 @@ class TestMahjongRenderer:
 
         assert 'class="mahjong-tile-stack"' in html
 
-    def test_render_dora_and_ura(self):
+    def test_render_dora(self):
         renderer = MahjongRenderer()
         hand = parse_hand("123m456p789s11222z")
         hand.dora_indicators = [Tile(suit="m", number=5)]
-        hand.ura_indicators = [Tile(suit="p", number=3)]
         html = renderer.render(hand)
 
         assert 'class="mahjong-dora-row"' in html
         assert "Dora" in html
-        assert "mahjong-ura" in html
-        assert "Ura" in html
 
 
 class TestRendererConfiguration:
