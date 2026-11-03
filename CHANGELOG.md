@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.0] - 2026-11-03
+
+### Added
+
+- feat: `shimo.`, `toimen.` and `kami.` block options render a full table.
+- feat: `seat:` and `score:` block options show the seat wind and score.
+- feat: `riichi:` and `honba:` block options render point sticks, kept by the dealer on a table.
+- feat: `round:` and `remaining:` block options show the round (e.g. 南二局) and tiles left (残 N).
+- feat: East/South round marker sits with the original dealer.
+- feat: dora indicators render as a stretch of the dead wall.
+- feat: `tile_back_color` and `table_color` options.
+
+### Changed
+
+- feat: center the dora indicators and drop their visible label.
+- fix: dora indicators count toward the 4-per-tile limit on single hands too.
+- fix: a rejected `configure_superfences()` call keeps the previous config.
+- feat: discards after the riichi tile render as tsumogiri.
+- fix: reject a block option given more than once instead of keeping the last.
+- test: write full-width digits as escapes to satisfy ruff.
+
+### Removed
+
+- feat!: drop the `ura:` block option and `Hand.ura_indicators`.
+- feat!: drop the `waits:` block option and `Hand.waits`.
+- remove: drop the visible "Draw" label above the drawn tile.
+
 ## [0.2.3] - 2026-10-29
 
 ### Added
