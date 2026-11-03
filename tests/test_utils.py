@@ -180,7 +180,8 @@ class TestSticksOptions:
 
         assert hand.score == score
 
-    @pytest.mark.parametrize("value", ["", "-", "25,000", "1.5", "+100", "２５"])
+    # "\uff12\uff15" is "25" in full-width digits, which isn't an ASCII integer.
+    @pytest.mark.parametrize("value", ["", "-", "25,000", "1.5", "+100", "\uff12\uff15"])
     def test_invalid_score_reports_error(self, value):
         errors = apply_hand_options(Hand(), MahjongParser(), {"score": value})
 
