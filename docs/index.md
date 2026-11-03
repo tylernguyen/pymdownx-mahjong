@@ -132,6 +132,8 @@ Add `discards:` to a block to render a discard pile above the hand.
 
 Syntax can be combined, `rt5p` is tsumogiri riichi on :5p:.
 
+Every discard after the riichi tile is tsumogiri, so it's dimmed without needing `t`.
+
 | Syntax | Title                         | Example |
 | ------ | ----------------------------- | ------- |
 | `r`    | Riichi marker                 | `r1m`   |

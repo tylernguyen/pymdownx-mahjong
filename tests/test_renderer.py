@@ -242,7 +242,7 @@ class TestDiscards:
         assert self._row_sizes(self._render(discards)) == sizes
 
     def test_markers(self):
-        html = self._render("r1m t2m c3m")
+        html = self._render("t2m c3m r1m")
 
         assert 'class="mahjong-tile mahjong-tile-rotated mahjong-theme-light"' in html
         assert 'aria-label="1 Man (riichi)"' in html
@@ -250,6 +250,13 @@ class TestDiscards:
         assert 'aria-label="2 Man (tsumogiri)"' in html
         assert 'class="mahjong-tile mahjong-tile-called mahjong-theme-light"' in html
         assert 'aria-label="3 Man (called)"' in html
+
+    def test_discards_after_riichi_render_as_tsumogiri(self):
+        html = self._render("r1m 2m c3m")
+
+        assert 'class="mahjong-tile mahjong-tile-tsumogiri mahjong-theme-light"' in html
+        assert 'aria-label="2 Man (tsumogiri)"' in html
+        assert 'aria-label="3 Man (tsumogiri, called)"' in html
 
     def test_discards_only_has_no_hand_row(self):
         html = self._render("123m")

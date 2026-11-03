@@ -257,6 +257,23 @@ class TestDiscards:
         assert tsumogiri_riichi.notation == "5p" and tsumogiri_riichi.is_rotated and tsumogiri_riichi.is_tsumogiri
         assert called.notation == "7z" and called.is_called and not called.is_rotated
 
+    def test_discards_after_riichi_are_tsumogiri(self):
+        tiles = MahjongParser().parse_discards("1m 2m r3m 4m t5m c6m")
+
+        assert [t.is_tsumogiri for t in tiles] == [False, False, False, True, True, True]
+        assert tiles[5].is_called
+
+    def test_riichi_tile_keeps_its_own_marker(self):
+        plain, tsumogiri = MahjongParser().parse_discards("r3m"), MahjongParser().parse_discards("rt3m")
+
+        assert not plain[0].is_tsumogiri
+        assert tsumogiri[0].is_tsumogiri
+
+    def test_no_riichi_no_change(self):
+        tiles = MahjongParser().parse_discards("1m t2m 3m")
+
+        assert [t.is_tsumogiri for t in tiles] == [False, True, False]
+
     @pytest.mark.parametrize("notation", ["5mr", "rm", "r", "5m t"])
     def test_dangling_marker(self, notation):
         with pytest.raises(ParseError, match="Invalid tile notation"):

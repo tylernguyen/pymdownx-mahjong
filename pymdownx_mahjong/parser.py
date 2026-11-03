@@ -170,6 +170,9 @@ class MahjongParser:
     def parse_discards(self, notation: str) -> list[Tile]:
         """Parse discard pile notation, which allows r/t/c markers before a rank.
 
+        After riichi a player can only discard the tile they draw, so every discard after
+        the riichi tile is tsumogiri, whether or not it's marked.
+
         Raises:
             ParseError: If the notation is invalid
         """
@@ -177,6 +180,10 @@ class MahjongParser:
         tiles = self._parse_tiles(notation, errors, discards=True)
         if errors:
             raise ParseError("; ".join(errors))
+        riichi = next((i for i, tile in enumerate(tiles) if tile.is_rotated), None)
+        if riichi is not None:
+            for tile in tiles[riichi + 1 :]:
+                tile.is_tsumogiri = True
         return tiles
 
     def _parse_tiles(self, notation: str, errors: list[str], *, discards: bool = False) -> list[Tile]:
