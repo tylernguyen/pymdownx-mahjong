@@ -25,19 +25,26 @@ class _SuperfencesState:
         self._config: dict[str, Any] = {}
 
     def configure(self, **kwargs: Any) -> None:
-        self._config.update(kwargs)
-        self._renderer = None
-        # Build eagerly so invalid config is rejected here rather than on first render.
-        _ = self.renderer
+        # Build the renderer before keeping the new config, so invalid config is rejected
+        # here and leaves the previous config in place.
+        config = {**self._config, **kwargs}
+        renderer = self._build(config)
+        self._config, self._renderer = config, renderer
 
     @property
     def renderer(self) -> MahjongRenderer:
         if self._renderer is None:
-            self._renderer = MahjongRenderer(
-                theme=self._config.get("theme", "auto"),
-                closed_kan_style=self._config.get("closed_kan_style", "outer"),
-            )
+            self._renderer = self._build(self._config)
         return self._renderer
+
+    @staticmethod
+    def _build(config: dict[str, Any]) -> MahjongRenderer:
+        return MahjongRenderer(
+            theme=config.get("theme", "auto"),
+            closed_kan_style=config.get("closed_kan_style", "outer"),
+            tile_back_color=config.get("tile_back_color"),
+            table_color=config.get("table_color"),
+        )
 
 
 _state = _SuperfencesState()
@@ -50,7 +57,7 @@ def configure_superfences(**kwargs: Any) -> None:
 
     Example:
         from pymdownx_mahjong import configure_superfences
-        configure_superfences(theme='dark', closed_kan_style='inner')
+        configure_superfences(theme='dark', closed_kan_style='inner', tile_back_color='#2e7d6b')
     """
     _state.configure(**kwargs)
 

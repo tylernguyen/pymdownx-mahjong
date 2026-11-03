@@ -92,6 +92,26 @@ class TestConfigureSuperfences:
         configure_superfences(theme="dark")
         assert "mahjong-theme-dark" in _format("123m")
 
+    def test_configure_applies_tile_back_color(self):
+        configure_superfences(tile_back_color="#2e7d6b")
+        assert 'style="--mahjong-tile-back: #2e7d6b"' in _format("123m")
+
+    def test_configure_applies_table_color(self):
+        configure_superfences(table_color="#2b7a78")
+        out = _format("123m\nshimo.hand:")
+        assert 'style="--mahjong-table-bg: #2b7a78"' in out
+        assert "mahjong-table-filled" in out
+
+    def test_rejected_configure_keeps_previous_config(self):
+        configure_superfences(theme="dark")
+        with pytest.raises(ValueError, match="tile_back_color"):
+            configure_superfences(tile_back_color="url(x)")
+
+        html = _format("123m")
+        assert "mahjong-theme-dark" in html
+        assert "mahjong-error" not in html
+        assert "url(" not in html
+
     def test_configure_rejects_invalid_theme(self):
         with pytest.raises(ValueError, match="theme"):
             configure_superfences(theme="Dark")

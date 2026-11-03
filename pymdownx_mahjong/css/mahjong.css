@@ -583,6 +583,11 @@
    (discards, status row, hand) along their own edge. The table is a square in tile
    units, and its tiles size themselves to the figure's width (a size container), so the
    whole table shrinks to fit the content column instead of scrolling. */
+/* With a background (table_color), keep the players' hands a little in from its edge. */
+.mahjong-table-filled {
+    --mahjong-table-inset: calc(var(--mahjong-tile-width) * 0.25);
+}
+
 .mahjong-hand:has(.mahjong-table),
 .md-typeset .mahjong-hand:has(.mahjong-table) {
     container-type: inline-size;
@@ -609,6 +614,9 @@
     width: var(--mahjong-table-size);
     height: var(--mahjong-table-size);
     margin: 0 auto;
+    /* Transparent unless the table_color option (or your CSS) sets --mahjong-table-bg. */
+    background: var(--mahjong-table-bg, transparent);
+    border-radius: 6px;
     /* Text scales with the tiles (0.8rem at the default size). */
     font-size: calc(var(--mahjong-tile-width) / 1.8);
 }
@@ -645,7 +653,7 @@
    kamicha left. */
 .mahjong-player {
     position: absolute;
-    inset: 0;
+    inset: var(--mahjong-table-inset, 0);
     display: grid;
     justify-content: center;
     align-content: end;

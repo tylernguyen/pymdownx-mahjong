@@ -156,6 +156,32 @@ class TestConfigPropagation:
         # inner: front, back, back, front
         assert out.count("mahjong-tile-back") == 2
 
+    def test_fence_uses_tile_back_color(self):
+        out = self._md(tile_back_color="#2e7d6b").convert("```mahjong\n[1111z]\n```")
+        assert '<figure class="mahjong-hand" style="--mahjong-tile-back: #2e7d6b"' in out
+
+    def test_inline_tiles_use_tile_back_color(self):
+        out = self._md(tile_back_color="teal").convert("Tile :Xz: here")
+        assert '<span class="mahjong-inline" style="--mahjong-tile-back: teal">' in out
+
+    def test_fence_uses_table_color(self):
+        out = self._md(table_color="#2b7a78").convert("```mahjong\n123m\nshimo.hand:\n```")
+        assert '<figure class="mahjong-hand" style="--mahjong-table-bg: #2b7a78"' in out
+        assert '<div class="mahjong-table mahjong-table-filled">' in out
+
+    def test_table_transparent_by_default(self):
+        out = self._md().convert("```mahjong\n123m\nshimo.hand:\n```")
+        assert "--mahjong-table-bg" not in out
+        assert '<div class="mahjong-table">' in out
+
+    def test_both_colors_share_one_style(self):
+        out = self._md(tile_back_color="teal", table_color="#2b7a78").convert("```mahjong\n123m\n```")
+        assert 'style="--mahjong-tile-back: teal; --mahjong-table-bg: #2b7a78"' in out
+
+    def test_no_style_without_tile_back_color(self):
+        out = self._md().convert("```mahjong\n123m\n```\n\n:1m:")
+        assert "--mahjong-tile-back" not in out
+
     def test_config_does_not_leak_between_instances(self):
         dark = self._md(theme="dark")
         self._md(theme="light")
@@ -171,6 +197,57 @@ class TestConfigValidation:
                 extensions=["pymdownx_mahjong"],
                 extension_configs={"pymdownx_mahjong": {"theme": "Dark"}},
             )
+
+    @pytest.mark.parametrize(
+        "color",
+        [
+            "url(x.png)",
+            "red; color: blue",
+            "#12345",
+            "var(--x)",
+            '"><script>',
+            "rgb(1 2 3) url(//evil.example/x.png)",
+            "color-mix(in srgb, red, red) url(x.png)",
+            "rgb(1 2 3))",
+            "rgb(url(x))",
+            "color-mix(in srgb, url(x.png), red)",
+            "teall",
+            "foo",
+        ],
+    )
+    def test_invalid_tile_back_color_rejected(self, color):
+        with pytest.raises(ValueError, match="tile_back_color"):
+            markdown.Markdown(
+                extensions=["pymdownx_mahjong"],
+                extension_configs={"pymdownx_mahjong": {"tile_back_color": color}},
+            )
+
+    @pytest.mark.parametrize("color", ["url(x.png)", "red; color: blue", '"><script>'])
+    def test_invalid_table_color_rejected(self, color):
+        with pytest.raises(ValueError, match="table_color"):
+            markdown.Markdown(
+                extensions=["pymdownx_mahjong"],
+                extension_configs={"pymdownx_mahjong": {"table_color": color}},
+            )
+
+    @pytest.mark.parametrize(
+        "color",
+        [
+            "#e7b246",
+            "#abc",
+            "teal",
+            "Teal",
+            "transparent",
+            "rgb(231 178 70)",
+            "oklch(70% 0.1 200)",
+            "color-mix(in srgb, teal, #000 10%)",
+            "color-mix(in srgb, rgb(1 2 3), hsl(0 0% 50%))",
+        ],
+    )
+    def test_valid_tile_back_color_accepted(self, color):
+        markdown.Markdown(
+            extensions=["pymdownx_mahjong"], extension_configs={"pymdownx_mahjong": {"tile_back_color": color}}
+        )
 
     def test_invalid_closed_kan_style_rejected(self):
         with pytest.raises(ValueError, match="closed_kan_style"):

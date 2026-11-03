@@ -35,6 +35,7 @@ class MahjongInlineProcessor(InlineProcessor):
         self.renderer = MahjongRenderer(
             theme=config.get("theme", "auto"),
             css_class="mahjong-inline",
+            tile_back_color=config.get("tile_back_color"),
         )
 
     def handleMatch(self, m: re.Match, data: str) -> tuple[str | None, int | None, int | None]:

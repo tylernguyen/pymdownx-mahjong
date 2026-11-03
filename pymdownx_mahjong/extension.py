@@ -22,6 +22,8 @@ class MahjongExtension(markdown.Extension):
             "theme": ["auto", "Color theme: 'light', 'dark', or 'auto'"],
             "enable_inline": ["true", "Enable inline tile syntax (:1m:)"],
             "closed_kan_style": ["outer", "Closed kan style: 'outer' or 'inner'"],
+            "tile_back_color": ["", "CSS color for the backs of face-down tiles (default: the stylesheet's)"],
+            "table_color": ["", "CSS color for the table's background (default: transparent)"],
         }
         super().__init__(**kwargs)
         # Collects the tile symbols used while converting a page; see MahjongSpriteTreeprocessor.
@@ -31,9 +33,14 @@ class MahjongExtension(markdown.Extension):
         config = {key: self.getConfig(key) for key in self.config}
 
         # The superfences formatter finds this extension on md and renders with this
-        # renderer, so each Markdown instance keeps its own theme/closed_kan_style.
+        # renderer, so each Markdown instance keeps its own config.
         # Constructing it here also rejects invalid config when the extension loads.
-        self.renderer = MahjongRenderer(theme=config["theme"], closed_kan_style=config["closed_kan_style"])
+        self.renderer = MahjongRenderer(
+            theme=config["theme"],
+            closed_kan_style=config["closed_kan_style"],
+            tile_back_color=config["tile_back_color"],
+            table_color=config["table_color"],
+        )
 
         if str(config.get("enable_inline", "true")).lower() in ("true", "1", "yes"):
             # Priority 76: before pymdownx.emoji (75)

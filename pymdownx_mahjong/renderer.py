@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import re
 from typing import Final
 
 from .parser import MAX_DORA_INDICATORS, OPPONENT_SEATS, SEAT_WINDS, Hand, Meld, MeldSource, MeldType, Tile
@@ -10,6 +11,41 @@ from .sprite import MARKER_THEME, TileSprite
 
 THEMES: Final[tuple[str, ...]] = ("auto", "light", "dark")
 CLOSED_KAN_STYLES: Final[tuple[str, ...]] = ("outer", "inner")
+
+# A CSS color for tile_back_color and table_color: hex (#e7b246), a named color (teal), or a color function
+# (rgb(...), oklch(...), color-mix(...)). It lands in a style attribute and feeds background
+# rules, so nothing else (e.g. url(...)) is accepted.
+_CSS_COLOR: Final[re.Pattern[str]] = re.compile(
+    r"#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})"
+    r"|[a-zA-Z]+"
+    r"|(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\([#0-9a-zA-Z.,%/+\s()-]*\)"
+)
+# Functions allowed inside a color value, so nothing like url(...) can be nested in one.
+_COLOR_FUNCTIONS: Final = frozenset(
+    ("rgb", "rgba", "hsl", "hsla", "hwb", "lab", "lch", "oklab", "oklch", "color", "color-mix")
+)
+_CSS_FUNCTION: Final[re.Pattern[str]] = re.compile(r"([a-zA-Z-]+)\s*\(")
+# CSS named colors (plus transparent and currentcolor), so a misspelt name is caught.
+_CSS_NAMED_COLORS: Final = frozenset(
+    """aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue
+    blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk
+    crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki
+    darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen
+    darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue
+    dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite
+    gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki
+    lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan
+    lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen
+    lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen
+    magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen
+    mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream
+    mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid
+    palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum
+    powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown
+    seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen
+    steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow
+    yellowgreen transparent currentcolor""".split()  # noqa: SIM905 - a word list reads far better than 150 strings
+)
 
 # The first two discard rows hold 6 tiles each; the third holds the rest.
 _DISCARD_ROW_SIZE: Final = 6
@@ -54,6 +90,31 @@ _SOURCE_NAMES: Final[dict[MeldSource, str]] = {
 }
 
 
+def _is_css_color(value: str) -> bool:
+    """Whether ``value`` is a CSS color: a hex color, a named color, or a color function
+    (possibly with colors nested in it) that ends the value."""
+    if not _CSS_COLOR.fullmatch(value):
+        return False
+    if "(" not in value:
+        return value.startswith("#") or value.lower() in _CSS_NAMED_COLORS
+    functions = {name.lower() for name in _CSS_FUNCTION.findall(value)}
+    return functions <= _COLOR_FUNCTIONS and _closes_at_end(value)
+
+
+def _closes_at_end(value: str) -> bool:
+    """Whether a color function's first parenthesis closes at the very end of the value, so
+    nothing (e.g. a url(...)) can follow it."""
+    depth = 0
+    for i, char in enumerate(value):
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth < 0 or (depth == 0 and i != len(value) - 1):
+                return False
+    return depth == 0
+
+
 class MahjongRenderer:
     """Renders mahjong hands as HTML with SVG tiles.
 
@@ -63,6 +124,8 @@ class MahjongRenderer:
     Configuration options:
         theme: 'light', 'dark', or 'auto'
         closed_kan_style: 'outer' (default) or 'inner'
+        tile_back_color: a CSS color for face-down tiles (default: the stylesheet's)
+        table_color: a CSS color for the table's background (default: transparent)
     """
 
     _BACK_TILE_HTML = (
@@ -82,6 +145,8 @@ class MahjongRenderer:
         theme: str = "light",
         closed_kan_style: str = "outer",
         css_class: str = "mahjong-hand",
+        tile_back_color: str | None = None,
+        table_color: str | None = None,
     ) -> None:
         if theme not in THEMES:
             raise ValueError(f"Invalid theme {theme!r} (expected one of: {', '.join(THEMES)})")
@@ -89,9 +154,34 @@ class MahjongRenderer:
             raise ValueError(
                 f"Invalid closed_kan_style {closed_kan_style!r} (expected one of: {', '.join(CLOSED_KAN_STYLES)})"
             )
+        tile_back_color = self._css_color("tile_back_color", tile_back_color)
+        table_color = self._css_color("table_color", table_color)
         self.theme = theme
         self.css_class = css_class
         self.closed_kan_style = closed_kan_style
+        # Set on each rendered block, overriding the stylesheet's defaults.
+        style_vars = [
+            f"--mahjong-tile-back: {tile_back_color}" if tile_back_color else "",
+            f"--mahjong-table-bg: {table_color}" if table_color else "",
+        ]
+        style = "; ".join(filter(None, style_vars))
+        self._style_attr = f' style="{html.escape(style)}"' if style else ""
+        # A table with a background keeps its tiles a little in from its edge.
+        self._table_class = "mahjong-table mahjong-table-filled" if table_color else "mahjong-table"
+
+    @staticmethod
+    def _css_color(option: str, value: str | None) -> str:
+        """Validate an optional CSS color option, returning it stripped ('' when unset).
+
+        Raises:
+            ValueError: If the value isn't a CSS color
+        """
+        value = (value or "").strip()
+        if value and not _is_css_color(value):
+            raise ValueError(
+                f"Invalid {option} {value!r} (expected a CSS color, e.g. '#e7b246', 'teal' or 'rgb(231 178 70)')"
+            )
+        return value
 
     def render(
         self,
@@ -109,7 +199,7 @@ class MahjongRenderer:
         theme_class = f" mahjong-theme-{self.theme}" if self.theme in ("light", "dark") else ""
         # A figcaption names the figure; otherwise give it a generic accessible name.
         label_attr = "" if title else ' aria-label="Mahjong hand"'
-        parts.append(f'<figure class="{self.css_class}{theme_class}"{data_attr}{label_attr}>')
+        parts.append(f'<figure class="{self.css_class}{theme_class}"{self._style_attr}{data_attr}{label_attr}>')
 
         # With other players, the same pieces sit on a square table: the dora row in the
         # center, and each player's discards, status and hand along their own edge.
@@ -121,7 +211,7 @@ class MahjongRenderer:
         marker_wind = self._original_dealer_wind(hand)
 
         if on_table:
-            parts.append('<div class="mahjong-table">')
+            parts.append(f'<div class="{self._table_class}">')
         parts.extend(self._render_dora_row(hand, sprite))
         for seat, player in players:
             if on_table and seat == "self" and not self._has_content(player, hand, dealer, marker_wind):
@@ -291,7 +381,7 @@ class MahjongRenderer:
         """Render a simple list of tiles as HTML."""
         page_sprite = sprite
         sprite = sprite or TileSprite()
-        parts = [f'<span class="{self.css_class}">']
+        parts = [f'<span class="{self.css_class}"{self._style_attr}>']
         parts.extend(self._render_tile(tile, sprite) for tile in tiles)
         parts.append("</span>")
         return self._join(parts, sprite, page_sprite)

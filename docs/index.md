@@ -38,6 +38,8 @@ Copy `mahjong.css` to `stylesheets/`.
     [project.markdown_extensions.pymdownx_mahjong]
     theme = "auto"
     closed_kan_style = "outer"
+    tile_back_color = "#e7b246"
+    table_color = ""
     [project.markdown_extensions.pymdownx.superfences]
     custom_fences = [
       { name = "mahjong", class = "mahjong", format = "pymdownx_mahjong.superfences_formatter" }
@@ -54,6 +56,8 @@ Copy `mahjong.css` to `stylesheets/`.
       - pymdownx_mahjong:
           theme: auto
           closed_kan_style: outer
+          tile_back_color: "#e7b246"
+          table_color: ""
       - pymdownx.superfences:
           custom_fences:
             - name: mahjong
@@ -67,7 +71,7 @@ Copy `mahjong.css` to `stylesheets/`.
 
 
 > [!note]
-> Register `pymdownx_mahjong` alongside SuperFences even if you only use fenced blocks. The extension supplies the fence's `theme` and `closed_kan_style`, and emits each tile's artwork once per page. Without it, every block embeds its own copy, producing duplicate element IDs.
+> Register `pymdownx_mahjong` alongside SuperFences even if you only use fenced blocks. The extension supplies the fence's `theme`, `closed_kan_style`, `tile_back_color` and `table_color`, and emits each tile's artwork once per page. Without it, every block embeds its own copy, producing duplicate element IDs.
 
 ### Configuration
 
@@ -75,6 +79,8 @@ Copy `mahjong.css` to `stylesheets/`.
 |------------------|------|-----------------|---------|---------------------------------------------------------------------|
 | theme            | str  | `auto` `light` `dark` | `auto` |  |
 | closed_kan_style | str  | `outer` `inner` | `outer` | `outer`: back, front, front, back `inner`: front, back, back, front |
+| tile_back_color  | str  | CSS color       | `#e7b246` | color of tiles' backs, e.g. `#2e7d6b` |
+| table_color      | str  | CSS color       | transparent | color of tablecloth, e.g. `#2b7a78` |
 
 
 ## Inline Syntax
