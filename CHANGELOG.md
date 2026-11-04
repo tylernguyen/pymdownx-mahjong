@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- fix: infer seat winds from any player and reject winds out of turn order.
+
 ## [0.3.3] - 2026-11-04
 
 ### Added
