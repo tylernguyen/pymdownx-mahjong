@@ -13,7 +13,7 @@ icon: octicons/markdown-16
 
 ## Purpose
 
-PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong content. Designed with MkDocs and Zensical in mind, the extension offers:
+PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong content. Designed and tested for Zensical, the extension offers:
 
 - Inline rendering of individual Mahjong tiles.
 - Complete Mahjong hand rendering, supporting: pon/chi/kan, and dora information.

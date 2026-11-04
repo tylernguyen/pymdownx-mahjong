@@ -1,11 +1,9 @@
-![PyPI - Version](https://img.shields.io/pypi/v/pymdownx-mahjong?logo=python&logoColor=white&label=PyPI)
-
 > [!WARNING]
 > This project was written with assistance from Claude. If that's a deal-breaker for you, I understand.
 
 # PyMdown Mahjong
 
-[Python Markdown](https://python-markdown.github.io) extension to render and stylize Mahjong tiles. Designed for use with [MkDocs](https://github.com/mkdocs/mkdocs) and [Zensical](https://github.com/zensical/zensical).
+[Python Markdown](https://python-markdown.github.io) extension to render and stylize Mahjong tiles. Designed and tested for [Zensical](https://github.com/zensical/zensical).
 
 ## Demo and Documentation
 
