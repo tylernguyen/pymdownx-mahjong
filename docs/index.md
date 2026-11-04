@@ -101,7 +101,7 @@ Hands are written in a `mahjong` fenced code block, with additional options to c
 - default hand can be written without an option but also accepts `hand` as an option.
 - `dora`: renders dora indicator(s) as a dead-wall block.
 - `riichi` and `honba`: indicate current repeat and riichi sticks in the pot.
-- `remaining`: indicate live tiles remaining in the wall.
+- `remaining`: indicate live tiles remaining in the wall, or `auto` to count them on a full table render.
 - `seat` and `score`: wind marker and score.
 - `title`: title for the rendered figure.
 
@@ -141,12 +141,15 @@ To render a complete board-state, `hand`, `discard`, and `score` can be affixed 
 
 Other players' seat wind are automatically generated from `seat`. Likewise, round wind marker placement is generated from `seat` and `round`.
 
+`remaining: auto` counts the tiles left in the wall from the discards, melds, and kans. It needs hand and discards for each player.
+
 Hovering a tile on a table outlines every visible copy of it, with red 5s counted as 5s. Set `--mahjong-tile-highlight` in your CSS to change the color.
 
 ````markdown
 ```mahjong
 title: M-League 26-27 10/1 Table 1
 round: S2
+remaining: auto
 dora: 2z
 hand: 11p888s11133z (640m<)
 draw: 1p
@@ -169,6 +172,7 @@ kami.discards: 1m t9s 1z 2z c7z 3m 5p rc6m rt4s t5z t7m t7p t6p
 ```mahjong
 title: M-League 26-27 10/1 Table 1
 round: S2
+remaining: auto
 dora: 2z
 hand: 11p888s11133z (640m<)
 draw: 1p

@@ -137,6 +137,9 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
     if hand.opponents:
         _assign_seat_winds(hand)
 
+    if _is_auto_remaining(options.get("remaining", "")):
+        hand.remaining = _count_remaining(hand)
+
     # One check over everything on show: every player's hand and discards, and the dora.
     parser.validate_table(hand)
 
@@ -196,6 +199,47 @@ def _assign_seat_winds(hand: Hand) -> None:
     duplicates = [f"{wind} ({', '.join(names)})" for wind, names in by_wind.items() if len(names) > 1]
     if duplicates:
         raise ParseError(f"Seat wind given to more than one player: {'; '.join(duplicates)}")
+
+
+def _is_auto_remaining(value: str) -> bool:
+    return value.lower() == "auto"
+
+
+def _count_remaining(hand: Hand) -> int:
+    """Count the tiles left in the wall from everything on the table.
+
+    Every tile beyond the 13 each player was dealt came from the wall: it's now a 14th tile
+    in hand, a discard, or the extra tile of a kan, whose replacement draw also shortens the
+    live wall. A called discard is only counted in its caller's meld.
+
+    Raises:
+        ParseError: If the table is missing a player, the calls don't match, or too many
+            tiles are on the table
+    """
+    missing = [seat for seat in OPPONENT_SEATS if seat not in hand.opponents]
+    if missing:
+        raise ParseError(f"remaining: auto needs all four players on the table (missing: {', '.join(missing)})")
+
+    players = (hand, *hand.opponents.values())
+    open_melds = sum(meld.is_open for player in players for meld in player.melds)
+    called = sum(tile.is_called for player in players for tile in player.discards)
+    if open_melds != called:
+        raise ParseError(
+            f"remaining: auto needs each called tile marked with 'c' in a discard pile "
+            f"(found {open_melds} open melds and {called} called discards)"
+        )
+
+    drawn = 0
+    for player in players:
+        in_hand = len(player.closed_tiles) + 3 * len(player.melds) + (1 if player.draw_tile else 0)
+        kans = sum(len(meld.tiles) == 4 for meld in player.melds)
+        discarded = sum(not tile.is_called for tile in player.discards)
+        drawn += max(in_hand - _HAND_SIZE, 0) + kans + discarded
+
+    remaining = _MAX_REMAINING - drawn
+    if remaining < 0:
+        raise ParseError(f"remaining: auto found {drawn} tiles drawn, but the wall only holds {_MAX_REMAINING}")
+    return remaining
 
 
 def _parse_option_tiles(key: str, parse: Callable[[str], list[Tile]], value: str) -> list[Tile]:
@@ -274,9 +318,14 @@ def _apply_round(hand: Hand, _parser: MahjongParser, value: str) -> None:
 
 
 def _apply_remaining(hand: Hand, _parser: MahjongParser, value: str) -> None:
+    # "auto" needs the other players, so parse_hand_block counts it once they're parsed.
+    if _is_auto_remaining(value):
+        return
     remaining = parse_int(value)
     if remaining is None or remaining > _MAX_REMAINING:
-        raise ParseError(f"Invalid remaining value: expected an integer from 0 to {_MAX_REMAINING}, got {value!r}")
+        raise ParseError(
+            f"Invalid remaining value: expected 'auto' or an integer from 0 to {_MAX_REMAINING}, got {value!r}"
+        )
     hand.remaining = remaining
 
 

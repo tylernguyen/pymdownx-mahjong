@@ -362,7 +362,103 @@ class TestRoundAndRemaining:
     def test_invalid_remaining_reports_error(self, value):
         errors = apply_hand_options(Hand(), MahjongParser(), {"remaining": value})
 
-        assert errors == [f"Invalid remaining value: expected an integer from 0 to 70, got {value!r}"]
+        assert errors == [f"Invalid remaining value: expected 'auto' or an integer from 0 to 70, got {value!r}"]
+
+
+def _table(*lines):
+    """Parse a table block with all three other players, plus any ``lines``."""
+    seats = ("shimo.score: 25000", "toimen.score: 25000", "kami.score: 25000")
+    return parse_hand_block("\n".join((*lines, *seats)), MahjongParser())[0]
+
+
+class TestAutoRemaining:
+    def test_fresh_deal(self):
+        assert _table("remaining: auto").remaining == 70
+
+    @pytest.mark.parametrize("value", ["AUTO", "Auto", '"auto"'])
+    def test_auto_is_case_insensitive_and_may_be_quoted(self, value):
+        assert _table(f"remaining: {value}").remaining == 70
+
+    def test_draw_comes_from_the_wall(self):
+        assert _table("remaining: auto", "hand: XXXXXXXXXXXXXz", "draw: 1m").remaining == 69
+
+    def test_discards_come_from_the_wall(self):
+        assert _table("remaining: auto", "discards: 1m 2m 3m").remaining == 67
+
+    def test_every_players_discards_count(self):
+        hand = parse_hand_block(
+            "remaining: auto\ndiscards: 1m\nshimo.discards: 2m 3m\ntoimen.discards: 4m\nkami.discards: 5m 6m 7m",
+            MahjongParser(),
+        )[0]
+
+        assert hand.remaining == 63
+
+    def test_a_call_draws_nothing(self):
+        # Dealer draws and discards (69); the pon takes that tile and the caller discards.
+        hand = parse_hand_block(
+            "remaining: auto\ndiscards: c1z\nshimo.hand: (111z>)\nshimo.discards: 9m\n"
+            "toimen.score: 25000\nkami.score: 25000",
+            MahjongParser(),
+        )[0]
+
+        assert hand.remaining == 69
+
+    def test_a_players_14th_tile_after_a_call_was_not_drawn(self):
+        # Kami draws and discards (69); the caller then holds 14 tiles without having drawn.
+        hand = _table("remaining: auto", "hand: 123456789m11p (111z<)", "kami.discards: c1z")
+
+        assert hand.remaining == 69
+
+    @pytest.mark.parametrize(
+        ("kan", "kami_discards"),
+        [("[1111z]", ""), ("(1111z<)", "c1z")],
+    )
+    def test_kan_replacement_shortens_the_wall(self, kan, kami_discards):
+        # One draw before the kan (the player's own, or kami's called tile), then the replacement.
+        hand = _table("remaining: auto", f"hand: {kan}", "discards: 3z", f"kami.discards: {kami_discards}")
+
+        assert hand.remaining == 68
+
+    def test_added_kan_replacement_shortens_the_wall(self):
+        # Kami's called tile, then the discard after the pon, a draw, the replacement and a discard.
+        hand = _table("remaining: auto", "hand: (111+1z<)", "discards: 2z 3z", "kami.discards: c1z")
+
+        assert hand.remaining == 67
+
+    def test_board_with_calls(self):
+        hand = parse_hand_block(
+            "remaining: auto\n"
+            "hand: 11p888s11133z (640m<)\n"
+            "draw: 1p\n"
+            "discards: 4z 9m t9p 6z t5z 2s t9m 5m 6s tc2p t9p t9p\n"
+            "shimo.hand: (234p<) (777z^)\n"
+            "shimo.discards: 1m 2z 9s 5z 3s 6m 4m c4p 1m t6z 4m t8p t4z\n"
+            "toimen.hand: (456p<)\n"
+            "toimen.discards: 9s 1s 6z 2m 5s t2s t6m 8p 3m t5z 4m 8p 9p\n"
+            "kami.discards: 1m t9s 1z 2z c7z 3m 5p rc6m rt4s t5z t7m t7p t6p",
+            MahjongParser(),
+        )[0]
+
+        assert hand.remaining == 22
+
+    def test_requires_all_four_players(self):
+        with pytest.raises(ParseError, match=r"needs all four players on the table \(missing: toimen, kami\)"):
+            parse_hand_block("remaining: auto\nshimo.score: 25000", MahjongParser())
+
+    def test_rejected_on_a_single_hand(self):
+        with pytest.raises(ParseError, match="missing: shimo, toimen, kami"):
+            parse_hand_block("123m\nremaining: auto", MahjongParser())
+
+    def test_requires_called_discards_to_be_marked(self):
+        with pytest.raises(ParseError, match="found 1 open melds and 0 called discards"):
+            _table("remaining: auto", "hand: (111z>)", "discards: 2z")
+
+    def test_rejects_more_tiles_than_the_wall_holds(self):
+        with pytest.raises(ParseError, match="found 71 tiles drawn"):
+            _table("remaining: auto", f"discards: {'X' * 71}z")
+
+    def test_given_number_is_kept_as_is(self):
+        assert _table("remaining: 5", "discards: 1m").remaining == 5
 
 
 class TestHandLimits:
