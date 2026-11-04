@@ -5,6 +5,7 @@
 ### Changed
 
 - refactor: simplify meld parsing and hand option handling.
+- refactor: skip empty players from their rendered output, removing `_has_content`.
 
 ## [0.3.1] - 2026-11-03
 

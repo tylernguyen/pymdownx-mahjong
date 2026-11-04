@@ -214,9 +214,6 @@ class MahjongRenderer:
             parts.append(f'<div class="{self._table_class}">')
         parts.extend(self._render_dora_row(hand, sprite))
         for seat, player in players:
-            if on_table and seat == "self" and not self._has_content(player, hand, dealer, marker_wind):
-                # A table given only the other players: no empty area for the bottom player.
-                continue
             body = self._render_player(
                 player,
                 sprite,
@@ -224,6 +221,9 @@ class MahjongRenderer:
                 marker=hand.round_wind if marker_wind and player.seat_wind == marker_wind else None,
                 standing=seat != "self",
             )
+            if seat == "self" and not body:
+                # A table given only the other players: no empty area for the bottom player.
+                continue
             if on_table:
                 name = _PLAYER_NAMES[seat]
                 body = [
@@ -254,21 +254,6 @@ class MahjongRenderer:
             parts.extend(self._render_round_info(hand))
         parts.append("</div>")
         return parts
-
-    @staticmethod
-    def _has_content(player: Hand, hand: Hand, dealer: str, marker_wind: str | None) -> bool:
-        """Whether the bottom player has anything to show: tiles, discards, a seat or score,
-        the sticks (as dealer) or the round marker."""
-        return bool(
-            player.closed_tiles
-            or player.melds
-            or player.draw_tile
-            or player.discards
-            or player.seat_wind
-            or player.score is not None
-            or (dealer == "self" and (hand.riichi or hand.honba))
-            or (marker_wind and player.seat_wind == marker_wind)
-        )
 
     @staticmethod
     def _original_dealer_wind(hand: Hand) -> str | None:
