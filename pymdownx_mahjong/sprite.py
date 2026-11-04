@@ -3,6 +3,10 @@
 Each tile's SVG is emitted once per page as a ``<symbol>`` and every tile references it
 with ``<use>``, instead of inlining the full artwork for every tile. Symbol IDs are
 derived from the theme and asset name, so output is deterministic across builds.
+
+Fragment references stay ``xlink:href`` rather than the SVG 2 ``href``: Zensical's blog
+rewrites ``href="#..."`` in post excerpts to point at the post, which would blank the tiles.
+HTML parsers don't need an ``xmlns:xlink`` declaration for it.
 """
 
 from __future__ import annotations
@@ -58,9 +62,6 @@ def load_symbol(asset_name: str, theme: str) -> str:
     # Self-closing root (<svg .../>) is an empty tile face, e.g. the white dragon.
     body = "" if root.group(2) else svg[root.end() : svg.rindex("</svg>")]
 
-    # The root's xmlns:xlink declaration is dropped, so use the SVG 2 href attribute.
-    body = body.replace("xlink:href=", "href=")
-
     # Namespace internal IDs by symbol so they can't collide with other tiles on the page.
     for old_id in set(_RE_ID.findall(body)):
         new_id = f"{sid}-{old_id}"
@@ -111,7 +112,10 @@ class TileSprite:
         sid = symbol_id(asset_name, theme)
         if sid not in self._symbols:
             self._symbols[sid] = load_symbol(asset_name, theme)
-        return f'<svg width="{width}" height="{height}" aria-hidden="true" focusable="false"><use href="#{sid}"/></svg>'
+        return (
+            f'<svg width="{width}" height="{height}" aria-hidden="true" focusable="false">'
+            f'<use xlink:href="#{sid}"/></svg>'
+        )
 
     def render(self) -> str:
         """Render all registered symbols as a hidden SVG, or an empty string if none were used."""

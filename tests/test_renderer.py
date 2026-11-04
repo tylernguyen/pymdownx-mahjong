@@ -139,7 +139,7 @@ class TestSprite:
         html = renderer.render(parse_hand("111m"))
 
         assert html.count('<symbol id="mj-light-1m"') == 1
-        assert html.count('<use href="#mj-light-1m"/>') == 3
+        assert html.count('<use xlink:href="#mj-light-1m"/>') == 3
 
     def test_auto_theme_references_both_themes(self):
         html = MahjongRenderer(theme="auto").render(parse_hand("1m"))
@@ -173,7 +173,13 @@ class TestSprite:
 
         assert len(ids) == len(set(ids))
         assert all(i.startswith(("mj-light-1p", "mj-light-2p")) for i in ids)
-        assert "xlink:href" not in html
+        assert 'xlink:href="#mj-light-1p-' in html
+
+    def test_no_plain_fragment_hrefs(self):
+        """Zensical's blog rewrites href="#..." in excerpts to point at the post, blanking tiles."""
+        html = MahjongRenderer(theme="light").render(parse_hand("1p1s2p"))
+
+        assert ' href="#' not in html
 
 
 class TestAccessibility:
@@ -287,8 +293,8 @@ class TestSticks:
 
         assert 'aria-label="Riichi sticks: 1"' in html
         assert 'aria-label="Honba: 3"' in html
-        assert '<use href="#mj-tenbou-1000"/>' in html
-        assert '<use href="#mj-tenbou-100"/>' in html
+        assert '<use xlink:href="#mj-tenbou-1000"/>' in html
+        assert '<use xlink:href="#mj-tenbou-100"/>' in html
         assert "&times;1" in html
         assert "&times;3" in html
         # Riichi sticks stack above honba.
