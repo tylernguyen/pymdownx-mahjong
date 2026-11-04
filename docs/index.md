@@ -143,8 +143,6 @@ Other players' seat wind are automatically generated from `seat`. Likewise, roun
 
 `remaining: auto` counts the tiles left in the wall from the discards, melds, and kans.
 
-Hovering a tile on a table outlines every visible copy of it, with red 5s counted as 5s. Set `--mahjong-tile-highlight` in your CSS to change the color.
-
 ````markdown
 ```mahjong
 title: M-League 26-27 10/1 Table 1
