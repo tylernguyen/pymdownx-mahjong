@@ -10,6 +10,12 @@
 - fix: an empty Hand() opponent no longer renders an empty wrapper.
 - docs: correct the `MahjongParser` docstring on face-down tiles.
 - test: cover added kan stacking, invalid melds, and `X` tile outside the `z` suit.
+- fix(a11y): announce face-down runs once, name the closed tiles group, mark called and added meld tiles.
+- fix(a11y): keep English labels out of `lang="ja"`, and match `title` to `aria-label`.
+- fix: tooltips on a table beyond the bottom player's pieces.
+- fix: side players' closed tiles overlapping their melds on mobile.
+- feat: align table melds to each player's right edge.
+- chore: drop Python 3.10 support.
 
 ## [0.3.1] - 2026-11-03
 
