@@ -9,6 +9,7 @@
 - refactor: import the extension at the top of superfences.py
 - fix: an empty Hand() opponent no longer renders an empty wrapper.
 - docs: correct the `MahjongParser` docstring on face-down tiles.
+- test: cover added kan stacking, invalid melds, and `X` tile outside the `z` suit.
 
 ## [0.3.1] - 2026-11-03
 

@@ -6,6 +6,7 @@ import pytest
 
 from pymdownx_mahjong.parser import Hand, MahjongParser, Tile, parse_hand
 from pymdownx_mahjong.renderer import MahjongRenderer
+from pymdownx_mahjong.sprite import TileSprite
 
 
 class TestMahjongRenderer:
@@ -74,6 +75,22 @@ class TestMahjongRenderer:
         html = renderer.render(hand)
 
         assert 'class="mahjong-tile-stack"' in html
+
+    @pytest.mark.parametrize(
+        ("notation", "tiles_before_stack"),
+        [("(111+1m<)", 0), ("(111+1m^)", 1), ("(111+1m>)", 2)],
+    )
+    def test_added_kan_stacks_on_the_called_tile(self, notation, tiles_before_stack):
+        html = MahjongRenderer(theme="light").render(parse_hand(notation), sprite=TileSprite())
+
+        stack = re.search(r'<span class="mahjong-tile-stack">(.*?</svg></span>.*?</svg></span>)</span>(.*)', html)
+        assert stack is not None
+        assert html[: stack.start()].count("data-tile=") == tiles_before_stack
+        assert stack.group(2).count("data-tile=") == 2 - tiles_before_stack
+        # Both stacked tiles lie sideways: the called tile and the one added to it.
+        assert stack.group(1).count("data-tile=") == 2
+        assert stack.group(1).count("mahjong-tile-rotated") == 2
+        assert stack.group(1).count("mahjong-tile-added") == 1
 
     def test_render_dora(self):
         renderer = MahjongRenderer()
@@ -148,8 +165,6 @@ class TestSprite:
         assert '<symbol id="mj-dark-1m"' in html
 
     def test_shared_sprite_is_not_embedded(self):
-        from pymdownx_mahjong.sprite import TileSprite
-
         sprite = TileSprite()
         html = MahjongRenderer(theme="light").render(parse_hand("1m2p"), sprite=sprite)
 

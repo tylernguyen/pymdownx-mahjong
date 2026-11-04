@@ -37,6 +37,13 @@ class TestMahjongExtension:
         assert out.count("mahjong-tile-back") == 1
         assert "mahjong-inline" in out
 
+    def test_inline_face_down_outside_z_suit_stays_text(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert("a :Xm: b `mj:Xm` c")
+        assert "mahjong-inline" not in out
+        assert ":Xm:" in out
+        assert "<code>mj:Xm</code>" in out
+
     def test_inline_face_down_mixed_with_tiles(self):
         md = markdown.Markdown(extensions=["pymdownx_mahjong"])
         out = md.convert(":1mXz3m:")

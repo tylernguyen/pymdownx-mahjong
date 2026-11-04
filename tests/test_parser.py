@@ -164,11 +164,19 @@ class TestMeldValidation:
             ("[111m]", "Closed meld must be a kan of 4 tiles"),
             ("[1234m]", "Kan must be 4 identical tiles"),
             ("(12m<)", "Invalid meld size: 2 tiles"),
+            ("(111m]", "Mismatched brackets in meld: (111m]"),
+            ("[1111m)", "Mismatched brackets in meld: [1111m)"),
+            ("(111+m<)", "Added kan notation requires digit after '+': (111+m<)"),
+            ("(888z<)", "Invalid tile: 8z"),
         ],
     )
     def test_invalid_meld_rejected(self, notation, message):
         with pytest.raises(ParseError, match=re.escape(f"{message}")):
             MahjongParser().parse(notation)
+
+    def test_face_down_tiles_not_allowed_in_meld(self):
+        with pytest.raises(ParseError, match=re.escape("Invalid tile notation: (XXXz<)")):
+            MahjongParser().parse("(XXXz<)")
 
     @pytest.mark.parametrize(
         ("notation", "meld_type"),
@@ -184,6 +192,22 @@ class TestMeldValidation:
     )
     def test_valid_meld_accepted(self, notation, meld_type):
         assert MahjongParser().parse(notation).melds[0].meld_type == meld_type
+
+
+class TestFaceDownSuit:
+    @pytest.mark.parametrize("suit", ["m", "p", "s"])
+    def test_face_down_rejected_outside_z_suit(self, suit):
+        with pytest.raises(ParseError, match=f"Invalid tile: X{suit}"):
+            MahjongParser().parse_tiles(f"X{suit}")
+
+    def test_face_down_rejected_outside_z_suit_in_discards(self):
+        with pytest.raises(ParseError, match="Invalid tile: Xm"):
+            MahjongParser().parse_discards("rXm")
+
+    def test_face_down_keeps_discard_markers(self):
+        tile = MahjongParser().parse_discards("rXz")[0]
+        assert tile.is_back is True
+        assert tile.is_rotated is True
 
 
 class TestHandProperties:
