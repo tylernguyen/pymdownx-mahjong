@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1] - 2026-11-03
+
+### Changed
+
+- fix: stricter matching for inline tiles
+- fix: blank tiles in Zensical blog post excerpt
+
 ## [0.3.0] - 2026-11-03
 
 ### Added
