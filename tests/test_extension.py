@@ -44,6 +44,27 @@ class TestMahjongExtension:
         assert out.count('data-tile="1m"') == 1
         assert out.count('data-tile="3m"') == 1
 
+    @pytest.mark.parametrize("text", ["at 10:30m:15", "ratio 1:2m:3", "a:1m:", ":1m:b", ":1m:2m:"])
+    def test_inline_tiles_not_matched_inside_text(self, text):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert(text)
+        assert "mahjong-inline" not in out
+        assert text in out
+
+    @pytest.mark.parametrize(
+        ("text", "count"),
+        [
+            (":1m:", 1),
+            ("(:1m:), :2p:.", 2),
+            (":1m::2m:", 2),
+            ("**:1m:**", 1),
+            ("手牌:1m:です", 1),
+        ],
+    )
+    def test_inline_tiles_matched_beside_non_alphanumerics(self, text, count):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        assert md.convert(text).count('class="mahjong-inline"') == count
+
     def test_double_backtick_escapes_mj_code(self):
         md = markdown.Markdown(extensions=["pymdownx_mahjong"])
         out = md.convert("``mj:123456789m``")

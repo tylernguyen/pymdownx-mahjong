@@ -17,8 +17,9 @@ if TYPE_CHECKING:
     from .sprite import TileSprite
 
 # Matches :123m:, :1z:, :Xz:, :1234567Xz: etc. — rank+suit groups where a rank is a
-# digit or X (X = a face-down tile, e.g. Xz).
-INLINE_TILE_PATTERN: Final[str] = r":((?:[0-9X]+[mpsz])+):"
+# digit or X (X = a face-down tile, e.g. Xz). An ASCII letter or digit on either side means
+# it's ordinary text like 10:30m:15, not tiles; \w would also reject tiles beside CJK text.
+INLINE_TILE_PATTERN: Final[str] = r"(?<![0-9A-Za-z]):((?:[0-9X]+[mpsz])+):(?![0-9A-Za-z])"
 # Matches `mj:1112345678999p` — a single-backtick code span prefixed with mj: for whole
 # hands. The lookbehind/lookahead require a lone backtick on each side, so doubling the
 # backticks (``mj:...``) escapes it and renders a literal code span instead.
