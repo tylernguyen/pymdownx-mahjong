@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import itertools
 import re
 from typing import Final
 
@@ -305,14 +306,14 @@ class MahjongRenderer:
             name = f"{hand.round_wind.capitalize()} {hand.round_number}"
             kanji = f"{_SEAT_WIND_KANJI[hand.round_wind]}{_ROUND_NUMBER_KANJI[hand.round_number]}局"
             parts.append(
-                f'<span class="mahjong-round" lang="ja" role="img" aria-label="Round: {name}" title="{name}">'
-                f"{kanji}</span>"
+                f'<span class="mahjong-round" role="img" aria-label="Round: {name}" title="Round: {name}">'
+                f'<span lang="ja">{kanji}</span></span>'
             )
         if hand.remaining is not None:
             label = f"{hand.remaining} tiles remaining"
             parts.append(
-                f'<span class="mahjong-remaining" lang="ja" role="img" aria-label="{label}" title="{label}">'
-                f"残 {hand.remaining}</span>"
+                f'<span class="mahjong-remaining" role="img" aria-label="{label}" title="{label}">'
+                f'<span lang="ja">残 {hand.remaining}</span></span>'
             )
         parts.append("</span>")
         return parts
@@ -322,9 +323,11 @@ class MahjongRenderer:
         and draw tiles standing up (melds' face-down tiles stay lying down)."""
         parts = ['<div class="mahjong-hand-row">']
 
-        parts.append('<div class="mahjong-hand-left">')
+        # Name the group so the closed tiles are distinguishable from the draw and melds.
+        group_attrs = ' role="group" aria-label="Hand"' if hand.closed_tiles else ""
+        parts.append(f'<div class="mahjong-hand-left"{group_attrs}>')
         parts.append('<div class="mahjong-tiles">')
-        parts.extend(self._render_tile(tile, sprite, standing=standing) for tile in hand.closed_tiles)
+        parts.extend(self._render_closed_tiles(hand.closed_tiles, sprite, standing))
         parts.append("</div>")
         parts.append("</div>")
 
@@ -346,6 +349,28 @@ class MahjongRenderer:
         parts.append("</div>")
         return parts
 
+    def _render_closed_tiles(self, tiles: list[Tile], sprite: TileSprite, standing: bool) -> list[str]:
+        """Render closed tiles, with each run of face-down tiles announced once."""
+        parts: list[str] = []
+        for is_back, run in itertools.groupby(tiles, key=lambda tile: tile.is_back):
+            if is_back:
+                parts.extend(self._render_back_run(sum(1 for _ in run), standing))
+            else:
+                parts.extend(self._render_tile(tile, sprite, standing=standing) for tile in run)
+        return parts
+
+    def _render_back_run(self, count: int, standing: bool) -> list[str]:
+        """Render a run of face-down tiles: the first carries the count for screen readers, so
+        a hidden hand is one stop rather than 13, and the rest are hidden from them. No wrapper,
+        as the CSS relies on tiles being direct children of their row."""
+        if count == 1:
+            return [self._STANDING_BACK_TILE_HTML if standing else self._BACK_TILE_HTML]
+        classes = "mahjong-tile mahjong-tile-back" + (" mahjong-tile-standing" if standing else "")
+        label = f"{count} face-down tiles"
+        first = f'<span class="{classes}" role="img" aria-label="{label}" title="{label}"></span>'
+        rest = f'<span class="{classes}" aria-hidden="true" title="{label}"></span>'
+        return [first, *[rest] * (count - 1)]
+
     def _render_discards(self, tiles: list[Tile], sprite: TileSprite) -> list[str]:
         """Render a discard pile: two rows of up to 6 tiles, then a row with the rest."""
         rows = [
@@ -357,7 +382,7 @@ class MahjongRenderer:
         for row in rows:
             if row:
                 parts.append('<div class="mahjong-discard-row">')
-                parts.extend(self._render_tile(tile, sprite, discard=True) for tile in row)
+                parts.extend(self._render_tile(tile, sprite, note=self._discard_note(tile)) for tile in row)
                 parts.append("</div>")
         parts.append("</div>")
         return parts
@@ -397,10 +422,10 @@ class MahjongRenderer:
         """Render the seat wind kanji and score at the left of the status row."""
         parts = ['<div class="mahjong-seat">']
         if hand.seat_wind:
-            name = hand.seat_wind.capitalize()
+            label = f"Seat Wind: {hand.seat_wind.capitalize()}"
             parts.append(
-                f'<span class="mahjong-seat-wind" lang="ja" role="img" '
-                f'aria-label="Seat wind: {name}" title="{name}">{_SEAT_WIND_KANJI[hand.seat_wind]}</span>'
+                f'<span class="mahjong-seat-wind" role="img" aria-label="{label}" title="{label}">'
+                f'<span lang="ja">{_SEAT_WIND_KANJI[hand.seat_wind]}</span></span>'
             )
         if hand.score is not None:
             parts.append(
@@ -445,8 +470,9 @@ class MahjongRenderer:
         parts.append("</div>")
         return parts
 
-    def _render_tile(self, tile: Tile, sprite: TileSprite, discard: bool = False, standing: bool = False) -> str:
-        """Render a single tile as HTML with an SVG referencing the sprite."""
+    def _render_tile(self, tile: Tile, sprite: TileSprite, note: str = "", standing: bool = False) -> str:
+        """Render a single tile as HTML with an SVG referencing the sprite; ``note`` is
+        appended to its accessible name."""
         if tile.is_back:
             return self._STANDING_BACK_TILE_HTML if standing else self._BACK_TILE_HTML
 
@@ -470,7 +496,7 @@ class MahjongRenderer:
             classes.append(f"mahjong-theme-{self.theme}")
 
         class_str = " ".join(classes)
-        label = html.escape(info.display_name + (self._discard_note(tile) if discard else ""), quote=True)
+        label = html.escape(info.display_name + note, quote=True)
         if self.theme == "auto":
             svg_content = (
                 f'<span class="mahjong-tile-light">{sprite.use(info.asset_name, "light")}</span>'
@@ -495,6 +521,14 @@ class MahjongRenderer:
             notes.append("called")
         return f" ({', '.join(notes)})" if notes else ""
 
+    @staticmethod
+    def _meld_note(tile: Tile) -> str:
+        """Describe a meld tile's sideways position for its accessible name: the tile added to
+        a kan, or the tile called from another player."""
+        if tile.is_added:
+            return " (added)"
+        return " (called)" if tile.is_rotated else ""
+
     def _render_meld(self, meld: Meld, sprite: TileSprite) -> str:
         """Render a meld (called tile group)."""
         state = "open" if meld.is_open else "closed"
@@ -512,7 +546,7 @@ class MahjongRenderer:
 
     def _render_added_kan(self, meld: Meld, sprite: TileSprite) -> list[str]:
         """Render an added kan (shouminkan) — stacked pair position depends on source."""
-        t = [self._render_tile(tile, sprite) for tile in meld.tiles]
+        t = [self._render_tile(tile, sprite, note=self._meld_note(tile)) for tile in meld.tiles]
         stack_open = '<span class="mahjong-tile-stack">'
         if meld.tiles[0].is_rotated:
             return [stack_open, t[0], t[3], "</span>", t[1], t[2]]
@@ -532,6 +566,6 @@ class MahjongRenderer:
                 else:
                     parts.append(self._render_tile(tile, sprite))
             else:
-                parts.append(self._render_tile(tile, sprite))
+                parts.append(self._render_tile(tile, sprite, note=self._meld_note(tile)))
 
         return parts

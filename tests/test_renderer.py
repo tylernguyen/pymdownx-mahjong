@@ -228,6 +228,78 @@ class TestAccessibility:
         assert 'aria-label="Mahjong hand"' in renderer.render(parse_hand("1m"))
         assert 'aria-label="Mahjong hand"' not in renderer.render(parse_hand("1m"), title="T")
 
+    def test_face_down_run_announced_once(self):
+        html = MahjongRenderer().render(parse_hand("XXXz"))
+
+        assert html.count('role="img"') == 1
+        assert 'role="img" aria-label="3 face-down tiles" title="3 face-down tiles"' in html
+        assert html.count('aria-hidden="true" title="3 face-down tiles"') == 2
+        assert html.count("mahjong-tile-back") == 3
+
+    def test_single_face_down_tile_is_singular(self):
+        html = MahjongRenderer().render(parse_hand("Xz"))
+
+        assert 'aria-label="Face-down tile"' in html
+        assert "face-down tiles" not in html
+
+    def test_table_hidden_hand_is_one_stop(self):
+        html = _block_html("1m\ntoimen.hand:")
+
+        assert html.count("mahjong-tile-standing") == 13
+        assert html.count('aria-label="13 face-down tiles"') == 1
+
+    def test_face_down_runs_split_by_face_up_tiles(self):
+        hand = parse_hand("XXz")
+        hand.closed_tiles.insert(1, Tile(suit="m", number=1))
+        html = MahjongRenderer().render(hand)
+
+        assert html.count('aria-label="Face-down tile"') == 2
+        assert 'aria-label="1 Man"' in html
+
+    @pytest.mark.parametrize("theme", ["light", "dark", "auto"])
+    def test_lang_excludes_english_labels(self, theme):
+        html = _block_html("1m\nseat: south\nround: E1\nremaining: 35", theme=theme)
+
+        assert '<span lang="ja">南</span>' in html
+        assert '<span lang="ja">東一局</span>' in html
+        assert '<span lang="ja">残 35</span>' in html
+        assert not re.search(r'<span [^>]*lang="ja"[^>]*aria-label', html)
+
+    def test_title_matches_label(self):
+        html = _block_html("1m\nseat: south\nround: E1")
+
+        assert 'aria-label="Seat Wind: South" title="Seat Wind: South"' in html
+        assert 'aria-label="Round: East 1" title="Round: East 1"' in html
+
+    def test_closed_tiles_group_labelled(self):
+        html = MahjongRenderer().render(parse_hand("123m"))
+
+        assert '<div class="mahjong-hand-left" role="group" aria-label="Hand">' in html
+
+    def test_no_closed_tiles_group_without_closed_tiles(self):
+        html = MahjongRenderer().render(parse_hand("(111p^)"))
+
+        assert 'aria-label="Hand"' not in html
+
+    def test_called_meld_tile_labelled(self):
+        html = MahjongRenderer().render(parse_hand("(123m<)"))
+
+        assert 'aria-label="1 Man (called)"' in html
+        assert 'aria-label="2 Man"' in html
+        assert 'aria-label="3 Man"' in html
+
+    def test_added_kan_tiles_labelled(self):
+        html = MahjongRenderer().render(parse_hand("(111+1z<)"))
+
+        assert html.count('aria-label="East (called)"') == 1
+        assert html.count('aria-label="East (added)"') == 1
+        assert html.count('aria-label="East"') == 2
+
+    def test_closed_kan_tiles_have_no_note(self):
+        html = MahjongRenderer().render(parse_hand("[1111z]"))
+
+        assert html.count('aria-label="East"') == 2
+
 
 class TestRendererValidation:
     def test_invalid_theme(self):
@@ -354,7 +426,7 @@ class TestSeat:
     def test_seat_wind_and_score(self):
         html = self._render(seat_wind="south", score=25000)
 
-        assert 'aria-label="Seat wind: South"' in html
+        assert 'aria-label="Seat Wind: South"' in html
         assert ">南</span>" in html
         assert (
             '<span class="mahjong-score" role="img" aria-label="Score: 25000">'
@@ -518,7 +590,7 @@ class TestTable:
         dora_row = html[html.index('<div class="mahjong-dora-row">') : html.index("mahjong-player-self")]
 
         assert '<div class="mahjong-dora"' in dora_row
-        assert '<span class="mahjong-round" lang="ja" role="img" aria-label="Round: South 2"' in dora_row
+        assert '<span class="mahjong-round" role="img" aria-label="Round: South 2"' in dora_row
         assert ">南二局</span>" in dora_row
         assert ">残 35</span>" in dora_row
         assert 'aria-label="35 tiles remaining"' in dora_row
@@ -527,7 +599,7 @@ class TestTable:
         html = _block_html(self.BLOCK)
         shimo = html[html.index("mahjong-player-shimo") : html.index("mahjong-player-toimen")]
 
-        assert 'aria-label="Seat wind: North"' in shimo
+        assert 'aria-label="Seat Wind: North"' in shimo
         assert 'aria-label="Score: 50900"' in shimo
 
     def test_sticks_with_dealer(self):
@@ -554,7 +626,7 @@ class TestTable:
         toimen = html[html.index("mahjong-player-toimen") :]
 
         assert '<div class="mahjong-status"><div class="mahjong-sticks">' not in toimen
-        assert 'aria-label="Seat wind: East"' in toimen
+        assert 'aria-label="Seat Wind: East"' in toimen
 
     def test_face_down_opponent_hand(self):
         html = _block_html(self.BLOCK)
