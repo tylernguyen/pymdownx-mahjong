@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- feat: `remaining: auto` counts the tiles left in the wall on a full table.
+- feat: hovering a tile on a table highlights every visible copy.
+
 ### Changed
 
 - fix: keep pieces from touching on mobile, especially on a table.
