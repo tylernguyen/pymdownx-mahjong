@@ -67,9 +67,10 @@ _PLAYER_NAMES: Final[dict[str, str]] = {
     "kami": "Kamicha (left)",
 }
 
-# Intrinsic size of the stick artwork (65.45 x 7.3 mm); CSS sets the rendered size.
+# Intrinsic size of the stick artwork (65.45 x 7.3 mm, plus a 0.5 mm margin all round so its
+# outline is never clipped); CSS sets the rendered size.
 _STICK_WIDTH: Final = 72
-_STICK_HEIGHT: Final = 8
+_STICK_HEIGHT: Final = 9
 
 # Round markers kept by the original dealer: round wind -> asset (assets/<name>.png), and the
 # artwork's intrinsic size; CSS sets the rendered size. West and north rounds have none.

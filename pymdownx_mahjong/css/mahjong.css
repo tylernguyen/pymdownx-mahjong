@@ -429,7 +429,15 @@
     display: block;
     width: calc(var(--mahjong-tile-width) * 2.75);
     height: auto;
-    aspect-ratio: 65.45 / 7.3;
+    /* Matches the artwork's viewBox, which keeps a margin so its outline is never clipped. */
+    aspect-ratio: 66.45 / 8.3;
+}
+
+/* The status row's zoom can round an SVG's clip area smaller than its box, which cuts off
+   the outline, so don't clip the sticks. */
+.mahjong-stick svg,
+symbol[id^="mj-tenbou-"] {
+    overflow: visible;
 }
 
 .mahjong-stick-count {
@@ -1102,7 +1110,7 @@
 
     /* Slimmer sticks leave the third discard row room beside them. */
     .mahjong-table .mahjong-stick svg {
-        width: calc(var(--mahjong-tile-width) * 1.75);
+        width: calc(var(--mahjong-tile-width) * 2.25);
     }
 
     /* Auto margins collapse when a hand fills its row, so keep a minimum between sections.
