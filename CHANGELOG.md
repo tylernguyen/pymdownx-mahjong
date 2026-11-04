@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- feat: `round: S2-1` sets the honba as part of the round.
+
 ### Changed
 
 - fix: infer seat winds from any player and reject winds out of turn order.
