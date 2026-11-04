@@ -221,7 +221,7 @@ class MahjongRenderer:
                 marker=hand.round_wind if marker_wind and player.seat_wind == marker_wind else None,
                 standing=seat != "self",
             )
-            if seat == "self" and not body:
+            if not body:
                 # A table given only the other players: no empty area for the bottom player.
                 continue
             if on_table:
