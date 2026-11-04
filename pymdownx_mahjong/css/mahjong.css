@@ -657,6 +657,13 @@
     display: grid;
     justify-content: center;
     align-content: end;
+    /* Each player's box covers the whole table, so let the pointer through to whatever is
+       beneath it; only the labelled pieces take it back, keeping their tooltips reachable. */
+    pointer-events: none;
+}
+
+.mahjong-player :is([role="img"], [title]) {
+    pointer-events: auto;
 }
 
 .mahjong-player-shimo {
