@@ -137,9 +137,9 @@ title: Daisuushii Tsuuiisou
 
 ### Additional Block Syntax
 
-To render a complete board-state, `hand`, `discard`, and `score` can be affixed with `kami.`, `shimo.`, and `toimen.`;
+To render a complete board-state, `hand`, `discards`, and `score` can be affixed with `kami.`, `shimo.`, and `toimen.`;
 
-Other players' seat wind are automatically generated from `seat`. Likewise, round wind marker placement is generated from `seat` and `round`.
+Other players' seat wind are automatically generated from any `seat`. Likewise, round wind marker placement is generated from `seat` and `round`.
 
 `remaining: auto` counts the tiles left in the wall from the discards, melds, and kans.
 
