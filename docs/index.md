@@ -96,7 +96,14 @@ For example, ``mj:123456789m`` will render `mj:123456789m` inline.
 
 ## Block Syntax
 
-Hands are written in a fenced codeblock, with additional YAML-like options for dora, round (`round: S2`), tiles remaining (`remaining: 35`), riichi and honba sticks, seat wind, score, and title.
+Hands are written in a `mahjong` fenced code block, with additional options to convey info.
+
+- default hand can be written without an option but also accepts `hand` as an option.
+- `dora`: renders dora indicator(s) as a dead-wall block.
+- `riichi` and `honba`: indicate current repeat and riichi sticks in the pot.
+- `remaining`: indicate live tiles remaining in the wall.
+- `seat` and `score`: wind marker and score.
+- `title`: title for the rendered figure.
 
 ````markdown
 ```mahjong
@@ -128,7 +135,11 @@ seat: east
 title: Daisuushii Tsuuiisou
 ```
 
-### Board State
+### Additional Block Syntax
+
+To render a complete board-state, `hand`, `discard`, and `score` can be affixed with `kami.`, `shimo.`, and `toimen.`;
+
+Other players' seat wind are automatically generated from `seat`. Likewise, round wind marker placement is generated from `seat` and `round`.
 
 ````markdown
 ```mahjong
