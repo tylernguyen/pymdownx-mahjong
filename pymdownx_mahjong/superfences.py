@@ -6,14 +6,12 @@ Provides custom fence formatter and validator for use with pymdownx.superfences.
 from __future__ import annotations
 
 from html import escape
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from .extension import MahjongExtension
 from .parser import MahjongParser, ParseError
 from .renderer import MahjongRenderer
 from .utils import parse_hand_block
-
-if TYPE_CHECKING:
-    from .extension import MahjongExtension
 
 
 class _SuperfencesState:
@@ -104,8 +102,6 @@ def superfences_formatter(
 
 def _find_extension(md: Any) -> MahjongExtension | None:
     """Return the MahjongExtension registered on ``md``, if any."""
-    from .extension import MahjongExtension  # lazy import avoids circular dependency
-
     for ext in getattr(md, "registeredExtensions", ()):
         if isinstance(ext, MahjongExtension):
             return ext
