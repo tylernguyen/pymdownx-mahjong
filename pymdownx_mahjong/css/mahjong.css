@@ -1035,7 +1035,7 @@ symbol[id^="mj-marker-"] {
 
 /* NOTE Same-tile highlight - hovering a tile on a table outlines every visible copy, with a
    red 5 counting as a 5. The outline sits inside the tile's face, where its edge and its
-   neighbors can't cover it, and called tiles regain full opacity. */
+   neighbors can't cover it. */
 .mahjong-table:has([data-tile="1m"]:hover) [data-tile="1m"],
 .mahjong-table:has([data-tile="2m"]:hover) [data-tile="2m"],
 .mahjong-table:has([data-tile="3m"]:hover) [data-tile="3m"],
@@ -1070,7 +1070,6 @@ symbol[id^="mj-marker-"] {
 .mahjong-table:has([data-tile="5z"]:hover) [data-tile="5z"],
 .mahjong-table:has([data-tile="6z"]:hover) [data-tile="6z"],
 .mahjong-table:has([data-tile="7z"]:hover) [data-tile="7z"] {
-    opacity: 1;
     outline: 2px solid var(--mahjong-tile-highlight);
     outline-offset: -2px;
 }
