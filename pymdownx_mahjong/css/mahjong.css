@@ -655,7 +655,7 @@
     position: absolute;
     inset: var(--mahjong-table-inset, 0);
     display: grid;
-    justify-content: center;
+    grid-template-columns: minmax(0, 1fr);
     align-content: end;
     /* Each player's box covers the whole table, so let the pointer through to whatever is
        beneath it; only the labelled pieces take it back, keeping their tooltips reachable. */
@@ -701,13 +701,38 @@
     margin: 0;
 }
 
-.mahjong-table .mahjong-hand-row {
-    justify-content: center;
+/* The status row keeps to the middle of the player's edge, clear of the corners (14 tiles
+   wide, undoing the row's zoom). */
+.mahjong-player > .mahjong-status {
+    justify-self: center;
+    width: calc(var(--mahjong-tile-width) * 14 / 0.9);
 }
 
-.mahjong-table .mahjong-hand-melds,
+.mahjong-table .mahjong-hand-row {
+    justify-content: center;
+    column-gap: var(--mahjong-hand-section-gap, calc(var(--mahjong-meld-gap) * 0.75));
+}
+
+.mahjong-table .mahjong-hand-draw,
 .mahjong-table .mahjong-hand-row:has(.mahjong-hand-melds) .mahjong-hand-draw {
-    margin-left: calc(var(--mahjong-meld-gap) * 0.75);
+    margin-left: 0;
+}
+
+/* Melds sit at the player's right corner, with the closed tiles centered in the space left
+   of them, which also keeps those tiles out of the previous player's meld corner. */
+.mahjong-table .mahjong-hand-row:has(.mahjong-hand-melds) > .mahjong-hand-left {
+    margin-left: auto;
+}
+
+.mahjong-table .mahjong-hand-melds {
+    margin-right: calc(var(--mahjong-tile-width) * 0.5);
+}
+
+/* The side players' tile edges point along their hand row, and keep their full depth as
+   the tiles shrink, so the gap between sections must always clear an edge. */
+.mahjong-player-shimo,
+.mahjong-player-kami {
+    --mahjong-hand-section-gap: max(calc(var(--mahjong-meld-gap) * 0.75), calc(var(--mahjong-tile-depth) + 0.25rem));
 }
 
 /* Table text already scales with the tiles, so skip the breakpoints' extra shrinking. */
