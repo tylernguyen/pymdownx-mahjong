@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- refactor: simplify meld parsing and hand option handling.
+
 ## [0.3.1] - 2026-11-03
 
 ### Changed

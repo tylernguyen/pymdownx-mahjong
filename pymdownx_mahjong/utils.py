@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any, Final
 
 from .parser import (
@@ -11,8 +12,10 @@ from .parser import (
     Hand,
     MahjongParser,
     ParseError,
+    Tile,
     face_down_tiles,
     parse_int,
+    raise_if_errors,
 )
 
 _OPTION_KEYS: Final[tuple[str, ...]] = (
@@ -129,8 +132,7 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
         option_errors.extend(f"{seat}: {error}" for error in apply_hand_options(opponent, parser, seat_options))
         hand.opponents[seat] = opponent
 
-    if option_errors:
-        raise ParseError("; ".join(option_errors))
+    raise_if_errors(option_errors)
 
     if hand.opponents:
         _assign_seat_winds(hand)
@@ -196,79 +198,110 @@ def _assign_seat_winds(hand: Hand) -> None:
         raise ParseError(f"Seat wind given to more than one player: {'; '.join(duplicates)}")
 
 
+def _parse_option_tiles(key: str, parse: Callable[[str], list[Tile]], value: str) -> list[Tile]:
+    """Parse an option's tile notation, naming the option in any error.
+
+    Raises:
+        ParseError: If the notation is invalid
+    """
+    try:
+        return parse(value)
+    except ParseError as e:
+        raise ParseError(f"Invalid {key} notation: {e}") from e
+
+
+def _parse_count(key: str, value: str) -> int:
+    """Parse an option's non-negative count, naming the option in any error.
+
+    Raises:
+        ParseError: If the value isn't a non-negative integer
+    """
+    count = parse_int(value)
+    if count is None:
+        raise ParseError(f"Invalid {key} value: expected a non-negative integer, got {value!r}")
+    return count
+
+
+def _apply_dora(hand: Hand, parser: MahjongParser, value: str) -> None:
+    tiles = _parse_option_tiles("dora", parser.parse_tiles, value)
+    if len(tiles) > MAX_DORA_INDICATORS:
+        raise ParseError(f"Invalid dora notation: expected at most {MAX_DORA_INDICATORS} tiles, got {len(tiles)}")
+    hand.dora_indicators = tiles
+
+
+def _apply_draw(hand: Hand, parser: MahjongParser, value: str) -> None:
+    tiles = _parse_option_tiles("draw", parser.parse_tiles, value)
+    if len(tiles) > 1:
+        raise ParseError(f"Invalid draw notation: expected 1 tile, got {len(tiles)}")
+    if tiles:
+        hand.draw_tile = tiles[0]
+
+
+def _apply_discards(hand: Hand, parser: MahjongParser, value: str) -> None:
+    hand.discards = _parse_option_tiles("discards", parser.parse_discards, value)
+
+
+def _apply_honba(hand: Hand, _parser: MahjongParser, value: str) -> None:
+    hand.honba = _parse_count("honba", value)
+
+
+def _apply_riichi(hand: Hand, _parser: MahjongParser, value: str) -> None:
+    hand.riichi = _parse_count("riichi", value)
+
+
+def _apply_seat(hand: Hand, _parser: MahjongParser, value: str) -> None:
+    wind = _SEAT_VALUES.get(value.lower())
+    if not wind:
+        raise ParseError(f"Invalid seat value: expected one of east, south, west, north (or E, S, W, N), got {value!r}")
+    hand.seat_wind = wind
+
+
+def _apply_score(hand: Hand, _parser: MahjongParser, value: str) -> None:
+    score = parse_int(value, signed=True)
+    if score is None:
+        raise ParseError(f"Invalid score value: expected an integer, got {value!r}")
+    hand.score = score
+
+
+def _apply_round(hand: Hand, _parser: MahjongParser, value: str) -> None:
+    # "S2", "south 2" or "south2": a wind, then a hand number 1-4.
+    wind_part, number_part = value[:-1].strip().lower(), value[-1:]
+    wind = _SEAT_VALUES.get(wind_part)
+    if not (wind and number_part and number_part in "1234"):
+        raise ParseError(f"Invalid round value: expected a wind and a number 1-4 (e.g. E1, south 2), got {value!r}")
+    hand.round_wind = wind
+    hand.round_number = int(number_part)
+
+
+def _apply_remaining(hand: Hand, _parser: MahjongParser, value: str) -> None:
+    remaining = parse_int(value)
+    if remaining is None or remaining > _MAX_REMAINING:
+        raise ParseError(f"Invalid remaining value: expected an integer from 0 to {_MAX_REMAINING}, got {value!r}")
+    hand.remaining = remaining
+
+
+# How each option is applied to a hand, in the order their errors are reported.
+_OPTION_APPLIERS: Final[dict[str, Callable[[Hand, MahjongParser, str], None]]] = {
+    "dora": _apply_dora,
+    "draw": _apply_draw,
+    "discards": _apply_discards,
+    "honba": _apply_honba,
+    "riichi": _apply_riichi,
+    "seat": _apply_seat,
+    "score": _apply_score,
+    "round": _apply_round,
+    "remaining": _apply_remaining,
+}
+
+
 def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any]) -> list[str]:
     """Apply parsed options (dora, draw, discards, honba, riichi, seat, score, round, remaining) to a hand.
     Returns error messages."""
     errors: list[str] = []
-    if "dora" in options:
-        try:
-            tiles = parser.parse_tiles(options["dora"])
-            if len(tiles) > MAX_DORA_INDICATORS:
-                errors.append(f"Invalid dora notation: expected at most {MAX_DORA_INDICATORS} tiles, got {len(tiles)}")
-            else:
-                hand.dora_indicators = tiles
-        except ParseError as e:
-            errors.append(f"Invalid dora notation: {e}")
-
-    if "draw" in options:
-        try:
-            tiles = parser.parse_tiles(options["draw"])
-            if len(tiles) > 1:
-                errors.append(f"Invalid draw notation: expected 1 tile, got {len(tiles)}")
-            elif tiles:
-                hand.draw_tile = tiles[0]
-        except ParseError as e:
-            errors.append(f"Invalid draw notation: {e}")
-
-    if "discards" in options:
-        try:
-            hand.discards = parser.parse_discards(options["discards"])
-        except ParseError as e:
-            errors.append(f"Invalid discards notation: {e}")
-
-    for key in ("honba", "riichi"):
+    for key, apply_option in _OPTION_APPLIERS.items():
         if key in options:
-            count = parse_int(options[key])
-            if count is not None:
-                setattr(hand, key, count)
-            else:
-                errors.append(f"Invalid {key} value: expected a non-negative integer, got {options[key]!r}")
-
-    if "seat" in options:
-        value = options["seat"]
-        wind = _SEAT_VALUES.get(value.lower())
-        if wind:
-            hand.seat_wind = wind
-        else:
-            errors.append(
-                f"Invalid seat value: expected one of east, south, west, north (or E, S, W, N), got {value!r}"
-            )
-
-    if "score" in options:
-        score = parse_int(options["score"], signed=True)
-        if score is not None:
-            hand.score = score
-        else:
-            errors.append(f"Invalid score value: expected an integer, got {options['score']!r}")
-
-    if "round" in options:
-        value = options["round"]
-        # "S2", "south 2" or "south2": a wind, then a hand number 1-4.
-        wind_part, number_part = value[:-1].strip().lower(), value[-1:]
-        wind = _SEAT_VALUES.get(wind_part)
-        if wind and number_part and number_part in "1234":
-            hand.round_wind = wind
-            hand.round_number = int(number_part)
-        else:
-            errors.append(f"Invalid round value: expected a wind and a number 1-4 (e.g. E1, south 2), got {value!r}")
-
-    if "remaining" in options:
-        remaining = parse_int(options["remaining"])
-        if remaining is not None and remaining <= _MAX_REMAINING:
-            hand.remaining = remaining
-        else:
-            errors.append(
-                f"Invalid remaining value: expected an integer from 0 to {_MAX_REMAINING}, got {options['remaining']!r}"
-            )
-
+            try:
+                apply_option(hand, parser, options[key])
+            except ParseError as e:
+                errors.append(str(e))
     return errors

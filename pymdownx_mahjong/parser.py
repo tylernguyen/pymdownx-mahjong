@@ -43,13 +43,6 @@ OPPONENT_SEATS: Final = ("shimo", "toimen", "kami")
 MAX_DORA_INDICATORS: Final = 5
 
 
-_SOURCE_MAP: Final[dict[str, MeldSource]] = {
-    "<": MeldSource.LEFT,
-    "^": MeldSource.ACROSS,
-    ">": MeldSource.RIGHT,
-}
-
-
 @dataclass
 class Tile:
     """Represents a single mahjong tile."""
@@ -135,8 +128,19 @@ def _rank(tile: Tile) -> int:
     return 5 if tile.number == 0 else tile.number
 
 
+def _strip_separators(notation: str) -> str:
+    """Remove the characters allowed between tiles for readability."""
+    return notation.replace("_", "").replace(" ", "").replace("|", "")
+
+
 class ParseError(Exception):
     """Exception raised when parsing fails."""
+
+
+def raise_if_errors(errors: list[str]) -> None:
+    """Raise a ParseError combining ``errors``, if there are any."""
+    if errors:
+        raise ParseError("; ".join(errors))
 
 
 class MahjongParser:
@@ -159,7 +163,9 @@ class MahjongParser:
     _DISCARD_PATTERN: Final[re.Pattern[str]] = re.compile(r"((?:[rtc]*[0-9X])+)([mpsz])")
 
     # For added kan, use + to mark the added tile: (111+1m<)
-    MELD_PATTERN: Final[re.Pattern[str]] = re.compile(r"(\[|\()([0-9]+)(\+)?([0-9])?([mpsz])([<^>])?(\]|\))")
+    MELD_PATTERN: Final[re.Pattern[str]] = re.compile(
+        r"(?P<open>\[|\()(?P<base>[0-9]+)(?P<plus>\+)?(?P<added>[0-9])?(?P<suit>[mpsz])(?P<source>[<^>])?(?P<close>\]|\))"
+    )
 
     def parse(self, notation: str) -> Hand:
         """Parse a hand notation string into a Hand object.
@@ -177,7 +183,7 @@ class MahjongParser:
 
         # Remove meld notation to get closed tiles
         closed_part = self.MELD_PATTERN.sub("", notation).strip()
-        number = parse_int(closed_part.replace("_", "").replace(" ", "").replace("|", ""))
+        number = parse_int(_strip_separators(closed_part))
         if number is not None:
             # Digits with no suit: most likely a forgotten suit.
             errors.append(f"Invalid tile notation: {number} (did you forget a suit?)")
@@ -186,8 +192,7 @@ class MahjongParser:
 
         self._validate_tile_counts(hand, errors)
 
-        if errors:
-            raise ParseError("; ".join(errors))
+        raise_if_errors(errors)
 
         return hand
 
@@ -199,8 +204,7 @@ class MahjongParser:
         """
         errors: list[str] = []
         tiles = self._parse_tiles(notation, errors)
-        if errors:
-            raise ParseError("; ".join(errors))
+        raise_if_errors(errors)
         return tiles
 
     def parse_discards(self, notation: str) -> list[Tile]:
@@ -214,8 +218,7 @@ class MahjongParser:
         """
         errors: list[str] = []
         tiles = self._parse_tiles(notation, errors, discards=True)
-        if errors:
-            raise ParseError("; ".join(errors))
+        raise_if_errors(errors)
         riichi = next((i for i, tile in enumerate(tiles) if tile.is_rotated), None)
         if riichi is not None:
             for tile in tiles[riichi + 1 :]:
@@ -227,7 +230,7 @@ class MahjongParser:
         tiles: list[Tile] = []
         pattern = self._DISCARD_PATTERN if discards else self._TILE_OR_BACK_PATTERN
 
-        clean = notation.replace("_", "").replace(" ", "").replace("|", "")
+        clean = _strip_separators(notation)
         if not clean:
             return tiles
 
@@ -249,22 +252,10 @@ class MahjongParser:
                     markers += rank
                     continue
 
-                if rank == "X":  # face-down tile — only valid with the z suit (Xz)
-                    if suit != "z":
-                        errors.append(f"Invalid tile: X{suit}")
-                    else:
-                        tile = face_down_tiles(1)[0]
-                        self._apply_markers(tile, markers)
-                        tiles.append(tile)
-                    markers = ""
-                    continue
-
-                number = int(rank)
-
-                if get_tile_info(suit, number) is None:
-                    errors.append(f"Invalid tile: {number}{suit}")
+                tile = self._make_tile(rank, suit)
+                if tile is None:
+                    errors.append(f"Invalid tile: {rank}{suit}")
                 else:
-                    tile = Tile(suit=suit, number=number)
                     self._apply_markers(tile, markers)
                     tiles.append(tile)
                 markers = ""
@@ -278,6 +269,15 @@ class MahjongParser:
             errors.append(f"Invalid tile notation: {clean}")
 
         return tiles
+
+    @staticmethod
+    def _make_tile(rank: str, suit: str) -> Tile | None:
+        """Make the tile for a rank (a digit, or X for a face-down tile, which is only valid
+        with the z suit) and suit, or None if there is no such tile."""
+        if rank == "X":
+            return face_down_tiles(1)[0] if suit == "z" else None
+        number = int(rank)
+        return Tile(suit=suit, number=number) if get_tile_info(suit, number) else None
 
     @staticmethod
     def _apply_markers(tile: Tile, markers: str) -> None:
@@ -294,45 +294,33 @@ class MahjongParser:
         melds: list[Meld] = []
 
         for match in self.MELD_PATTERN.finditer(notation):
-            open_bracket = match.group(1)
-            base_numbers = match.group(2)
-            plus_marker = match.group(3)
-            added_number = match.group(4)
-            suit = match.group(5)
-            source_char = match.group(6) or ""
-            close_bracket = match.group(7)
+            is_closed = match["open"] == "["
+            is_added_kan = match["plus"] is not None
+            source_char = match["source"] or ""
 
-            if (open_bracket == "[" and close_bracket != "]") or (open_bracket == "(" and close_bracket != ")"):
-                errors.append(f"Mismatched brackets in meld: {match.group(0)}")
+            if is_closed != (match["close"] == "]"):
+                errors.append(f"Mismatched brackets in meld: {match[0]}")
                 continue
 
-            if plus_marker and not added_number:
-                errors.append(f"Added kan notation requires digit after '+': {match.group(0)}")
+            if is_added_kan and not match["added"]:
+                errors.append(f"Added kan notation requires digit after '+': {match[0]}")
                 continue
 
-            if plus_marker and added_number:
-                tile_notation = base_numbers + added_number + suit
-                is_added_kan = True
-            else:
-                tile_notation = base_numbers + suit
-                is_added_kan = False
-
-            tiles = self._parse_tiles(tile_notation, errors)
+            # The base digits are greedy, so an added digit only ever follows a '+'.
+            tiles = self._parse_tiles(f"{match['base']}{match['added'] or ''}{match['suit']}", errors)
 
             if not tiles:
                 continue
 
-            meld_type = self._classify_meld(
-                match.group(0), tiles, open_bracket == "[", is_added_kan, source_char, errors
-            )
+            meld_type = self._classify_meld(match[0], tiles, is_closed, is_added_kan, source_char, errors)
             if meld_type is None:
                 continue
 
-            source = _SOURCE_MAP.get(source_char, MeldSource.SELF)
+            source = MeldSource(source_char)
 
             # Rotated tile position indicates which player the tile was called from:
             #   < (kamicha): index 0, ^ (toimen): index 1, > (shimocha): last position
-            if source != MeldSource.SELF and tiles:
+            if source != MeldSource.SELF:
                 if source == MeldSource.LEFT:
                     rotated_idx = 0
                 elif source == MeldSource.ACROSS:
@@ -420,15 +408,14 @@ class MahjongParser:
             tiles.extend(tile for tile in player.discards if not tile.is_called)
         errors: list[str] = []
         self._validate_tile_list(tiles, errors)
-        if errors:
-            raise ParseError("; ".join(errors))
+        raise_if_errors(errors)
 
     # The original name for validate_table, kept for existing callers.
     validate = validate_table
 
     def _validate_tile_counts(self, hand: Hand, errors: list[str]) -> None:
         """Validate that no tile appears more than 4 times."""
-        self._validate_tile_list(hand.all_tiles + hand.discards, errors)
+        self._validate_tile_list(hand.all_tiles, errors)
 
     @staticmethod
     def _validate_tile_list(tiles: list[Tile], errors: list[str]) -> None:
