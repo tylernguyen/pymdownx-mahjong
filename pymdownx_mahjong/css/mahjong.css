@@ -144,6 +144,7 @@
 /* NOTE Individual tile - styled like physical riichi tiles */
 .mahjong-tile {
     --mahjong-tile-radius: 3px;
+    --mahjong-tile-padding: 2px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -154,7 +155,7 @@
     background: var(--mahjong-tile-bg);
     border: 1px solid var(--mahjong-tile-border);
     border-radius: var(--mahjong-tile-radius);
-    padding: 2px;
+    padding: var(--mahjong-tile-padding);
     box-sizing: border-box;
     position: relative;
     margin-bottom: var(--mahjong-tile-depth);
@@ -488,6 +489,38 @@ symbol[id^="mj-tenbou-"] {
     flex-wrap: nowrap;
     align-items: flex-end;
     gap: var(--mahjong-tile-gap);
+}
+
+/* As in the dora wall: under a single hand's discard zoom the 1px border snaps to whole
+   device pixels while the edge's offsets don't, leaving a tile's sides crooked where face
+   meets edge. Draw the border as an inset shadow, so face and edge share one box, and add
+   its width to the padding and the edge's offset so nothing else moves. (A table's discards
+   aren't zoomed.) */
+.mahjong-hand > .mahjong-discards .mahjong-tile {
+    border-width: 0;
+    padding: calc(var(--mahjong-tile-padding) + 1px);
+    box-shadow:
+        inset 0 0 0 1px var(--mahjong-tile-border),
+        0 3px 0 var(--mahjong-tile-side);
+}
+
+.mahjong-hand > .mahjong-discards .mahjong-tile::before {
+    top: calc(100% - 1px);
+    left: 0;
+    right: 0;
+}
+
+.mahjong-hand > .mahjong-discards .mahjong-tile-rotated {
+    box-shadow:
+        inset 0 0 0 1px var(--mahjong-tile-border),
+        3px 0 0 var(--mahjong-tile-side);
+}
+
+.mahjong-hand > .mahjong-discards .mahjong-tile-rotated::before {
+    top: 0;
+    bottom: 0;
+    left: calc(100% - 1px);
+    right: auto;
 }
 
 /* Tsumogiri (discarded straight from the draw) - dimmed */
@@ -1062,8 +1095,8 @@ symbol[id^="mj-tenbou-"] {
     }
 
     .mahjong-tile {
+        --mahjong-tile-padding: 1px;
         border-width: 1px;
-        padding: 1px;
     }
 
     /* Smaller tiles keep the desktop tile's proportions: 3px on a 36px tile. Inline tiles
@@ -1128,8 +1161,8 @@ symbol[id^="mj-tenbou-"] {
     }
 
     .mahjong-tile {
+        --mahjong-tile-padding: 0.5px;
         border-width: 1px;
-        padding: 0.5px;
     }
 
     .mahjong-stick-count {
@@ -1153,8 +1186,8 @@ symbol[id^="mj-tenbou-"] {
     }
 
     .mahjong-tile {
+        --mahjong-tile-padding: 0px;
         border-width: 1px;
-        padding: 0;
     }
 
     .mahjong-dora-row {
