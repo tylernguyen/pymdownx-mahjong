@@ -272,11 +272,16 @@ class MahjongRenderer:
         """Render one player: discards, then the status row (with the riichi and honba sticks
         from ``sticks`` and the round ``marker``, if given), then the hand, whose face-down
         tiles stand up for the other players."""
+        sticks = sticks if sticks is not None and (sticks.riichi or sticks.honba) else None
+        has_tiles = hand.closed_tiles or hand.melds or hand.draw_tile
+        # An inferred wind doesn't earn a player an area of their own.
+        if hand.seat_wind_inferred and not (has_tiles or hand.discards or hand.score is not None or sticks or marker):
+            return []
+
         parts: list[str] = []
         if hand.discards:
             parts.extend(self._render_discards(hand.discards, sprite))
 
-        sticks = sticks if sticks is not None and (sticks.riichi or sticks.honba) else None
         if hand.seat_wind or hand.score is not None or sticks or marker:
             parts.append('<div class="mahjong-status">')
             if hand.seat_wind or hand.score is not None:
@@ -287,7 +292,7 @@ class MahjongRenderer:
                 parts.append(self._render_round_marker(marker, sprite))
             parts.append("</div>")
 
-        if hand.closed_tiles or hand.melds or hand.draw_tile:
+        if has_tiles:
             parts.extend(self._render_hand_row(hand, sprite, standing=standing))
         return parts
 

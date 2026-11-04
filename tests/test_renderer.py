@@ -687,6 +687,25 @@ class TestEmptyBottomPlayer:
     def test_bottom_area_kept_with_content(self, option):
         assert "mahjong-player-self" in _block_html(f"{option}\ntoimen.discards: 2m")
 
+    @pytest.mark.parametrize("option", ["riichi: 1", "honba: 1"])
+    def test_inferred_wind_shown_with_sticks(self, option):
+        html = _block_html(f"{option}\ntoimen.seat: west\ntoimen.discards: 2m")
+
+        assert _owning_player("mahjong-sticks", html) == "self"
+        assert "Seat Wind: East" in html
+
+    def test_inferred_wind_places_round_marker(self):
+        html = _block_html("round: E1\ntoimen.seat: west\ntoimen.discards: 2m")
+
+        assert _owning_player("mahjong-round-marker", html) == "self"
+        assert "Seat Wind: East" in html
+
+    def test_no_bottom_area_when_marker_belongs_to_another_player(self):
+        html = _block_html("round: E1\ntoimen.seat: east\ntoimen.discards: 2m")
+
+        assert "mahjong-player-self" not in html
+        assert _owning_player("mahjong-round-marker", html) == "toimen"
+
 
 class TestRoundMarker:
     BASE = "123m\nseat: west\nshimo.hand:\ntoimen.hand:\nkami.hand:"

@@ -94,6 +94,7 @@ class Hand:
     honba: int = 0
     riichi: int = 0  # riichi sticks on the table
     seat_wind: str | None = None  # one of SEAT_WINDS
+    seat_wind_inferred: bool = False  # worked out from another player's wind, not given
     score: int | None = None
     round_wind: str | None = None  # one of SEAT_WINDS
     round_number: int | None = None  # 1-4
