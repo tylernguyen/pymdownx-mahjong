@@ -15,7 +15,6 @@
     --mahjong-tile-depth: 10px;
     --mahjong-tile-border: #cfcfcf;
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.35);
-    --mahjong-tile-radius: 4px;
     --mahjong-tile-back: #e7b246;
     --mahjong-tile-side: #d0ccc8;
 }
@@ -144,6 +143,7 @@
 
 /* NOTE Individual tile - styled like physical riichi tiles */
 .mahjong-tile {
+    --mahjong-tile-radius: 3px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -153,7 +153,7 @@
     flex-shrink: 0;
     background: var(--mahjong-tile-bg);
     border: 1px solid var(--mahjong-tile-border);
-    border-radius: 3px;
+    border-radius: var(--mahjong-tile-radius);
     padding: 2px;
     box-sizing: border-box;
     position: relative;
@@ -177,7 +177,7 @@
         var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.7),
         var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.7)
     );
-    border-radius: 0 0 3px 3px;
+    border-radius: 0 0 var(--mahjong-tile-radius) var(--mahjong-tile-radius);
     box-sizing: border-box;
     box-shadow: 0 4px 3px var(--mahjong-tile-shadow);
 }
@@ -759,7 +759,7 @@
     right: 100%;
     width: var(--mahjong-tile-depth);
     height: auto;
-    border-radius: 3px 0 0 3px;
+    border-radius: var(--mahjong-tile-radius) 0 0 var(--mahjong-tile-radius);
     background: linear-gradient(to left, var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.7), var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.7));
     box-shadow: -4px 0 3px var(--mahjong-tile-shadow);
 }
@@ -778,7 +778,7 @@
     right: -1px;
     width: auto;
     height: var(--mahjong-tile-depth);
-    border-radius: 3px 3px 0 0;
+    border-radius: var(--mahjong-tile-radius) var(--mahjong-tile-radius) 0 0;
     background: linear-gradient(to top, var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.7), var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.7));
     box-shadow: 0 -4px 3px var(--mahjong-tile-shadow);
 }
@@ -796,7 +796,7 @@
     right: auto;
     width: var(--mahjong-tile-depth);
     height: auto;
-    border-radius: 0 3px 3px 0;
+    border-radius: 0 var(--mahjong-tile-radius) var(--mahjong-tile-radius) 0;
     background: linear-gradient(to right, var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.7), var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.7));
     box-shadow: 4px 0 3px var(--mahjong-tile-shadow);
 }
@@ -812,7 +812,7 @@
     right: -1px;
     width: auto;
     height: var(--mahjong-tile-depth);
-    border-radius: 0 0 3px 3px;
+    border-radius: 0 0 var(--mahjong-tile-radius) var(--mahjong-tile-radius);
     background: linear-gradient(to bottom, var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.7), var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.7));
     box-shadow: 0 4px 3px var(--mahjong-tile-shadow);
 }
@@ -926,13 +926,13 @@
 /* Start that edge a little under the face, so the band runs straight around the face's
    rounded corner instead of breaking at it. */
 .mahjong-player-kami .mahjong-tile.mahjong-tile-standing:last-child::before {
-    left: calc(100% - 3px);
-    width: calc(var(--mahjong-tile-depth) + 3px);
+    left: calc(100% - var(--mahjong-tile-radius));
+    width: calc(var(--mahjong-tile-depth) + var(--mahjong-tile-radius));
 }
 
 .mahjong-player-shimo .mahjong-tile.mahjong-tile-standing:first-child::before {
-    right: calc(100% - 3px);
-    width: calc(var(--mahjong-tile-depth) + 3px);
+    right: calc(100% - var(--mahjong-tile-radius));
+    width: calc(var(--mahjong-tile-depth) + var(--mahjong-tile-radius));
 }
 
 /* Toimen's edges face the row behind, so each tile makes room for its own edge. */
@@ -1055,8 +1055,13 @@
 
     .mahjong-tile {
         border-width: 1px;
-        border-radius: 3px;
         padding: 1px;
+    }
+
+    /* Smaller tiles keep the desktop tile's proportions: 3px on a 36px tile. Inline tiles
+       stay their desktop size, so they keep its radius too. */
+    .mahjong-hand .mahjong-tile {
+        --mahjong-tile-radius: calc(var(--mahjong-tile-width) / 12);
     }
 
     /* A sideways tile's face overhangs its box by this much on each side, whatever the
@@ -1116,7 +1121,6 @@
 
     .mahjong-tile {
         border-width: 1px;
-        border-radius: 3px;
         padding: 0.5px;
     }
 
@@ -1142,7 +1146,6 @@
 
     .mahjong-tile {
         border-width: 1px;
-        border-radius: 3px;
         padding: 0;
     }
 
@@ -1184,7 +1187,6 @@
     margin: 0 0.05em;
     margin-bottom: var(--mahjong-tile-depth);
     border-width: 1px;
-    border-radius: 3px;
     padding: 1px;
 }
 
