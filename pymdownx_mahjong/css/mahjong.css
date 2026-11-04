@@ -13,6 +13,7 @@
     --mahjong-table-center-bg: rgba(0, 0, 0, 0.18);
     --mahjong-tile-bg: #f5f0eb;
     --mahjong-tile-depth: 10px;
+    --mahjong-tile-highlight: #e6194b;
     --mahjong-tile-border: #cfcfcf;
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.35);
     --mahjong-tile-back: #e7b246;
@@ -1031,6 +1032,48 @@ symbol[id^="mj-marker-"] {
 .mahjong-player-shimo :is(.mahjong-discard-row, .mahjong-tiles, .mahjong-meld, .mahjong-tile-stack) > :nth-last-child(22) { z-index: 22; }
 .mahjong-player-shimo :is(.mahjong-discard-row, .mahjong-tiles, .mahjong-meld, .mahjong-tile-stack) > :nth-last-child(23) { z-index: 23; }
 .mahjong-player-shimo :is(.mahjong-discard-row, .mahjong-tiles, .mahjong-meld, .mahjong-tile-stack) > :nth-last-child(24) { z-index: 24; }
+
+/* NOTE Same-tile highlight - hovering a tile on a table outlines every visible copy, with a
+   red 5 counting as a 5. The outline sits inside the tile's face, where its edge and its
+   neighbors can't cover it, and called tiles regain full opacity. */
+.mahjong-table:has([data-tile="1m"]:hover) [data-tile="1m"],
+.mahjong-table:has([data-tile="2m"]:hover) [data-tile="2m"],
+.mahjong-table:has([data-tile="3m"]:hover) [data-tile="3m"],
+.mahjong-table:has([data-tile="4m"]:hover) [data-tile="4m"],
+.mahjong-table:has(:is([data-tile="5m"], [data-tile="0m"]):hover) :is([data-tile="5m"], [data-tile="0m"]),
+.mahjong-table:has([data-tile="6m"]:hover) [data-tile="6m"],
+.mahjong-table:has([data-tile="7m"]:hover) [data-tile="7m"],
+.mahjong-table:has([data-tile="8m"]:hover) [data-tile="8m"],
+.mahjong-table:has([data-tile="9m"]:hover) [data-tile="9m"],
+.mahjong-table:has([data-tile="1p"]:hover) [data-tile="1p"],
+.mahjong-table:has([data-tile="2p"]:hover) [data-tile="2p"],
+.mahjong-table:has([data-tile="3p"]:hover) [data-tile="3p"],
+.mahjong-table:has([data-tile="4p"]:hover) [data-tile="4p"],
+.mahjong-table:has(:is([data-tile="5p"], [data-tile="0p"]):hover) :is([data-tile="5p"], [data-tile="0p"]),
+.mahjong-table:has([data-tile="6p"]:hover) [data-tile="6p"],
+.mahjong-table:has([data-tile="7p"]:hover) [data-tile="7p"],
+.mahjong-table:has([data-tile="8p"]:hover) [data-tile="8p"],
+.mahjong-table:has([data-tile="9p"]:hover) [data-tile="9p"],
+.mahjong-table:has([data-tile="1s"]:hover) [data-tile="1s"],
+.mahjong-table:has([data-tile="2s"]:hover) [data-tile="2s"],
+.mahjong-table:has([data-tile="3s"]:hover) [data-tile="3s"],
+.mahjong-table:has([data-tile="4s"]:hover) [data-tile="4s"],
+.mahjong-table:has(:is([data-tile="5s"], [data-tile="0s"]):hover) :is([data-tile="5s"], [data-tile="0s"]),
+.mahjong-table:has([data-tile="6s"]:hover) [data-tile="6s"],
+.mahjong-table:has([data-tile="7s"]:hover) [data-tile="7s"],
+.mahjong-table:has([data-tile="8s"]:hover) [data-tile="8s"],
+.mahjong-table:has([data-tile="9s"]:hover) [data-tile="9s"],
+.mahjong-table:has([data-tile="1z"]:hover) [data-tile="1z"],
+.mahjong-table:has([data-tile="2z"]:hover) [data-tile="2z"],
+.mahjong-table:has([data-tile="3z"]:hover) [data-tile="3z"],
+.mahjong-table:has([data-tile="4z"]:hover) [data-tile="4z"],
+.mahjong-table:has([data-tile="5z"]:hover) [data-tile="5z"],
+.mahjong-table:has([data-tile="6z"]:hover) [data-tile="6z"],
+.mahjong-table:has([data-tile="7z"]:hover) [data-tile="7z"] {
+    opacity: 1;
+    outline: 2px solid var(--mahjong-tile-highlight);
+    outline-offset: -2px;
+}
 
 /* Only the bottom player's discard edges face the next row. Elsewhere the room each tile
    keeps below it for its edge would just widen the gap between rows, so drop it; sideways

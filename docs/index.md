@@ -141,6 +141,8 @@ To render a complete board-state, `hand`, `discard`, and `score` can be affixed 
 
 Other players' seat wind are automatically generated from `seat`. Likewise, round wind marker placement is generated from `seat` and `round`.
 
+Hovering a tile on a table outlines every visible copy of it, with red 5s counted as 5s. Set `--mahjong-tile-highlight` in your CSS to change the color.
+
 ````markdown
 ```mahjong
 title: M-League 26-27 10/1 Table 1
