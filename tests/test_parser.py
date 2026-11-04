@@ -253,9 +253,14 @@ class TestDiscards:
     def test_markers(self):
         one, riichi, tsumogiri_riichi, called = MahjongParser().parse_discards("1r9m rt5p c7z")
         assert not one.is_rotated
-        assert riichi.notation == "9m" and riichi.is_rotated
-        assert tsumogiri_riichi.notation == "5p" and tsumogiri_riichi.is_rotated and tsumogiri_riichi.is_tsumogiri
-        assert called.notation == "7z" and called.is_called and not called.is_rotated
+        assert riichi.notation == "9m"
+        assert riichi.is_rotated
+        assert tsumogiri_riichi.notation == "5p"
+        assert tsumogiri_riichi.is_rotated
+        assert tsumogiri_riichi.is_tsumogiri
+        assert called.notation == "7z"
+        assert called.is_called
+        assert not called.is_rotated
 
     def test_discards_after_riichi_are_tsumogiri(self):
         tiles = MahjongParser().parse_discards("1m 2m r3m 4m t5m c6m")
