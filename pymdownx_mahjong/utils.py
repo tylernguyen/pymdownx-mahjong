@@ -178,27 +178,37 @@ def _split_player_options(options: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def _assign_seat_winds(hand: Hand) -> None:
-    """Give the other players the winds that follow the bottom player's, unless set,
-    and reject two players sharing a wind.
+    """Work out every player's seat wind from any one that's given, as the winds follow turn
+    order around the table. A bottom player with nothing on show stays unset, so a table given
+    only the other players doesn't gain a bottom area just for a wind.
 
     Raises:
-        ParseError: If two players have the same seat wind
+        ParseError: If the given seat winds don't follow turn order
     """
-    if hand.seat_wind:
-        start = SEAT_WINDS.index(hand.seat_wind)
-        for offset, seat in enumerate(OPPONENT_SEATS, start=1):
-            opponent = hand.opponents.get(seat)
-            if opponent and not opponent.seat_wind:
-                opponent.seat_wind = SEAT_WINDS[(start + offset) % len(SEAT_WINDS)]
+    players = {"hand": hand, **hand.opponents}
+    positions = {name: position for position, name in enumerate(("hand", *OPPONENT_SEATS))}
+    given = {name: player.seat_wind for name, player in players.items() if player.seat_wind}
+    if not given:
+        return
 
-    seats = {"hand": hand.seat_wind} | {seat: opponent.seat_wind for seat, opponent in hand.opponents.items()}
-    by_wind: dict[str, list[str]] = {}
-    for seat, wind in seats.items():
-        if wind:
-            by_wind.setdefault(wind, []).append(seat)
-    duplicates = [f"{wind} ({', '.join(names)})" for wind, names in by_wind.items() if len(names) > 1]
-    if duplicates:
-        raise ParseError(f"Seat wind given to more than one player: {'; '.join(duplicates)}")
+    first, first_wind = next(iter(given.items()))
+    bottom = SEAT_WINDS.index(first_wind) - positions[first]
+
+    def wind_at(name: str) -> str:
+        return SEAT_WINDS[(bottom + positions[name]) % len(SEAT_WINDS)]
+
+    conflicts = [
+        f"{name} should be {wind_at(name)}, not {wind}" for name, wind in given.items() if wind != wind_at(name)
+    ]
+    if conflicts:
+        raise ParseError(f"Seat winds don't follow turn order: with {first} {first_wind}, {'; '.join(conflicts)}")
+
+    has_content = (
+        hand.closed_tiles or hand.melds or hand.draw_tile or hand.discards or hand.score is not None or hand.seat_wind
+    )
+    for name, player in players.items():
+        if player is not hand or has_content:
+            player.seat_wind = wind_at(name)
 
 
 def _is_auto_remaining(value: str) -> bool:

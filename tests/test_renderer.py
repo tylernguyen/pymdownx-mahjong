@@ -680,6 +680,9 @@ class TestEmptyBottomPlayer:
         assert "mahjong-player-self" not in html
         assert "mahjong-player-toimen" in html
 
+    def test_no_bottom_area_when_another_player_has_a_seat(self):
+        assert "mahjong-player-self" not in _block_html("toimen.seat: east\ntoimen.discards: 1m 2m")
+
     @pytest.mark.parametrize("option", ["score: 0", "seat: west", "riichi: 1", "discards: 1m"])
     def test_bottom_area_kept_with_content(self, option):
         assert "mahjong-player-self" in _block_html(f"{option}\ntoimen.discards: 2m")

@@ -300,18 +300,60 @@ class TestBoardOptions:
             "kami": "south",
         }
 
-    def test_explicit_seat_overrides_inferred(self):
-        block = "123m\nseat: east\nshimo.hand:\nshimo.seat: W\ntoimen.hand:"
-        with pytest.raises(ParseError, match=r"west \(shimo, toimen\)"):
+    @pytest.mark.parametrize(
+        ("option", "bottom", "shimo", "toimen", "kami"),
+        [
+            ("shimo.seat: east", "north", "east", "south", "west"),
+            ("toimen.seat: east", "west", "north", "east", "south"),
+            ("kami.seat: east", "south", "west", "north", "east"),
+        ],
+    )
+    def test_seat_winds_follow_any_player(self, option, bottom, shimo, toimen, kami):
+        block = f"123m\n{option}\nshimo.hand:\ntoimen.hand:\nkami.hand:"
+        hand, _, _ = parse_hand_block(block, MahjongParser())
+
+        assert hand.seat_wind == bottom
+        assert {seat: p.seat_wind for seat, p in hand.opponents.items()} == {
+            "shimo": shimo,
+            "toimen": toimen,
+            "kami": kami,
+        }
+
+    def test_seat_winds_in_turn_order_accepted(self):
+        block = "123m\nseat: west\ntoimen.seat: east\nkami.seat: south"
+        hand, _, _ = parse_hand_block(block, MahjongParser())
+
+        assert hand.opponents["toimen"].seat_wind == "east"
+        assert hand.opponents["kami"].seat_wind == "south"
+
+    def test_seat_winds_out_of_turn_order_rejected(self):
+        block = "123m\nseat: east\nshimo.hand:\nshimo.seat: W"
+        with pytest.raises(ParseError, match=r"with hand east, shimo should be south, not west"):
             parse_hand_block(block, MahjongParser())
 
-    def test_no_seat_wind_without_bottom_seat(self):
+    def test_seat_wind_conflict_between_other_players_rejected(self):
+        block = "shimo.seat: east\nkami.seat: north"
+        with pytest.raises(ParseError, match=r"with shimo east, kami should be west, not north"):
+            parse_hand_block(block, MahjongParser())
+
+    def test_every_seat_wind_conflict_reported(self):
+        block = "123m\nseat: east\nshimo.seat: west\ntoimen.seat: north"
+        with pytest.raises(ParseError, match=r"shimo should be south, not west; toimen should be west, not north"):
+            parse_hand_block(block, MahjongParser())
+
+    def test_no_seat_wind_when_none_given(self):
         hand, _, _ = parse_hand_block("123m\nshimo.hand:", MahjongParser())
 
+        assert hand.seat_wind is None
         assert hand.opponents["shimo"].seat_wind is None
 
+    def test_empty_bottom_player_gets_no_seat_wind(self):
+        hand, _, _ = parse_hand_block("toimen.seat: east\ntoimen.discards: 1m", MahjongParser())
+
+        assert hand.seat_wind is None
+
     def test_duplicate_seat_wind_rejected(self):
-        with pytest.raises(ParseError, match=r"Seat wind given to more than one player: east \(hand, kami\)"):
+        with pytest.raises(ParseError, match=r"with hand east, kami should be north, not east"):
             parse_hand_block("123m\nseat: E\nkami.hand:\nkami.seat: east", MahjongParser())
 
     def test_opponent_errors_carry_prefix(self):
