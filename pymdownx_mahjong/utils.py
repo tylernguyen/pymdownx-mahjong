@@ -310,13 +310,20 @@ def _apply_score(hand: Hand, _parser: MahjongParser, value: str) -> None:
 
 
 def _apply_round(hand: Hand, _parser: MahjongParser, value: str) -> None:
-    # "S2", "south 2" or "south2": a wind, then a hand number 1-4.
-    wind_part, number_part = value[:-1].strip().lower(), value[-1:]
+    # "S2", "south 2" or "south2": a wind, then a hand number 1-4, then optionally the honba: "S2-1".
+    round_part, has_honba, honba_part = (part.strip() for part in value.partition("-"))
+    wind_part, number_part = round_part[:-1].strip().lower(), round_part[-1:]
     wind = _SEAT_VALUES.get(wind_part)
-    if not (wind and number_part and number_part in "1234"):
-        raise ParseError(f"Invalid round value: expected a wind and a number 1-4 (e.g. E1, south 2), got {value!r}")
+    honba = parse_int(honba_part) if has_honba else 0
+    if not (wind and number_part and number_part in "1234" and honba is not None):
+        raise ParseError(
+            f"Invalid round value: expected a wind and a number 1-4, optionally followed by '-' and the honba "
+            f"(e.g. E1, south 2, S2-1), got {value!r}"
+        )
     hand.round_wind = wind
     hand.round_number = int(number_part)
+    if has_honba:
+        hand.honba = honba
 
 
 def _apply_remaining(hand: Hand, _parser: MahjongParser, value: str) -> None:
@@ -349,6 +356,8 @@ def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any
     """Apply parsed options (dora, draw, discards, honba, riichi, seat, score, round, remaining) to a hand.
     Returns error messages."""
     errors: list[str] = []
+    if "honba" in options and "-" in options.get("round", ""):
+        errors.append(f"Honba given twice: honba: {options['honba']} and round: {options['round']}")
     for key, apply_option in _OPTION_APPLIERS.items():
         if key in options:
             try:

@@ -392,12 +392,38 @@ class TestRoundAndRemaining:
         assert apply_hand_options(hand, MahjongParser(), {"round": value}) == []
 
         assert (hand.round_wind, hand.round_number) == (wind, number)
+        assert hand.honba == 0
 
-    @pytest.mark.parametrize("value", ["", "E", "E5", "E0", "2", "up 1", "東一"])
+    @pytest.mark.parametrize(
+        ("value", "wind", "number", "honba"),
+        [("S2-1", "south", 2, 1), ("E1-0", "east", 1, 0), ("south 2 - 12", "south", 2, 12)],
+    )
+    def test_round_with_honba_parsed(self, value, wind, number, honba):
+        hand = Hand()
+        assert apply_hand_options(hand, MahjongParser(), {"round": value}) == []
+
+        assert (hand.round_wind, hand.round_number, hand.honba) == (wind, number, honba)
+
+    @pytest.mark.parametrize(
+        "value", ["", "E", "E5", "E0", "2", "up 1", "東一", "S2-", "S2--1", "S2-x", "S2-1.5", "S-1", "-1"]
+    )
     def test_invalid_round_reports_error(self, value):
         errors = apply_hand_options(Hand(), MahjongParser(), {"round": value})
 
-        assert errors == [f"Invalid round value: expected a wind and a number 1-4 (e.g. E1, south 2), got {value!r}"]
+        assert errors == [
+            "Invalid round value: expected a wind and a number 1-4, optionally followed by '-' and the honba "
+            f"(e.g. E1, south 2, S2-1), got {value!r}"
+        ]
+
+    @pytest.mark.parametrize("honba", ["1", "0"])
+    def test_honba_in_round_and_option_conflict(self, honba):
+        with pytest.raises(ParseError, match="Honba given twice"):
+            parse_hand_block(f"123m\nround: S2-1\nhonba: {honba}", MahjongParser())
+
+    def test_round_without_honba_keeps_honba_option(self):
+        hand, _, _ = parse_hand_block("123m\nround: S2\nhonba: 3", MahjongParser())
+
+        assert (hand.round_number, hand.honba) == (2, 3)
 
     @pytest.mark.parametrize("value", ["0", "35", "70"])
     def test_remaining_parsed(self, value):

@@ -100,7 +100,9 @@ Hands are written in a `mahjong` fenced code block, with additional options to c
 
 - default hand can be written without an option but also accepts `hand` as an option.
 - `dora`: renders dora indicator(s) as a dead-wall block.
-- `riichi` and `honba`: indicate current repeat and riichi sticks in the pot.
+- `riichi`: indicate number of riichi sticks in the pot.
+- `round`: round wind and hand number, e.g. `S2`. Can include the honba instead of a `honba` option, e.g. `S2-1`.
+- `honba`: if honba info is not written in round, this can explicitly set it
 - `remaining`: indicate live tiles remaining in the wall, or `auto` to count them on a full table render.
 - `seat` and `score`: wind marker and score.
 - `title`: title for the rendered figure.
