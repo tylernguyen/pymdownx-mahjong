@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- fix: keep pieces from touching on mobile, especially on a table.
+- fix: mobile tiles keep the desktop tile's corner proportions.
+- fix: riichi and honba sticks no longer cut off along their edges.
+- fix: straighten the sides of a single hand's discards.
+- refactor: redraw the East and South round markers as SVG.
+
 ## [0.3.2] - 2026-11-04
 
 ### Changed
