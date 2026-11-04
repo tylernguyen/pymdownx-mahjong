@@ -8,6 +8,7 @@
 - refactor: skip empty players from their rendered output, removing `_has_content`.
 - refactor: import the extension at the top of superfences.py
 - fix: an empty Hand() opponent no longer renders an empty wrapper.
+- docs: correct the `MahjongParser` docstring on face-down tiles.
 
 ## [0.3.1] - 2026-11-03
 

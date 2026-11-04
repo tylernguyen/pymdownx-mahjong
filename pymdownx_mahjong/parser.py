@@ -151,7 +151,7 @@ class MahjongParser:
     - Red dora: 1230m (0 = red 5)
     - Melds: (123m<) for chi, [1111m] for closed kan
     - Separators: |, _, and spaces are ignored and may be used for readability
-    - Face-down count: a bare number of closed tiles, e.g. 13 or 10 (777z<)
+    - Face-down tiles: Xz, e.g. XXX123z (not in melds)
     """
 
     # Tile groups: ranks + suit, where a rank is a digit or 'X' (a face-down tile).
