@@ -743,15 +743,16 @@ class TestRoundMarker:
 
 
 class TestMarkerSymbol:
-    def test_png_symbol_sized_from_header(self):
+    def test_svg_symbol_keeps_viewbox(self):
         from pymdownx_mahjong.sprite import load_symbol
 
         symbol = load_symbol("East", "marker")
 
         assert symbol.startswith('<symbol id="mj-marker-East" viewBox="0 0 567 374">')
-        assert '<image width="567" height="374" href="data:image/png;base64,' in symbol
+        assert "<path" in symbol
+        assert "<image" not in symbol
 
-    def test_missing_png_uses_placeholder(self):
+    def test_missing_svg_uses_placeholder(self):
         from pymdownx_mahjong.sprite import load_symbol
 
         assert "<rect" in load_symbol("West", "marker")

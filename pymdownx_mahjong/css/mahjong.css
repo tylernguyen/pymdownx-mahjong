@@ -435,9 +435,11 @@
 }
 
 /* The status row's zoom can round an SVG's clip area smaller than its box, which cuts off
-   the outline, so don't clip the sticks. */
+   the outline, so don't clip the sticks or the round marker. */
 .mahjong-stick svg,
-symbol[id^="mj-tenbou-"] {
+symbol[id^="mj-tenbou-"],
+.mahjong-round-marker svg,
+symbol[id^="mj-marker-"] {
     overflow: visible;
 }
 

@@ -11,11 +11,9 @@ HTML parsers don't need an ``xmlns:xlink`` declaration for it.
 
 from __future__ import annotations
 
-import base64
 import functools
 import importlib.resources
 import re
-import struct
 from typing import Final
 
 _RE_XML_DECL: Final[re.Pattern[str]] = re.compile(r"<\?xml[^?]*\?>")
@@ -31,7 +29,7 @@ SPRITE_STYLE: Final[str] = "position:absolute;width:0;height:0;overflow:hidden"
 TILE_WIDTH: Final[int] = 45
 TILE_HEIGHT: Final[int] = 60
 
-# Pseudo-theme for the PNG round markers (assets/East.png, assets/South.png).
+# Pseudo-theme for the round markers (assets/East.svg, assets/South.svg).
 MARKER_THEME: Final[str] = "marker"
 
 
@@ -41,12 +39,11 @@ def symbol_id(asset_name: str, theme: str) -> str:
 
 @functools.cache
 def load_symbol(asset_name: str, theme: str) -> str:
-    """Load a tile SVG (or, for MARKER_THEME, a PNG) from package resources and convert it
-    to a ``<symbol>``."""
+    """Load an SVG from package resources and convert it to a ``<symbol>``."""
     sid = symbol_id(asset_name, theme)
-    if theme == MARKER_THEME:
-        return _png_symbol(sid, asset_name)
-    assets = importlib.resources.files("pymdownx_mahjong") / "assets" / theme
+    assets = importlib.resources.files("pymdownx_mahjong") / "assets"
+    if theme != MARKER_THEME:
+        assets /= theme
     try:
         svg = (assets / f"{asset_name}.svg").read_text(encoding="utf-8")
     except (FileNotFoundError, TypeError):
@@ -70,24 +67,6 @@ def load_symbol(asset_name: str, theme: str) -> str:
         body = body.replace(f"url(#{old_id})", f"url(#{new_id})")
 
     return f'<symbol id="{sid}" viewBox="{viewbox}">{body}</symbol>'
-
-
-def _png_symbol(sid: str, asset_name: str) -> str:
-    """Wrap a PNG from the assets root in a ``<symbol>``, embedded as a data URI so the page
-    needs no separate file, and sized from the PNG header."""
-    asset = importlib.resources.files("pymdownx_mahjong") / "assets" / f"{asset_name}.png"
-    try:
-        data = asset.read_bytes()
-    except (FileNotFoundError, TypeError):
-        return _placeholder_symbol(sid, asset_name)
-    if data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
-        return _placeholder_symbol(sid, asset_name)
-    width, height = struct.unpack(">II", data[16:24])
-    href = "data:image/png;base64," + base64.b64encode(data).decode("ascii")
-    return (
-        f'<symbol id="{sid}" viewBox="0 0 {width} {height}">'
-        f'<image width="{width}" height="{height}" href="{href}"/></symbol>'
-    )
 
 
 def _placeholder_symbol(sid: str, asset_name: str) -> str:

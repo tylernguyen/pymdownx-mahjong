@@ -72,7 +72,7 @@ _PLAYER_NAMES: Final[dict[str, str]] = {
 _STICK_WIDTH: Final = 72
 _STICK_HEIGHT: Final = 9
 
-# Round markers kept by the original dealer: round wind -> asset (assets/<name>.png), and the
+# Round markers kept by the original dealer: round wind -> asset (assets/<name>.svg), and the
 # artwork's intrinsic size; CSS sets the rendered size. West and north rounds have none.
 _ROUND_MARKERS: Final[dict[str, str]] = {"east": "East", "south": "South"}
 _MARKER_WIDTH: Final = 45  # the artwork is 567 x 374; this keeps it tile-sized without the CSS
