@@ -15,22 +15,20 @@ icon: octicons/markdown-16
 
 PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong content. Designed and tested for Zensical, the extension offers:
 
-- Inline rendering of individual Mahjong tiles.
-- Complete Mahjong hand rendering, supporting: pon/chi/kan, and dora information.
-- Discard pile rendering.
-- Other players' hands and discards, laid out around the table.
-
-## Dependency
-
-[SuperFences](https://facelessuser.github.io/pymdown-extensions/extensions/superfences/) :lucide-arrow-up-right: from PyMdown Extensions.
+- Inline rendering of individual Mahjong tiles and melds.
+- Figure rendering of a __complete__ game state: multiple hands, discards, scores, dora, round and seat information.
+- Figure rendering of an individual Mahjong hand (including melds), discards and accompanying information.
 
 ## Installation
+
+> [!warning] Dependency
+> [SuperFences](https://facelessuser.github.io/pymdown-extensions/extensions/superfences/) :lucide-arrow-up-right: from PyMdown Extensions.
 
 ```bash
 pip install pymdownx-mahjong
 ```
 
-Copy `mahjong.css` to `stylesheets/`.
+Copy [mahjong.css :lucide-arrow-up-right:](https://github.com/tylernguyen/pymdownx-mahjong/releases) to `stylesheets/`.
 
 === "`zensical.toml`"
 
@@ -83,20 +81,82 @@ Copy `mahjong.css` to `stylesheets/`.
 | table_color      | str  | CSS color       | transparent | color of tablecloth, e.g. `#2b7a78` |
 
 
+## Basic Syntax
+
+### Tile Syntax
+
+The extension uses standard MPSZ notation, and extends on it with the __Xz__ notation for an unknown tile.
+
+| Syntax | Tile                 | Render   |
+| -------- | -------------------- | -------------- |
+| `1m`, `2m`, ...  | Manzu        | :1m: :2m: :3m: |
+| `1p`, `2p`, ...  | Pinzu        | :1p: :2p: :3p: |
+| `1s`, `2s`, ...  | Souzu        | :1s: :2s: :3s: |
+| `0m` `0p` `0s`   | Akadora      | :0m: :0p: :0s: |
+| `1z`     | East / Ton           | :1z:           |
+| `2z`     | South / Nan          | :2z:           |
+| `3z`     | West / Sha           | :3z:           |
+| `4z`     | North / Pei          | :4z:           |
+| `5z`     | White Dragon / Haku  | :5z:           |
+| `6z`     | Green Dragon / Hatsu | :6z:           |
+| `7z`     | Red Dragon / Chun    | :7z:           |
+| `Xz`     | Unknown              | :Xz:           |
+
+### Meld Syntax
+
+- Parenthesis `()` for open melds. `<` `^` `>` to indicate direction of meld.
+- Brackets `[]` for closed melds.
+- `+` in a Pon to indicate an added Kan.
+
+| Syntax                              | Description | Render                                       |
+|-------------------------------------|-------------|----------------------------------------------|
+| `(123m<)`                           | Chi         | `mj:(123m<)`                                 |
+| `(550m<)` `(505p^)` `(055s>)`       | Pon         | `mj:(550m<)` `mj:(505p^)` `mj:(055s>)`       |
+| `[1111z]`                           | Closed Kan  | `mj:[1111z]`                                 |
+| `(555+5z<)` `(66+66z^)` `(777+7z>)` | Added Kan   | `mj:(555+5z<)` `mj:(666+6z^)` `mj:(777+7z>)` |
+
+### Discard Syntax
+
+Add `discards:` to a block to render a discard pile above the hand.
+
+Syntax can be combined, `rt5p` is tsumogiri riichi on :5p:.
+
+Every discard after the riichi tile is tsumogiri, so it's dimmed without needing `t`.
+
+Discards can be single-line or formatted into multi-indented lines for easier reference.
+
+````markdown
+```mahjong
+discards: 4z 9m t9p 6z t5z 2s t9m 5m 6s tc2p t9p t9p 1m 9m 4m 5z
+```
+````
+
+````markdown
+```mahjong
+discards: 
+  4z 9m t9p 6z t5z 2s
+  t9m 5m 6s tc2p t9p t9p
+  1m 9m 4m 5z
+```
+````
+
+| Syntax | Title                         | Example |
+| ------ | ----------------------------- | ------- |
+| `r`    | Riichi marker                 | `r1m`   |
+| `t`    | Tsumogiri (dimmed)            | `t1m`   |
+| `c`    | Called by another player      | `c1m`   |
+
 ## Inline Syntax
 
-Inline tiles individually by using their shortname, e.g. `:1p:` will render as :1p:.
+Render tiles inline individually by using their shortname, e.g. `:1p:` will render as :1p:.
 
 Additionally, you can render tile groups or entire hand inline using the prefix `mj:`. 
 
-For example, ``mj:123456789m`` will render `mj:123456789m` inline.
+``mj:(123m<)(111z^) 456789m`` will render `mj:(123m<)(111z^) 456789m`.
 
-> [!failure] Inline Melds
-> Currently, the renderer does __NOT__ support inline melds.
+## Figure Syntax
 
-## Block Syntax
-
-Hands are written in a `mahjong` fenced code block, with additional options to convey info.
+Figures are written in a `mahjong` fenced code block, with additional options to convey info.
 
 - default hand can be written without an option but also accepts `hand` as an option.
 - `dora`: renders dora indicator(s) as a dead-wall block.
@@ -137,7 +197,7 @@ seat: east
 title: Daisuushii Tsuuiisou
 ```
 
-### Additional Block Syntax
+### Additional Figure Syntax
 
 To render a complete board-state, `hand`, `discards`, and `score` can be affixed with `kami.`, `shimo.`, and `toimen.`;
 
@@ -153,19 +213,30 @@ remaining: auto
 dora: 2z
 hand: 11p888s11133z (640m<)
 draw: 1p
-discards: 4z 9m t9p 6z t5z 2s t9m 5m 6s tc2p t9p t9p
+discards: 
+  4z 9m t9p 6z t5z 2s
+  t9m 5m 6s tc2p t9p t9p
 seat: east
 score: 23800
 riichi: 1
 honba: 1
 shimo.score: 41000
 shimo.hand: (234p<) (777z^)
-shimo.discards: 1m 2z 9s 5z 3s 6m 4m c4p 1m t6z 4m t8p t4z
+shimo.discards: 
+  1m 2z 9s 5z 3s 6m
+  4m c4p 1m t6z 4m t8p
+  t4z
 toimen.score: 17900
 toimen.hand: (456p<)
-toimen.discards: 9s 1s 6z 2m 5s t2s t6m 8p 3m t5z 4m 8p 9p
+toimen.discards: 
+  9s 1s 6z 2m 5s t2s
+  t6m 8p 3m t5z 4m 8p
+  9p
 kami.score: 16300
-kami.discards: 1m t9s 1z 2z c7z 3m 5p rc6m rt4s t5z t7m t7p t6p
+kami.discards: 
+  1m t9s 1z 2z c7z 3m
+  5p rc6m rt4s t5z t7m t7p
+  t6p
 ```
 ````
 
@@ -176,67 +247,28 @@ remaining: auto
 dora: 2z
 hand: 11p888s11133z (640m<)
 draw: 1p
-discards: 4z 9m t9p 6z t5z 2s t9m 5m 6s tc2p t9p t9p
+discards: 
+  4z 9m t9p 6z t5z 2s
+  t9m 5m 6s tc2p t9p t9p
 seat: east
 score: 23800
 riichi: 1
 honba: 1
 shimo.score: 41000
 shimo.hand: (234p<) (777z^)
-shimo.discards: 1m 2z 9s 5z 3s 6m 4m c4p 1m t6z 4m t8p t4z
+shimo.discards: 
+  1m 2z 9s 5z 3s 6m
+  4m c4p 1m t6z 4m t8p
+  t4z
 toimen.score: 17900
 toimen.hand: (456p<)
-toimen.discards: 9s 1s 6z 2m 5s t2s t6m 8p 3m t5z 4m 8p 9p
+toimen.discards: 
+  9s 1s 6z 2m 5s t2s
+  t6m 8p 3m t5z 4m 8p
+  9p
 kami.score: 16300
-kami.discards: 1m t9s 1z 2z c7z 3m 5p rc6m rt4s t5z t7m t7p t6p
+kami.discards: 
+  1m t9s 1z 2z c7z 3m
+  5p rc6m rt4s t5z t7m t7p
+  t6p
 ```
-
-## Meld Syntax
-
-Parenthesis `()` for open melds. `<` `^` `>` to indicate direction of meld.
-
-- `(123m<)` - Chi from kamicha
-- `(111m<)` - Pon from kamicha
-- `(111p^)` - Pon from toimen
-- `(999s>)` - Pon from shimocha
-
-Brackets `[]` for closed kan.
-
-- `[1111z]` - Closed kan
-
-Additional sign `+` to indicate added kan.
-
-- `(666+6z^)` - Added Kan
-
-## Discard Syntax
-
-Add `discards:` to a block to render a discard pile above the hand.
-
-Syntax can be combined, `rt5p` is tsumogiri riichi on :5p:.
-
-Every discard after the riichi tile is tsumogiri, so it's dimmed without needing `t`.
-
-| Syntax | Title                         | Example |
-| ------ | ----------------------------- | ------- |
-| `r`    | Riichi marker                 | `r1m`   |
-| `t`    | Tsumogiri (dimmed)            | `t1m`   |
-| `c`    | Called by another player      | `c1m`   |
-
-## Tile Notation
-
-The extension uses standard MPSZ notation, and extends on it with the __Xz__ notation for an unknown tile.
-
-| Notation | Tile                 | Tile (Emoji)   |
-| -------- | -------------------- | -------------- |
-| `1m`, `2m`, ...  | Manzu        | :1m: :2m: :3m: |
-| `1p`, `2p`, ...  | Pinzu        | :1p: :2p: :3p: |
-| `1s`, `2s`, ...  | Souzu        | :1s: :2s: :3s: |
-| `0m` `0p` `0s`   | Akadora      | :0m: :0p: :0s: |
-| `1z`     | East / Ton           | :1z:           |
-| `2z`     | South / Nan          | :2z:           |
-| `3z`     | West / Sha           | :3z:           |
-| `4z`     | North / Pei          | :4z:           |
-| `5z`     | White Dragon / Haku  | :5z:           |
-| `6z`     | Green Dragon / Hatsu | :6z:           |
-| `7z`     | Red Dragon / Chun    | :7z:           |
-| `Xz`     | Unknown              | :Xz:           |
