@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 import markdown
 from markdown.treeprocessors import Treeprocessor
 
-from .inline import INLINE_CODE_TILE_PATTERN, INLINE_TILE_PATTERN, MahjongInlineProcessor
+from .inline import INLINE_CODE_PATTERN, INLINE_TILE_PATTERN, MahjongCodeSpanProcessor, MahjongInlineProcessor
 from .renderer import MahjongRenderer
 from .sprite import SPRITE_CLASS, SPRITE_STYLE, TileSprite
 
@@ -48,7 +48,7 @@ class MahjongExtension(markdown.Extension):
             md.inlinePatterns.register(inline_processor, "mahjong_inline", 76)
 
             # Priority 195: before the built-in backtick code span processor (190)
-            code_processor = MahjongInlineProcessor(INLINE_CODE_TILE_PATTERN, md, config, self.sprite)
+            code_processor = MahjongCodeSpanProcessor(INLINE_CODE_PATTERN, md, config, self.sprite)
             md.inlinePatterns.register(code_processor, "mahjong_inline_code", 195)
 
         # Priority -10: after every processor that renders tiles, and after MkDocs reads the

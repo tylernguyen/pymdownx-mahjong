@@ -79,6 +79,31 @@ class TestMahjongExtension:
         assert ":1m:" not in out
         assert out.count("<img") == 1
 
+    @pytest.mark.parametrize(
+        ("text", "code"),
+        [
+            ("`` `mj:1m` ``", "<code>`mj:1m`</code>"),
+            ("``a `mj:1m` b``", "<code>a `mj:1m` b</code>"),
+        ],
+    )
+    def test_mj_inside_a_longer_code_span_stays_literal(self, md, text, code):
+        out = md.convert(text)
+        assert "mahjong-inline" not in out
+        assert code in out
+
+    def test_escaped_backtick_stays_literal(self, md):
+        assert md.convert("\\`mj:1m`") == "<p>`mj:1m`</p>"
+
+    def test_mj_after_an_escaped_backslash_still_renders(self, md):
+        out = md.convert("\\\\\\\\`mj:1m`")
+        assert out.count('class="mahjong-inline"') == 1
+
+    def test_mj_code_renders_beside_plain_code(self, md):
+        out = md.convert("`a` `mj:1m` `b`")
+        assert out.count('class="mahjong-inline"') == 1
+        assert "<code>a</code>" in out
+        assert "<code>b</code>" in out
+
     def test_inline_face_down_run_announced_once(self, md):
         out = md.convert("`mj:XXXz`")
         assert out.count('role="img"') == 1

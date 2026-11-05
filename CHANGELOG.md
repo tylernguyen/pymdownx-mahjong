@@ -5,6 +5,7 @@
 ### Changed
 
 - fix: face-down discards respect `r`, `t` and `c` markers.
+- fix: `mj:` inside a longer code span or after an escaped backtick stays literal.
 - fix: face-down inline tiles follow the `theme` option.
 - fix: a closed kan always shows its red five.
 - fix: runs of inline face-down tiles are announced once.
