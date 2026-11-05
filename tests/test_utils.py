@@ -823,7 +823,7 @@ class TestScoreTotal:
         errors = apply_hand_options(Hand(), MahjongParser(), {"score": value})
 
         assert errors == [
-            f"Invalid score value: expected the amount borrowed as a positive multiple of 10000, "
+            "Invalid score value: expected the amount borrowed as a positive multiple of 10000, "
             f"e.g. 7000(10000), got {value!r}"
         ]
 

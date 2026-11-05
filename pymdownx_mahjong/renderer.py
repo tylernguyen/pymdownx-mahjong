@@ -456,7 +456,7 @@ class MahjongRenderer:
         return parts
 
     @staticmethod
-    def _render_score(score: int, starting_score: int, borrowed: int = 0) -> str:
+    def _render_score(score: int, starting_score: int, borrowed: int) -> str:
         """Render a score and its delta from ``starting_score``, which the CSS swaps in on hover.
         Points ``borrowed`` from the bank are owed back, so they don't count toward the delta and
         are shown beside it."""

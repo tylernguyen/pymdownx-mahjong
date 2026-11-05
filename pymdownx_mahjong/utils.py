@@ -48,7 +48,6 @@ _HAND_SIZE: Final = 13
 # The most a player can hold: a full hand and the tile just drawn.
 _MAX_TILES_HELD: Final = _HAND_SIZE + 1
 
-# Points each riichi stick in the pot was taken from a player's score.
 _RIICHI_STICK_VALUE: Final = 1000
 
 # A player out of points borrows from the bank in multiples of this.
@@ -374,7 +373,7 @@ def _apply_score(hand: Hand, _parser: MahjongParser, value: str) -> None:
         borrowed = parse_int(loan_part.removesuffix(")").strip()) if loan_part.endswith(")") else None
         if not borrowed or borrowed % _BANK_LOAN_INCREMENT:
             raise ParseError(
-                f"Invalid score value: expected the amount borrowed as a positive multiple of "
+                "Invalid score value: expected the amount borrowed as a positive multiple of "
                 f"{_BANK_LOAN_INCREMENT}, e.g. 7000(10000), got {value!r}"
             )
         hand.borrowed = borrowed
