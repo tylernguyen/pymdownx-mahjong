@@ -84,10 +84,9 @@ def superfences_formatter(
     ext = _find_extension(md)
     renderer = ext.renderer if ext else _state.renderer
 
-    content = source.strip()
-
     try:
-        hand, block_options, notation = parse_hand_block(content, parser)
+        # Unstripped: a discards option's continuation lines are judged by indentation.
+        hand, block_options, notation = parse_hand_block(source, parser)
     except ParseError as e:
         return _error_block(str(e))
 

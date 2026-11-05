@@ -348,6 +348,19 @@ class TestBareNumbers:
         with pytest.raises(ParseError, match=r"Invalid tile notation: 1[013] \(did you forget a suit\?\)"):
             parse_hand(notation)
 
+    def test_meld_does_not_join_digits_to_a_later_suit(self):
+        with pytest.raises(ParseError, match=r"Invalid tile notation: 12 \(did you forget a suit\?\)"):
+            parse_hand("12(345p<)3m")
+
+    def test_closed_tiles_on_both_sides_of_a_meld(self):
+        hand = parse_hand("12m (345p<) 3m")
+
+        assert [t.notation for t in hand.closed_tiles] == ["1m", "2m", "3m"]
+
+    def test_absurdly_long_number_is_a_parse_error(self):
+        with pytest.raises(ParseError, match="Invalid tile notation"):
+            parse_hand("1" * 5000)
+
     def test_back_notation_still_works(self):
         hand = parse_hand("XXX123z")
 

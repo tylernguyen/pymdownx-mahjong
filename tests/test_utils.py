@@ -174,6 +174,21 @@ class TestDiscardsOption:
         with pytest.raises(ParseError, match="No hand notation provided"):
             parse_hand_block("dora: 1m", MahjongParser())
 
+    @pytest.mark.parametrize(
+        "block",
+        [
+            "discards:",
+            "title: Only Title\ndiscards:",
+            "hand:\ndiscards:",
+            "dora: 1m\ndiscards:",
+            "discards: _",
+            "hand: _",
+        ],
+    )
+    def test_no_tiles_to_show(self, block):
+        with pytest.raises(ParseError, match="No hand notation provided"):
+            parse_hand_block(block, MahjongParser())
+
     def test_invalid_discards(self):
         with pytest.raises(ParseError, match="Invalid discards notation"):
             parse_hand_block("discards: 1x", MahjongParser())
@@ -497,6 +512,10 @@ class TestAutoRemaining:
     def test_draw_comes_from_the_wall(self):
         assert _table("remaining: auto", "hand: XXXXXXXXXXXXXz", "draw: 1m").remaining == 69
 
+    @pytest.mark.parametrize("hand", ["123m", ""])
+    def test_draw_counts_when_the_hand_is_not_full(self, hand):
+        assert _table("remaining: auto", f"hand: {hand}", "draw: 1p").remaining == 69
+
     def test_discards_come_from_the_wall(self):
         assert _table("remaining: auto", "discards: 1m 2m 3m").remaining == 67
 
@@ -577,6 +596,11 @@ class TestAutoRemaining:
 
 
 class TestHandLimits:
+    @pytest.mark.parametrize("option", ["honba", "score", "remaining"])
+    def test_absurdly_long_number_is_a_parse_error(self, option):
+        with pytest.raises(ParseError, match=f"Invalid {option} value"):
+            parse_hand_block(f"123m\n{option}: {'1' * 5000}", MahjongParser())
+
     @pytest.mark.parametrize(("block", "tile"), [("1111m\ndora: 1m", "1m"), ("555z\ndora: 55z", "5z")])
     def test_dora_counted_on_a_single_hand(self, block, tile):
         with pytest.raises(ParseError, match=f"{tile} appears 5 times"):

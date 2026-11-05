@@ -42,6 +42,9 @@ OPPONENT_SEATS: Final = ("shimo", "toimen", "kami")
 # One dora indicator plus up to four kan dora.
 MAX_DORA_INDICATORS: Final = 5
 
+# Far beyond any real score or count.
+_MAX_INT_DIGITS: Final = 18
+
 
 @dataclass
 class Tile:
@@ -114,9 +117,10 @@ class Hand:
 
 def parse_int(text: str, *, signed: bool = False) -> int | None:
     """Parse a plain ASCII integer (with a leading '-' if ``signed``), or None if ``text``
-    isn't one; e.g. rejects '+1', '1.5', '25,000' and full-width digits."""
+    isn't one; e.g. rejects '+1', '1.5', '25,000', full-width digits and absurdly long numbers,
+    which int() itself refuses past a limit."""
     digits = text.removeprefix("-") if signed else text
-    return int(text) if digits.isascii() and digits.isdigit() else None
+    return int(text) if digits.isascii() and digits.isdigit() and len(digits) <= _MAX_INT_DIGITS else None
 
 
 def face_down_tiles(count: int) -> list[Tile]:
@@ -182,14 +186,15 @@ class MahjongParser:
         # Extract melds first (they're unambiguous with brackets)
         hand.melds = self._parse_melds(notation, errors)
 
-        # Remove meld notation to get closed tiles
-        closed_part = self.MELD_PATTERN.sub("", notation).strip()
-        number = parse_int(_strip_separators(closed_part))
-        if number is not None:
-            # Digits with no suit: most likely a forgotten suit.
-            errors.append(f"Invalid tile notation: {number} (did you forget a suit?)")
-        else:
-            hand.closed_tiles = self._parse_tiles(closed_part, errors)
+        # What's left between the melds is closed tiles; each stretch stands alone, so a meld
+        # can't join digits to a suit on its other side, as in 12(345p<)3m.
+        for closed_part in self.MELD_PATTERN.sub("\0", notation).split("\0"):
+            number = parse_int(_strip_separators(closed_part))
+            if number is not None:
+                # Digits with no suit: most likely a forgotten suit.
+                errors.append(f"Invalid tile notation: {number} (did you forget a suit?)")
+            else:
+                hand.closed_tiles.extend(self._parse_tiles(closed_part, errors))
 
         self._validate_tile_counts(hand, errors)
 

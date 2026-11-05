@@ -125,13 +125,7 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
 
     player_options = _split_player_options(options)
 
-    if notation:
-        hand = parser.parse(notation)
-    elif "discards" in options or player_options:
-        # A discard pile, or the other players on a board, may be shown without a hand.
-        hand = Hand()
-    else:
-        raise ParseError("No hand notation provided")
+    hand = parser.parse(notation) if notation else Hand()
 
     option_errors = apply_hand_options(hand, parser, options)
 
@@ -145,6 +139,10 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
         hand.opponents[seat] = opponent
 
     raise_if_errors(option_errors)
+
+    # A discard pile, or the other players on a board, may be shown without a hand.
+    if not (hand.closed_tiles or hand.melds or hand.discards or hand.opponents):
+        raise ParseError("No hand notation provided")
 
     if hand.opponents:
         _assign_seat_winds(hand)
@@ -246,9 +244,11 @@ def _count_remaining(hand: Hand) -> int:
     drawn = 0
     for player in players:
         in_hand = len(player.closed_tiles) + 3 * len(player.melds) + (1 if player.draw_tile else 0)
+        # A draw came from the wall even when the rest of the hand isn't shown.
+        extra = max(in_hand - _HAND_SIZE, 1 if player.draw_tile else 0)
         kans = sum(len(meld.tiles) == 4 for meld in player.melds)
         discarded = sum(not tile.is_called for tile in player.discards)
-        drawn += max(in_hand - _HAND_SIZE, 0) + kans + discarded
+        drawn += extra + kans + discarded
 
     remaining = _MAX_REMAINING - drawn
     if remaining < 0:

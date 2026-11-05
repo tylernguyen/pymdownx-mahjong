@@ -73,6 +73,17 @@ class TestSuperfencesFormatter:
         assert "mahjong-error" in html
         assert "No hand notation" in html
 
+    def test_uniformly_indented_block_keeps_hand_and_discards_apart(self):
+        html = _format("  discards: 1m\n  123m")
+
+        assert 'data-notation="123m"' in html
+        assert 'class="mahjong-hand-row"' in html
+
+    def test_deeper_indent_still_continues_discards(self):
+        html = _format("  discards: 1m\n    2m\n  123m")
+
+        assert html.split('class="mahjong-hand-row"')[0].count('data-tile="2m"') == 1
+
     def test_honba_and_riichi(self):
         html = _format("123m\nriichi: 1\nhonba: 2")
 

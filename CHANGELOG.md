@@ -5,10 +5,15 @@
 ### Changed
 
 - fix: face-down discards respect `r`, `t` and `c` markers.
+- fix: a block with no tiles to show reports an error instead of an empty figure.
 - fix: `mj:` inside a longer code span or after an escaped backtick stays literal.
+- fix: an evenly indented block no longer merges the hand into its discards.
 - fix: face-down inline tiles follow the `theme` option.
+- fix: `remaining: auto` counts the draw when the hand isn't full.
 - fix: a closed kan always shows its red five.
+- fix: a meld no longer joins digits to a suit on its other side.
 - fix: runs of inline face-down tiles are announced once.
+- fix: very long numbers report an error instead of crashing.
 
 ## [0.3.4] - 2026-11-04
 
