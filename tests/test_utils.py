@@ -706,3 +706,154 @@ class TestHandLimits:
     def test_uncalled_fifth_tile_still_rejected(self):
         with pytest.raises(ParseError, match="5z appears 5 times"):
             parse_hand_block("123456789m11p (555z<)\ndiscards: 5z\nkami.discards: 5z", MahjongParser())
+
+
+def _scored_table(bottom, shimo, toimen, kami, *lines):
+    """Parse a table block giving all four players' scores, plus any ``lines``."""
+    block = [f"score: {bottom}", f"shimo.score: {shimo}", f"toimen.score: {toimen}", f"kami.score: {kami}", *lines]
+    return parse_hand_block("\n".join(block), MahjongParser())[0]
+
+
+class TestScoreTotal:
+    def test_table_that_adds_up(self):
+        assert _scored_table(25000, 25000, 25000, 25000).score == 25000
+
+    def test_table_that_does_not_add_up(self):
+        with pytest.raises(ParseError, match="Scores don't add up"):
+            _scored_table(25000, 25000, 25000, 25100)
+
+    @pytest.mark.parametrize("sticks", [1, 3])
+    def test_riichi_sticks_count_toward_the_total(self, sticks):
+        hand = _scored_table(25000 - sticks * 1000, 25000, 25000, 25000, f"riichi: {sticks}")
+
+        assert hand.riichi == sticks
+
+    def test_riichi_sticks_missing_from_the_scores_fail(self):
+        with pytest.raises(ParseError, match="Scores don't add up"):
+            _scored_table(25000, 25000, 25000, 25000, "riichi: 1")
+
+    def test_custom_starting_score_adds_up(self):
+        hand = _scored_table(31000, 29000, 30000, 30000, "starting_score: 30000")
+
+        assert hand.starting_score == 30000
+
+    def test_custom_starting_score_with_riichi_sticks_adds_up(self):
+        assert _scored_table(30000, 29000, 30000, 30000, "starting_score: 30000", "riichi: 1").riichi == 1
+
+    def test_custom_starting_score_replaces_the_default(self):
+        # These add up from the default 25000, but not from the 30000 this table started with.
+        with pytest.raises(ParseError, match=r"expected 120000 \(4 x starting_score 30000\)"):
+            _scored_table(25000, 25000, 25000, 25000, "starting_score: 30000")
+
+    def test_starting_score_given_after_the_scores(self):
+        block = "score: 30000\nshimo.score: 30000\ntoimen.score: 30000\nkami.score: 30000\nstarting_score: 30000"
+
+        assert parse_hand_block(block, MahjongParser())[0].starting_score == 30000
+
+    def test_starting_score_of_zero_with_negative_scores(self):
+        assert _scored_table(-1200, 1200, -500, 500, "starting_score: 0").score == -1200
+
+    @pytest.mark.parametrize(
+        ("scores", "lines"),
+        [
+            ((-3000, 53000, 25000, 25000), ()),
+            ((-3000, 52000, 25000, 25000), ("riichi: 1",)),
+            ((-3000, 63000, 30000, 30000), ("starting_score: 30000",)),
+        ],
+    )
+    def test_negative_scores_still_add_up(self, scores, lines):
+        assert _scored_table(*scores, *lines).score == -3000
+
+    def test_points_passed_between_players_still_add_up(self):
+        # A player at -3000 borrowing 10000 from another: the table's total doesn't change.
+        assert _scored_table(7000, 43000, 25000, 25000).score == 7000
+
+    @pytest.mark.parametrize(
+        ("scores", "lines"),
+        [
+            (("7000(10000)", 53000, 25000, 25000), ()),
+            (("7000(20000)", 63000, 25000, 25000), ()),
+            ((7000, 53000, 25000, "25000(10000)"), ()),
+            (("7000(10000)", 53000, "35000(10000)", 25000), ()),
+            (("7000(10000)", 52000, 25000, 25000), ("riichi: 1",)),
+            (("7000(10000)", 63000, 30000, 30000), ("starting_score: 30000",)),
+        ],
+    )
+    def test_bank_loans_add_to_the_total(self, scores, lines):
+        assert _scored_table(*scores, *lines).score == 7000
+
+    @pytest.mark.parametrize(
+        ("value", "score", "borrowed"),
+        [
+            ("7000(10000)", 7000, 10000),
+            ("7000 ( 20000 )", 7000, 20000),
+            ("-2000(10000)", -2000, 10000),
+            ("7000", 7000, 0),
+        ],
+    )
+    def test_score_with_a_loan(self, value, score, borrowed):
+        hand, _, _ = parse_hand_block(f"123m\nscore: {value}", MahjongParser())
+
+        assert (hand.score, hand.borrowed) == (score, borrowed)
+
+    def test_each_player_keeps_their_own_loan(self):
+        hand, _, _ = parse_hand_block("123m\nkami.score: 7000(10000)", MahjongParser())
+
+        assert hand.borrowed == 0
+        assert hand.opponents["kami"].borrowed == 10000
+
+    def test_borrowed_is_not_its_own_option(self):
+        with pytest.raises(ParseError, match="Unknown option 'borrowed'"):
+            parse_hand_block("123m\nscore: 7000\nborrowed: 10000", MahjongParser())
+
+    def test_excess_without_a_stated_loan_fails(self):
+        # Exactly 10000 over is a typo unless the block says someone borrowed it.
+        with pytest.raises(ParseError, match=r"= 110000, expected 100000 \(4 x starting_score 25000\)"):
+            _scored_table(7000, 53000, 25000, 25000)
+
+    def test_stated_loan_missing_from_the_scores_fails(self):
+        with pytest.raises(ParseError, match=r"expected 110000 \(4 x starting_score 25000 \+ 10000 borrowed\)"):
+            _scored_table("25000(10000)", 25000, 25000, 25000)
+
+    @pytest.mark.parametrize(
+        "value",
+        ["7000(5000)", "7000(10100)", "7000(-10000)", "7000(0)", "7000(lots)", "7000()", "7000(10000", "7000(10000)x"],
+    )
+    def test_invalid_loan_reports_error(self, value):
+        errors = apply_hand_options(Hand(), MahjongParser(), {"score": value})
+
+        assert errors == [
+            f"Invalid score value: expected the amount borrowed as a positive multiple of 10000, "
+            f"e.g. 7000(10000), got {value!r}"
+        ]
+
+    @pytest.mark.parametrize("value", ["(10000)", "lots(10000)"])
+    def test_loan_needs_a_valid_score(self, value):
+        errors = apply_hand_options(Hand(), MahjongParser(), {"score": value})
+
+        assert errors == [f"Invalid score value: expected an integer, got {value!r}"]
+
+    def test_invalid_loan_names_the_player(self):
+        with pytest.raises(ParseError, match=r"kami: Invalid score value: expected the amount borrowed"):
+            parse_hand_block("123m\nkami.score: 7000(5000)", MahjongParser())
+
+    def test_honba_does_not_count(self):
+        assert _scored_table(25000, 25000, 25000, 25000, "honba: 3").honba == 3
+
+    def test_no_check_without_every_score(self):
+        # Only three of the four scores are known, so the total can't be.
+        hand = parse_hand_block("shimo.score: 1\ntoimen.score: 2\nkami.score: 3", MahjongParser())[0]
+
+        assert hand.score is None
+
+    def test_no_check_without_every_player(self):
+        assert parse_hand_block("score: 1\nshimo.score: 2", MahjongParser())[0].score == 1
+
+    def test_error_reports_the_numbers(self):
+        with pytest.raises(ParseError) as e:
+            _scored_table(23800, 41000, 17900, 16200, "riichi: 1")
+
+        assert str(e.value) == (
+            "Scores don't add up: 98900 in scores + 1000 in riichi sticks = 99900, "
+            "expected 100000 (4 x starting_score 25000)"
+        )

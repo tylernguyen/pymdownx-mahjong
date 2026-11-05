@@ -102,6 +102,7 @@ class Hand:
     seat_wind: str | None = None  # one of SEAT_WINDS
     seat_wind_inferred: bool = False  # worked out from another player's wind, not given
     score: int | None = None
+    borrowed: int = 0  # points this player has borrowed from the bank, included in their score
     starting_score: int = DEFAULT_STARTING_SCORE  # what every player on the table started with
     round_wind: str | None = None  # one of SEAT_WINDS
     round_number: int | None = None  # 1-4

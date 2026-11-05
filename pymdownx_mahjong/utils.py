@@ -48,6 +48,12 @@ _HAND_SIZE: Final = 13
 # The most a player can hold: a full hand and the tile just drawn.
 _MAX_TILES_HELD: Final = _HAND_SIZE + 1
 
+# Points each riichi stick in the pot was taken from a player's score.
+_RIICHI_STICK_VALUE: Final = 1000
+
+# A player out of points borrows from the bank in multiples of this.
+_BANK_LOAN_INCREMENT: Final = 10000
+
 
 def _hand_size(hand: Hand) -> int:
     """The tiles a player holds, counting each meld as 3 (kans included) and any draw."""
@@ -162,6 +168,8 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
     if hand.opponents:
         _assign_seat_winds(hand)
 
+    _check_score_total(hand)
+
     if _is_auto_remaining(options.get("remaining", "")):
         hand.remaining = _count_remaining(hand)
 
@@ -226,6 +234,34 @@ def _assign_seat_winds(hand: Hand) -> None:
     hand.seat_wind_inferred = "hand" not in given
     for name, player in players.items():
         player.seat_wind = SEAT_WINDS[(bottom + positions[name]) % len(SEAT_WINDS)]
+
+
+def _check_score_total(hand: Hand) -> None:
+    """Check that a table showing all four scores adds up: points only move between players
+    and the riichi pot, so scores and sticks must total what the table started with, plus
+    whatever each player has borrowed from the bank.
+
+    ``starting_score`` and ``riichi`` are table-wide options held on the bottom player, so the
+    other players' own (default) values don't apply.
+
+    Raises:
+        ParseError: If the scores and riichi sticks don't total the table's starting points and loans
+    """
+    players = (hand, *hand.opponents.values())
+    scores = [player.score for player in players if player.score is not None]
+    if len(scores) != len(SEAT_WINDS):
+        return
+
+    in_scores = sum(scores)
+    in_sticks = hand.riichi * _RIICHI_STICK_VALUE
+    borrowed = sum(player.borrowed for player in players)
+    expected = len(scores) * hand.starting_score + borrowed
+    if in_scores + in_sticks != expected:
+        loans = f" + {borrowed} borrowed" if borrowed else ""
+        raise ParseError(
+            f"Scores don't add up: {in_scores} in scores + {in_sticks} in riichi sticks = {in_scores + in_sticks}, "
+            f"expected {expected} ({len(scores)} x starting_score {hand.starting_score}{loans})"
+        )
 
 
 def _is_auto_remaining(value: str) -> bool:
@@ -329,9 +365,19 @@ def _apply_seat(hand: Hand, _parser: MahjongParser, value: str) -> None:
 
 
 def _apply_score(hand: Hand, _parser: MahjongParser, value: str) -> None:
-    score = parse_int(value, signed=True)
+    # "7000", or "7000(10000)" for 7000 after borrowing 10000 from the bank.
+    score_part, has_loan, loan_part = value.partition("(")
+    score = parse_int(score_part.strip(), signed=True)
     if score is None:
         raise ParseError(f"Invalid score value: expected an integer, got {value!r}")
+    if has_loan:
+        borrowed = parse_int(loan_part.removesuffix(")").strip()) if loan_part.endswith(")") else None
+        if not borrowed or borrowed % _BANK_LOAN_INCREMENT:
+            raise ParseError(
+                f"Invalid score value: expected the amount borrowed as a positive multiple of "
+                f"{_BANK_LOAN_INCREMENT}, e.g. 7000(10000), got {value!r}"
+            )
+        hand.borrowed = borrowed
     hand.score = score
 
 

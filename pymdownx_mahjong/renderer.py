@@ -451,22 +451,29 @@ class MahjongRenderer:
                 f'<span lang="ja">{_SEAT_WIND_KANJI[hand.seat_wind]}</span></span>'
             )
         if hand.score is not None:
-            parts.append(MahjongRenderer._render_score(hand.score, starting_score))
+            parts.append(MahjongRenderer._render_score(hand.score, starting_score, hand.borrowed))
         parts.append("</div>")
         return parts
 
     @staticmethod
-    def _render_score(score: int, starting_score: int) -> str:
-        """Render a score and its delta from ``starting_score``, which the CSS swaps in on hover."""
-        delta = score - starting_score
+    def _render_score(score: int, starting_score: int, borrowed: int = 0) -> str:
+        """Render a score and its delta from ``starting_score``, which the CSS swaps in on hover.
+        Points ``borrowed`` from the bank are owed back, so they don't count toward the delta and
+        are shown beside it."""
+        delta = score - borrowed - starting_score
         sign_class = ""
         if delta:
             sign_class = f" mahjong-score-delta-{'positive' if delta > 0 else 'negative'}"
-        label = f"Score: {score}, {f'{delta:+}' if delta else '±0'} from {starting_score}"
+        loan = f" with {borrowed} borrowed" if borrowed else ""
+        loan_html = ""
+        if borrowed:
+            loan_html = f'<span class="mahjong-score-loan" title="Borrowed {borrowed:,}">({borrowed:,})</span>'
+        label = f"Score: {score}{loan}, {f'{delta:+}' if delta else '±0'} from {starting_score}"
         return (
             f'<span class="mahjong-score" role="img" aria-label="{label}">'
             f'<span class="mahjong-score-value">{MahjongRenderer._score_digits(score)}</span>'
-            f'<span class="mahjong-score-delta{sign_class}">{MahjongRenderer._score_digits(delta, signed=True)}</span>'
+            f'<span class="mahjong-score-delta{sign_class}">'
+            f"{MahjongRenderer._score_digits(delta, signed=True)}{loan_html}</span>"
             "</span>"
         )
 

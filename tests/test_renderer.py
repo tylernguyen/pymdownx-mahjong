@@ -577,6 +577,28 @@ class TestSeat:
         assert self._delta("mahjong-score-delta mahjong-score-delta-positive", "+1", ",000") in html
         assert 'aria-label="Score: 1000, +1000 from 0"' in html
 
+    def test_borrowed_points_do_not_count_toward_the_delta(self):
+        html = self._render(score=7000, borrowed=10000)
+
+        assert '<span class="mahjong-score-thousands">-28</span>' in html
+        assert 'aria-label="Score: 7000 with 10000 borrowed, -28000 from 25000"' in html
+
+    def test_loan_is_shown_inside_the_delta(self):
+        html = self._render(score=7000, borrowed=10000)
+        delta = html[html.index('<span class="mahjong-score-delta ') :]
+
+        assert '<span class="mahjong-score-loan" title="Borrowed 10,000">(10,000)</span></span>' in delta
+
+    def test_no_loan_shown_without_borrowing(self):
+        assert "mahjong-score-loan" not in self._render(score=7000)
+
+    def test_borrowed_applies_to_each_player(self):
+        hand, _, _ = parse_hand_block("123m\nscore: 25000\nkami.score: 7000(10000)", MahjongParser())
+        html = MahjongRenderer().render(hand)
+
+        assert 'aria-label="Score: 25000, ±0 from 25000"' in html
+        assert 'aria-label="Score: 7000 with 10000 borrowed, -28000 from 25000"' in html
+
     def test_starting_score_applies_to_the_whole_table(self):
         hand, _, _ = parse_hand_block(
             "123m\nscore: 31000\nstarting_score: 30000\nshimo.score: 29000\nkami.score: 30000", MahjongParser()

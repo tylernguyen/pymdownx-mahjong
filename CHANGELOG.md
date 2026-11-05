@@ -5,6 +5,8 @@
 ### Added
 
 - feat: hovering a score shows its change from `starting_score:` (default 25000).
+- feat: a table with all four scores must add up, counting riichi sticks, `starting_score:` and bank loans.
+- feat: `score: 7000(10000)` is 7000 after borrowing 10000 from the bank, with the loan shown on hover.
 
 ### Changed
 

@@ -424,6 +424,7 @@
 .mahjong-score {
     display: inline-grid;
     align-items: baseline;
+    justify-items: start; /* beside the wind marker, even if the page centers its text */
 }
 
 .mahjong-score > * {
@@ -445,6 +446,16 @@
 
 .mahjong-score-delta-negative {
     color: var(--mahjong-delta-negative);
+}
+
+/* A bank loan, beside the delta on hover. It overflows a zero-width box, staying on the digits'
+   baseline without widening the score's box. */
+.mahjong-score-loan {
+    display: inline-block;
+    width: 0;
+    margin-inline: 0.3em -0.3em;
+    white-space: nowrap;
+    font-size: 0.8em; /* matches .mahjong-score-hundreds */
 }
 
 /* Riichi and honba sticks - stacked, pushed to the right of the status row.

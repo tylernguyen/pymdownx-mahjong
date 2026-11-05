@@ -38,6 +38,14 @@ def test_score_delta_colors(sign):
     assert CSS.count(f"--mahjong-delta-{sign}:") == 2
 
 
+def test_score_stays_beside_the_wind_marker():
+    assert "display: inline-grid;\n    align-items: baseline;\n    justify-items: start;" in CSS
+
+
+def test_score_loan_does_not_widen_the_score():
+    assert ".mahjong-score-loan {\n    display: inline-block;\n    width: 0;" in CSS
+
+
 def test_score_delta_swaps_in_on_hover():
     assert ".mahjong-score:hover .mahjong-score-value" in CSS
     assert ".mahjong-score:hover .mahjong-score-delta {\n    visibility: visible;" in CSS
