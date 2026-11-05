@@ -18,6 +18,7 @@
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.35);
     --mahjong-tile-back: #e7b246;
     --mahjong-tile-side: #d0ccc8;
+    --mahjong-wall-edge: #b4b0ac;
 }
 
 [data-md-color-scheme="slate"],
@@ -33,6 +34,7 @@
     --mahjong-tile-border: var(--mahjong-tile-side);
     --mahjong-tile-shadow: rgba(0, 0, 0, 0.55);
     --mahjong-tile-side: #2d2d2d;
+    --mahjong-wall-edge: #161616;
 }
 
 /* Theme-specific tile visibility for auto-switching */
@@ -61,6 +63,7 @@
     --mahjong-tile-bg: #262626;
     --mahjong-tile-border: var(--mahjong-tile-side);
     --mahjong-tile-side: #2d2d2d;
+    --mahjong-wall-edge: #161616;
 }
 
 /* Light tiles in dark mode need light background for contrast */
@@ -70,6 +73,7 @@
     --mahjong-tile-bg: #f5f0eb;
     --mahjong-tile-border: #cfcfcf;
     --mahjong-tile-side: #d0ccc8;
+    --mahjong-wall-edge: #b4b0ac;
 }
 
 /* NOTE Main container — centered by default (hands without melds shrink to their
@@ -307,9 +311,12 @@
 }
 
 /* Dora indicators drawn as a stretch of the dead wall: each slot is a two-high stack.
-   The top tile (face-up indicator or face-down filler) keeps its usual edge, then a 1px
-   seam, then the edge of the face-down tile underneath, drawn like any face-down tile
-   (back strip, then side). Override the seam color with --mahjong-wall-seam. */
+   The top tile (face-up indicator or face-down filler) keeps its usual edge, then the
+   edge of the face-down tile underneath, drawn like any face-down tile (back strip, then
+   side). --mahjong-wall-edge darkens the sides so they stand out from the panel. Where a
+   face-up tile's back strip meets the one below, a 1px seam (default: a shade of the back
+   color, override with --mahjong-wall-seam) keeps them apart; under a face-down filler
+   the change from side to back strip already does. */
 .mahjong-dora-wall .mahjong-tile {
     margin-bottom: calc(var(--mahjong-tile-depth) * 2 + 1px);
     /* Under the dora row's zoom the 1px border snaps to whole device pixels while the
@@ -318,7 +325,7 @@
     border-width: 0;
     box-shadow:
         inset 0 0 0 1px var(--mahjong-tile-border),
-        0 3px 0 var(--mahjong-tile-side);
+        0 3px 0 var(--mahjong-wall-edge);
 }
 
 .mahjong-dora-wall .mahjong-tile-back {
@@ -336,11 +343,11 @@
     box-shadow: 0 4px 3px -3px var(--mahjong-tile-shadow);
     background: linear-gradient(
         to bottom,
-        var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.7),
+        var(--mahjong-wall-edge) calc(var(--mahjong-tile-depth) * 0.7),
         var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.7) var(--mahjong-tile-depth),
-        var(--mahjong-wall-seam, #8a6a45) var(--mahjong-tile-depth) calc(var(--mahjong-tile-depth) + 1px),
+        var(--mahjong-wall-seam, color-mix(in srgb, var(--mahjong-tile-back), black 25%)) var(--mahjong-tile-depth) calc(var(--mahjong-tile-depth) + 1px),
         var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) + 1px) calc(var(--mahjong-tile-depth) * 1.7),
-        var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 1.7)
+        var(--mahjong-wall-edge) calc(var(--mahjong-tile-depth) * 1.7)
     );
 }
 
@@ -348,10 +355,9 @@
     background: linear-gradient(
         to bottom,
         var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.6),
-        var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.6) var(--mahjong-tile-depth),
-        var(--mahjong-wall-seam, #8a6a45) var(--mahjong-tile-depth) calc(var(--mahjong-tile-depth) + 1px),
+        var(--mahjong-wall-edge) calc(var(--mahjong-tile-depth) * 0.6) calc(var(--mahjong-tile-depth) + 1px),
         var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) + 1px) calc(var(--mahjong-tile-depth) * 1.7),
-        var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 1.7)
+        var(--mahjong-wall-edge) calc(var(--mahjong-tile-depth) * 1.7)
     );
 }
 

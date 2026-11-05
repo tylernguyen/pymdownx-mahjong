@@ -18,6 +18,7 @@
 - fix: color options accept uppercase function names and reject empty ones.
 - fix: very long numbers report an error instead of crashing.
 - fix: an added kan render order.
+- css: dora wall drops the seam on face-down stacks, tints it on face-up ones, and darkens the tile edges.
 
 ## [0.3.4] - 2026-11-04
 
