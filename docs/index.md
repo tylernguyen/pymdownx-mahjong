@@ -113,7 +113,7 @@ The extension uses standard MPSZ notation, and extends on it with the __Xz__ not
 | `(123m<)`                           | Chi         | `mj:(123m<)`                                 |
 | `(550m<)` `(505p^)` `(055s>)`       | Pon         | `mj:(550m<)` `mj:(505p^)` `mj:(055s>)`       |
 | `[1111z]`                           | Closed Kan  | `mj:[1111z]`                                 |
-| `(555+5z<)` `(66+66z^)` `(777+7z>)` | Added Kan   | `mj:(555+5z<)` `mj:(666+6z^)` `mj:(777+7z>)` |
+| `(555+5z<)` `(666+6z^)` `(777+7z>)` | Added Kan   | `mj:(555+5z<)` `mj:(666+6z^)` `mj:(777+7z>)` |
 
 ### Discard Syntax
 
