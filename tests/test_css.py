@@ -29,3 +29,15 @@ def test_sideways_face_down_discard_has_its_edge_on_each_seat(seat):
 
     assert f"{selector} {{" in CSS
     assert f"{selector}::before {{" in CSS
+
+
+@pytest.mark.parametrize("sign", ["positive", "negative"])
+def test_score_delta_colors(sign):
+    assert f".mahjong-score-delta-{sign} {{\n    color: var(--mahjong-delta-{sign});" in CSS
+    # Once in :root and once for dark schemes, plus the use above.
+    assert CSS.count(f"--mahjong-delta-{sign}:") == 2
+
+
+def test_score_delta_swaps_in_on_hover():
+    assert ".mahjong-score:hover .mahjong-score-value" in CSS
+    assert ".mahjong-score:hover .mahjong-score-delta {\n    visibility: visible;" in CSS

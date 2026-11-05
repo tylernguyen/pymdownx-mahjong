@@ -230,6 +230,7 @@ class MahjongRenderer:
                 sticks=hand if seat == dealer else None,
                 marker=hand.round_wind if marker_wind and player.seat_wind == marker_wind else None,
                 standing=seat != "self",
+                starting_score=hand.starting_score,
             )
             if not body:
                 # A table given only the other players: no empty area for the bottom player.
@@ -275,11 +276,18 @@ class MahjongRenderer:
         return SEAT_WINDS[(1 - hand.round_number) % len(SEAT_WINDS)]
 
     def _render_player(
-        self, hand: Hand, sprite: TileSprite, sticks: Hand | None, marker: str | None, standing: bool
+        self,
+        hand: Hand,
+        sprite: TileSprite,
+        sticks: Hand | None,
+        marker: str | None,
+        standing: bool,
+        starting_score: int,
     ) -> list[str]:
         """Render one player: discards, then the status row (with the riichi and honba sticks
         from ``sticks`` and the round ``marker``, if given), then the hand, whose face-down
-        tiles stand up for the other players."""
+        tiles stand up for the other players. The score shows its delta from ``starting_score``
+        on hover."""
         sticks = sticks if sticks is not None and (sticks.riichi or sticks.honba) else None
         has_tiles = hand.closed_tiles or hand.melds or hand.draw_tile
         # An inferred wind doesn't earn a player an area of their own.
@@ -293,7 +301,7 @@ class MahjongRenderer:
         if hand.seat_wind or hand.score is not None or sticks or marker:
             parts.append('<div class="mahjong-status">')
             if hand.seat_wind or hand.score is not None:
-                parts.extend(self._render_seat(hand))
+                parts.extend(self._render_seat(hand, starting_score))
             if sticks:
                 parts.extend(self._render_sticks(sticks, sprite))
             if marker:
@@ -433,7 +441,7 @@ class MahjongRenderer:
         return parts
 
     @staticmethod
-    def _render_seat(hand: Hand) -> list[str]:
+    def _render_seat(hand: Hand, starting_score: int) -> list[str]:
         """Render the seat wind kanji and score at the left of the status row."""
         parts = ['<div class="mahjong-seat">']
         if hand.seat_wind:
@@ -443,19 +451,36 @@ class MahjongRenderer:
                 f'<span lang="ja">{_SEAT_WIND_KANJI[hand.seat_wind]}</span></span>'
             )
         if hand.score is not None:
-            parts.append(
-                f'<span class="mahjong-score" role="img" aria-label="Score: {hand.score}">'
-                f"{MahjongRenderer._score_digits(hand.score)}</span>"
-            )
+            parts.append(MahjongRenderer._render_score(hand.score, starting_score))
         parts.append("</div>")
         return parts
 
     @staticmethod
-    def _score_digits(score: int) -> str:
+    def _render_score(score: int, starting_score: int) -> str:
+        """Render a score and its delta from ``starting_score``, which the CSS swaps in on hover."""
+        delta = score - starting_score
+        sign_class = ""
+        if delta:
+            sign_class = f" mahjong-score-delta-{'positive' if delta > 0 else 'negative'}"
+        label = f"Score: {score}, {f'{delta:+}' if delta else '±0'} from {starting_score}"
+        return (
+            f'<span class="mahjong-score" role="img" aria-label="{label}">'
+            f'<span class="mahjong-score-value">{MahjongRenderer._score_digits(score)}</span>'
+            f'<span class="mahjong-score-delta{sign_class}">{MahjongRenderer._score_digits(delta, signed=True)}</span>'
+            "</span>"
+        )
+
+    @staticmethod
+    def _score_digits(score: int, signed: bool = False) -> str:
         """Format a score with comma separators and split off its last three digits (with
         their comma), so the thousands can stand out, e.g. 25000 -> 25 and ,000; below 1000
-        there's no thousands part."""
-        sign = "-" if score < 0 else ""
+        there's no thousands part. ``signed`` marks a delta: +1,200 or ±0 as well as -1,200."""
+        if score < 0:
+            sign = "-"
+        elif signed:
+            sign = "+" if score else "±"
+        else:
+            sign = ""
         digits = f"{abs(score):,}"
         if abs(score) < 1000:
             # No thousands part: the sign stays with the digits, e.g. -500.

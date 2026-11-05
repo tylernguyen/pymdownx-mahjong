@@ -27,6 +27,7 @@ _OPTION_KEYS: Final[tuple[str, ...]] = (
     "riichi",
     "seat",
     "score",
+    "starting_score",
     "round",
     "remaining",
 )
@@ -334,6 +335,10 @@ def _apply_score(hand: Hand, _parser: MahjongParser, value: str) -> None:
     hand.score = score
 
 
+def _apply_starting_score(hand: Hand, _parser: MahjongParser, value: str) -> None:
+    hand.starting_score = _parse_count("starting_score", value)
+
+
 def _apply_round(hand: Hand, _parser: MahjongParser, value: str) -> None:
     # "S2", "south 2" or "south2": a wind, then a hand number 1-4, then optionally the honba: "S2-1".
     round_part, has_honba, honba_part = (part.strip() for part in value.partition("-"))
@@ -372,14 +377,15 @@ _OPTION_APPLIERS: Final[dict[str, Callable[[Hand, MahjongParser, str], None]]] =
     "riichi": _apply_riichi,
     "seat": _apply_seat,
     "score": _apply_score,
+    "starting_score": _apply_starting_score,
     "round": _apply_round,
     "remaining": _apply_remaining,
 }
 
 
 def apply_hand_options(hand: Hand, parser: MahjongParser, options: dict[str, Any]) -> list[str]:
-    """Apply parsed options (dora, draw, discards, honba, riichi, seat, score, round, remaining) to a hand.
-    Returns error messages."""
+    """Apply parsed options (dora, draw, discards, honba, riichi, seat, score, starting_score, round,
+    remaining) to a hand. Returns error messages."""
     errors: list[str] = []
     if "honba" in options and "-" in options.get("round", ""):
         errors.append(f"Honba given twice: honba: {options['honba']} and round: {options['round']}")

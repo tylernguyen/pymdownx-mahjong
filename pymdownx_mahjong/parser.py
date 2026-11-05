@@ -42,6 +42,9 @@ OPPONENT_SEATS: Final = ("shimo", "toimen", "kami")
 # One dora indicator plus up to four kan dora.
 MAX_DORA_INDICATORS: Final = 5
 
+# What a score's delta is measured from, unless a block's starting_score says otherwise.
+DEFAULT_STARTING_SCORE: Final = 25000
+
 # Far beyond any real score or count.
 _MAX_INT_DIGITS: Final = 18
 
@@ -99,6 +102,7 @@ class Hand:
     seat_wind: str | None = None  # one of SEAT_WINDS
     seat_wind_inferred: bool = False  # worked out from another player's wind, not given
     score: int | None = None
+    starting_score: int = DEFAULT_STARTING_SCORE  # what every player on the table started with
     round_wind: str | None = None  # one of SEAT_WINDS
     round_number: int | None = None  # 1-4
     remaining: int | None = None  # tiles left in the wall

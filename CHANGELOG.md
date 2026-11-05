@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- feat: hovering a score shows its change from `starting_score:` (default 25000).
+
 ### Changed
 
 - fix: face-down discards respect `r`, `t` and `c` markers.

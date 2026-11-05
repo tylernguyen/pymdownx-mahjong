@@ -166,7 +166,8 @@ Figures are written in a `mahjong` fenced code block, with additional options to
 - `round`: round wind and hand number, e.g. `S2`. Can include the honba instead of a `honba` option, e.g. `S2-1`.
 - `honba`: if honba info is not written in round, this can explicitly set it
 - `remaining`: indicate live tiles remaining in the wall, or `auto` to count them on a full table render.
-- `seat` and `score`: wind marker and score.
+- `seat` and `score`: wind marker and score. Score shows delta from starting on hover.
+- `starting_score`: what every player in the figure started with, `25000` by default.
 - `title`: title for the rendered figure.
 
 ````markdown

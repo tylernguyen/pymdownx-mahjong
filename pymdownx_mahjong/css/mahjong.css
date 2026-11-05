@@ -6,6 +6,8 @@
     --mahjong-bg: transparent;
     --mahjong-border: transparent;
     --mahjong-caption-color: #000;
+    --mahjong-delta-negative: #b91c1c;
+    --mahjong-delta-positive: #15803d;
     --mahjong-error-bg: #fee2e2;
     --mahjong-error-border: #ef4444;
     --mahjong-error-color: #991b1b;
@@ -25,6 +27,8 @@
 [data-theme="dark"],
 .dark {
     --mahjong-caption-color: #fff;
+    --mahjong-delta-negative: #f87171;
+    --mahjong-delta-positive: #4ade80;
     --mahjong-error-bg: #450a0a;
     --mahjong-error-border: #dc2626;
     --mahjong-error-color: #fca5a5;
@@ -413,6 +417,34 @@
 
 .mahjong-score-hundreds {
     font-size: 0.8em;
+}
+
+/* Hovering a score swaps it for its change from the starting score. Both share one grid
+   cell, so the box fits the wider of the two and nothing shifts. */
+.mahjong-score {
+    display: inline-grid;
+    align-items: baseline;
+}
+
+.mahjong-score > * {
+    grid-area: 1 / 1;
+}
+
+.mahjong-score-delta,
+.mahjong-score:hover .mahjong-score-value {
+    visibility: hidden;
+}
+
+.mahjong-score:hover .mahjong-score-delta {
+    visibility: visible;
+}
+
+.mahjong-score-delta-positive {
+    color: var(--mahjong-delta-positive);
+}
+
+.mahjong-score-delta-negative {
+    color: var(--mahjong-delta-negative);
 }
 
 /* Riichi and honba sticks - stacked, pushed to the right of the status row.

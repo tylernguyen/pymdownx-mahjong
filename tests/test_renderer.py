@@ -490,8 +490,10 @@ class TestSeat:
         assert 'aria-label="Seat Wind: South"' in html
         assert ">南</span>" in html
         assert (
-            '<span class="mahjong-score" role="img" aria-label="Score: 25000">'
+            '<span class="mahjong-score" role="img" aria-label="Score: 25000, ±0 from 25000">'
+            '<span class="mahjong-score-value">'
             '<span class="mahjong-score-thousands">25</span><span class="mahjong-score-hundreds">,000</span></span>'
+            '<span class="mahjong-score-delta"><span class="mahjong-score-hundreds">±0</span></span></span>'
         ) in html
         assert html.index("mahjong-seat-wind") < html.index("mahjong-score")
 
@@ -515,7 +517,8 @@ class TestSeat:
 
     @pytest.mark.parametrize("score", [0, 500, -500])
     def test_score_below_thousand_has_no_thousands(self, score):
-        html = self._render(score=score)
+        # Starting at the same score, so the delta (±0) has no thousands either.
+        html = self._render(score=score, starting_score=score)
 
         assert "mahjong-score-thousands" not in html
         assert f'<span class="mahjong-score-hundreds">{score}</span>' in html
@@ -523,8 +526,66 @@ class TestSeat:
     def test_zero_score_shown(self):
         html = self._render(score=0)
 
-        assert 'aria-label="Score: 0"' in html
+        assert 'aria-label="Score: 0, -25000 from 25000"' in html
         assert "mahjong-seat-wind" not in html
+
+    @staticmethod
+    def _delta(css_class: str, thousands: str, hundreds: str) -> str:
+        """The markup expected for a delta, split into its thousands and last three digits."""
+        return (
+            f'<span class="{css_class}"><span class="mahjong-score-thousands">{thousands}</span>'
+            f'<span class="mahjong-score-hundreds">{hundreds}</span></span>'
+        )
+
+    @pytest.mark.parametrize(
+        ("score", "css_class", "thousands", "hundreds", "label"),
+        [
+            (41000, "mahjong-score-delta mahjong-score-delta-positive", "+16", ",000", "+16000"),
+            (23800, "mahjong-score-delta mahjong-score-delta-negative", "-1", ",200", "-1200"),
+            (-500, "mahjong-score-delta mahjong-score-delta-negative", "-25", ",500", "-25500"),
+        ],
+    )
+    def test_score_delta(self, score, css_class, thousands, hundreds, label):
+        html = self._render(score=score)
+
+        assert self._delta(css_class, thousands, hundreds) in html
+        assert f'aria-label="Score: {score}, {label} from 25000"' in html
+        assert 'class="mahjong-score-value"' in html
+
+    @pytest.mark.parametrize(
+        ("score", "css_class", "text"),
+        [
+            (25500, "mahjong-score-delta mahjong-score-delta-positive", "+500"),
+            (24500, "mahjong-score-delta mahjong-score-delta-negative", "-500"),
+            (25000, "mahjong-score-delta", "±0"),
+        ],
+    )
+    def test_score_delta_below_thousand_has_no_thousands(self, score, css_class, text):
+        html = self._render(score=score)
+
+        assert f'<span class="{css_class}"><span class="mahjong-score-hundreds">{text}</span></span>' in html
+
+    def test_starting_score_overrides_the_default(self):
+        html = self._render(score=25000, starting_score=30000)
+
+        assert self._delta("mahjong-score-delta mahjong-score-delta-negative", "-5", ",000") in html
+        assert 'aria-label="Score: 25000, -5000 from 30000"' in html
+
+    def test_starting_score_of_zero_is_honoured(self):
+        html = self._render(score=1000, starting_score=0)
+
+        assert self._delta("mahjong-score-delta mahjong-score-delta-positive", "+1", ",000") in html
+        assert 'aria-label="Score: 1000, +1000 from 0"' in html
+
+    def test_starting_score_applies_to_the_whole_table(self):
+        hand, _, _ = parse_hand_block(
+            "123m\nscore: 31000\nstarting_score: 30000\nshimo.score: 29000\nkami.score: 30000", MahjongParser()
+        )
+        html = MahjongRenderer().render(hand)
+
+        assert 'aria-label="Score: 31000, +1000 from 30000"' in html
+        assert 'aria-label="Score: 29000, -1000 from 30000"' in html
+        assert 'aria-label="Score: 30000, ±0 from 30000"' in html
 
     def test_seat_left_of_sticks_in_status_row(self):
         html = self._render(seat_wind="east", riichi=1)
@@ -659,7 +720,7 @@ class TestTable:
         shimo = html[html.index("mahjong-player-shimo") : html.index("mahjong-player-toimen")]
 
         assert 'aria-label="Seat Wind: North"' in shimo
-        assert 'aria-label="Score: 50900"' in shimo
+        assert 'aria-label="Score: 50900, +25900 from 25000"' in shimo
 
     def test_sticks_with_dealer(self):
         # The bottom player is west, so toimen is east.

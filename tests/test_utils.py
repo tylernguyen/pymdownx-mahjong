@@ -248,6 +248,23 @@ class TestSticksOptions:
 
         assert hand.seat_wind is None
         assert hand.score is None
+        assert hand.starting_score == 25000
+
+    @pytest.mark.parametrize(("value", "start"), [("30000", 30000), ("0", 0)])
+    def test_starting_score(self, value, start):
+        hand, _, _ = parse_hand_block(f"123m\nstarting_score: {value}", MahjongParser())
+
+        assert hand.starting_score == start
+
+    @pytest.mark.parametrize("value", ["", "-1000", "lots", "25,000"])
+    def test_invalid_starting_score_reports_error(self, value):
+        errors = apply_hand_options(Hand(), MahjongParser(), {"starting_score": value})
+
+        assert errors == [f"Invalid starting_score value: expected a non-negative integer, got {value!r}"]
+
+    def test_starting_score_is_not_per_player(self):
+        with pytest.raises(ParseError, match=r"Unknown option 'shimo\.starting_score'"):
+            parse_hand_block("123m\nshimo.starting_score: 30000", MahjongParser())
 
     def test_sticks_alone_need_a_hand(self):
         with pytest.raises(ParseError, match="No hand notation provided"):
