@@ -69,6 +69,47 @@ class TestParseBlockContent:
             parse_block_content("123m\nhand: 456p")
 
 
+class TestMultiLineDiscards:
+    @pytest.mark.parametrize("key", ["discards", "kami.discards"])
+    def test_indented_lines_continue_discards(self, key):
+        _, options = parse_block_content(f"123m\n{key}: 1m 2m\n  3m 4m\n\t5m\nscore: 100")
+
+        assert options[key] == "1m 2m 3m 4m 5m"
+        assert options["score"] == "100"
+
+    def test_value_can_start_on_the_next_line(self):
+        hand, _, _ = parse_hand_block("discards:\n  r1m 2m\n  t3p", MahjongParser())
+
+        assert [tile.notation for tile in hand.discards] == ["1m", "2m", "3p"]
+        assert hand.discards[0].is_rotated
+
+    def test_invalid_continuation_names_the_option(self):
+        with pytest.raises(ParseError, match="Invalid discards notation"):
+            parse_hand_block("discards: 1m\n  x", MahjongParser())
+
+    def test_unindented_line_is_still_the_hand(self):
+        notation, options = parse_block_content("discards: 1m\n123m")
+
+        assert notation == "123m"
+        assert options["discards"] == "1m"
+
+    def test_same_indent_is_not_a_continuation(self):
+        notation, options = parse_block_content("  discards: 1m\n  123m")
+
+        assert notation == "123m"
+        assert options["discards"] == "1m"
+
+    def test_indented_option_is_not_a_continuation(self):
+        _, options = parse_block_content("discards: 1m\n  score: 100")
+
+        assert options == {"discards": "1m", "score": "100"}
+
+    @pytest.mark.parametrize("line", ["hand: 123m", "dora: 1m", "kami.hand: 123m"])
+    def test_other_options_do_not_continue(self, line):
+        with pytest.raises(ParseError, match="Hand notation given more than once"):
+            parse_block_content(f"123m\n{line}\n  456p")
+
+
 class TestParseHandBlock:
     def test_draw_counted_toward_tile_limit(self):
         with pytest.raises(ParseError, match="1m appears 5 times"):

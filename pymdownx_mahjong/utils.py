@@ -48,20 +48,29 @@ _HAND_SIZE: Final = 13
 def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
     """Parse block content into notation and options.
 
-    Supports simple notation, YAML-style key: value pairs, or a mix of both.
+    Supports simple notation, YAML-style key: value pairs, or a mix of both. A discards
+    option continues onto the lines after it that are indented deeper than its key.
 
     Raises:
         ParseError: On an unknown option key, a repeated option or a second hand notation
     """
     options: dict[str, Any] = {}
     notation = ""
+    discards_key: str | None = None  # the discards option that indented lines would continue
+    discards_indent = 0
 
     lines = content.split("\n")
 
-    for line in lines:
-        line = line.strip()
+    for raw_line in lines:
+        line = raw_line.strip()
         if not line:
             continue
+
+        indent = len(raw_line) - len(raw_line.lstrip())
+        if discards_key and indent > discards_indent and ":" not in line:
+            options[discards_key] += f" {line}"
+            continue
+        discards_key = None
 
         if ":" in line:
             key, _, value = line.partition(":")
@@ -88,6 +97,9 @@ def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
             else:
                 expected = ", ".join(("hand", *_OPTION_KEYS))
                 raise ParseError(f"Unknown option '{key}' (expected one of: {expected})")
+
+            if key.rpartition(".")[2] == "discards":
+                discards_key, discards_indent = key, indent
         elif notation:
             raise ParseError(f"Hand notation given more than once: {line}")
         else:
