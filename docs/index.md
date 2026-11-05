@@ -16,8 +16,9 @@ icon: octicons/markdown-16
 PyMdown Mahjong is an extension for Python Markdown that aids writing Mahjong content. Designed and tested for Zensical, the extension offers:
 
 - Inline rendering of individual Mahjong tiles and melds.
-- Figure rendering of a __complete__ game state: multiple hands, discards, scores, dora, round and seat information.
-- Figure rendering of an individual Mahjong hand (including melds), discards and accompanying information.
+- Figure rendering of a __complete__ game state: multiple hands, discards, scores, dora, round, and seat information.
+- Figure rendering of an individual Mahjong hand (including melds), with discards and accompanying information.
+- Adaptive tile assets, with customizations for tile back and background color. 
 
 ## Installation
 
@@ -111,16 +112,22 @@ The extension uses standard MPSZ notation, and extends on it with the __Xz__ not
 
 | Syntax                              | Description | Render                                       |
 |-------------------------------------|-------------|----------------------------------------------|
-| `(123m<)`                           | Chi         | `mj:(123m<)`                                 |
+| `(046m<)` `(978p<)`                 | Chi         | `mj:(046m<)` `mj:(978p<)`                    |
 | `(550m<)` `(505p^)` `(055s>)`       | Pon         | `mj:(550m<)` `mj:(505p^)` `mj:(055s>)`       |
-| `[5555p]` `[0555m]`                 | Closed Kan  | `mj:[5555p]` `mj:[0555m]`                    |
+| `[5555m]` `[0555p]`                 | Closed Kan  | `mj:[5555m]` `mj:[0555p]`                    |
 | `(555+0m<)` `(550+5p^)` `(550+5s>)` | Added Kan   | `mj:(555+0m<)` `mj:(550+5p^)` `mj:(550+5s>)` |
 
 ### Discard Syntax
 
 Add `discards:` to a block to render a discard pile above the hand.
 
-Syntax can be combined, `rt5p` is tsumogiri riichi on :5p:.
+| Syntax | Title                         | Example |
+| ------ | ----------------------------- | ------- |
+| `r`    | Riichi marker (sideway)       | `r1m`   |
+| `t`    | Tsumogiri (dimmed)            | `t1m`   |
+| `c`    | Called by another player      | `c1m`   |
+
+Syntax can be combined, `rt5p` is tsumogiri riichi, `cr5p` is a riichi tile that has been called.
 
 Every discard after the riichi tile is tsumogiri, so it's dimmed without needing `t`.
 
@@ -140,12 +147,6 @@ discards:
   1m 9m 4m 5z
 ```
 ````
-
-| Syntax | Title                         | Example |
-| ------ | ----------------------------- | ------- |
-| `r`    | Riichi marker                 | `r1m`   |
-| `t`    | Tsumogiri (dimmed)            | `t1m`   |
-| `c`    | Called by another player      | `c1m`   |
 
 ## Inline Syntax
 
