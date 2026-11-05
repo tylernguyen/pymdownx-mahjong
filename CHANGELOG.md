@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.4] - 2026-11-04
 
 ### Added
 
@@ -10,10 +10,12 @@
 
 ### Changed
 
+- chore: optimize assets to reduce size
 - fix: infer seat winds from any player and reject winds out of turn order.
 - fix: an empty bottom player keeps their inferred wind when showing sticks or the round marker.
 - fix: called tiles keep their opacity in the same-tile highlight.
 - fix: toimen's discard rows overlap in the right order.
+- css: fix toimen tile shadow
 
 ## [0.3.3] - 2026-11-04
 
