@@ -340,6 +340,9 @@ class TestConfigValidation:
             "color-mix(in srgb, url(x.png), red)",
             "teall",
             "foo",
+            "rgb()",
+            "rgb( )",
+            "rgb((1 2 3))",
         ],
     )
     def test_invalid_tile_back_color_rejected(self, color):
@@ -366,6 +369,7 @@ class TestConfigValidation:
             "Teal",
             "transparent",
             "rgb(231 178 70)",
+            "RGB(231, 178, 70)",
             "oklch(70% 0.1 200)",
             "color-mix(in srgb, teal, #000 10%)",
             "color-mix(in srgb, rgb(1 2 3), hsl(0 0% 50%))",
@@ -375,6 +379,22 @@ class TestConfigValidation:
         markdown.Markdown(
             extensions=["pymdownx_mahjong"], extension_configs={"pymdownx_mahjong": {"tile_back_color": color}}
         )
+
+    @pytest.mark.parametrize(
+        ("value", "enabled"),
+        [("true", True), ("TRUE", True), ("yes", True), ("on", True), (True, True), ("false", False), (False, False)],
+    )
+    def test_enable_inline_values(self, value, enabled):
+        md = markdown.Markdown(
+            extensions=["pymdownx_mahjong"], extension_configs={"pymdownx_mahjong": {"enable_inline": value}}
+        )
+        assert ("mahjong_inline" in md.inlinePatterns) is enabled
+
+    def test_invalid_enable_inline_rejected(self):
+        with pytest.raises(ValueError, match="enable_inline"):
+            markdown.Markdown(
+                extensions=["pymdownx_mahjong"], extension_configs={"pymdownx_mahjong": {"enable_inline": "maybe"}}
+            )
 
     def test_invalid_closed_kan_style_rejected(self):
         with pytest.raises(ValueError, match="closed_kan_style"):

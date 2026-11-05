@@ -22,7 +22,8 @@ CLOSED_KAN_STYLES: Final[tuple[str, ...]] = ("outer", "inner")
 _CSS_COLOR: Final[re.Pattern[str]] = re.compile(
     r"#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})"
     r"|[a-zA-Z]+"
-    r"|(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\([#0-9a-zA-Z.,%/+\s()-]*\)"
+    r"|(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\([#0-9a-zA-Z.,%/+\s()-]*\)",
+    re.IGNORECASE,  # CSS function names are case-insensitive, like its color names
 )
 # Functions allowed inside a color value, so nothing like url(...) can be nested in one.
 _COLOR_FUNCTIONS: Final = frozenset(
@@ -102,8 +103,11 @@ def _is_css_color(value: str) -> bool:
         return False
     if "(" not in value:
         return value.startswith("#") or value.lower() in _CSS_NAMED_COLORS
-    functions = {name.lower() for name in _CSS_FUNCTION.findall(value)}
-    return functions <= _COLOR_FUNCTIONS and _closes_at_end(value)
+    functions = [name.lower() for name in _CSS_FUNCTION.findall(value)]
+    # Every parenthesis opens a known function, with something inside it.
+    if value.count("(") != len(functions) or re.search(r"\(\s*\)", value):
+        return False
+    return _COLOR_FUNCTIONS.issuperset(functions) and _closes_at_end(value)
 
 
 def _closes_at_end(value: str) -> bool:

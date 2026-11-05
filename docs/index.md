@@ -76,6 +76,7 @@ Copy [mahjong.css :lucide-arrow-up-right:](https://github.com/tylernguyen/pymdow
 | Key              | Type | Options         | Default | Description                                                         |
 |------------------|------|-----------------|---------|---------------------------------------------------------------------|
 | theme            | str  | `auto` `light` `dark` | `auto` |  |
+| enable_inline    | bool | `true` `false`  | `true`  | render `:1m:` and `` `mj:` `` inline syntax |
 | closed_kan_style | str  | `outer` `inner` | `outer` | `outer`: back, front, front, back `inner`: front, back, back, front |
 | tile_back_color  | str  | CSS color       | `#e7b246` | color of tiles' backs, e.g. `#2e7d6b` |
 | table_color      | str  | CSS color       | transparent | color of tablecloth, e.g. `#2b7a78` |

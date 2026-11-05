@@ -16,6 +16,11 @@ if TYPE_CHECKING:
     from markdown import Markdown
 
 
+# Accepted spellings of a boolean option, lowercased; config files may pass a real bool or None.
+_TRUE_VALUES = ("true", "yes", "y", "on", "1")
+_FALSE_VALUES = ("false", "no", "n", "off", "0", "none")
+
+
 class MahjongExtension(markdown.Extension):
     def __init__(self, **kwargs: Any) -> None:
         self.config = {
@@ -42,7 +47,11 @@ class MahjongExtension(markdown.Extension):
             table_color=config["table_color"],
         )
 
-        if str(config.get("enable_inline", "true")).lower() in ("true", "1", "yes"):
+        enable_inline = str(config["enable_inline"]).lower()
+        if enable_inline not in _TRUE_VALUES + _FALSE_VALUES:
+            raise ValueError(f"Invalid enable_inline {config['enable_inline']!r} (expected true or false)")
+
+        if enable_inline in _TRUE_VALUES:
             # Priority 76: before pymdownx.emoji (75)
             inline_processor = MahjongInlineProcessor(INLINE_TILE_PATTERN, md, config, self.sprite)
             md.inlinePatterns.register(inline_processor, "mahjong_inline", 76)

@@ -14,6 +14,8 @@
 - fix: a closed kan always shows its red five.
 - fix: a meld no longer joins digits to a suit on its other side.
 - fix: runs of inline face-down tiles are announced once.
+- fix: `enable_inline` rejects unknown values.
+- fix: color options accept uppercase function names and reject empty ones.
 - fix: very long numbers report an error instead of crashing.
 
 ## [0.3.4] - 2026-11-04
