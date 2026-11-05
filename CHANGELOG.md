@@ -5,6 +5,8 @@
 ### Added
 
 - feat: `round: S2-1` sets the honba as part of the round.
+- feat: inline melds with `mj:`, e.g. `mj:(123m<)`.
+- feat: `discards` can continue onto indented lines.
 
 ### Changed
 
