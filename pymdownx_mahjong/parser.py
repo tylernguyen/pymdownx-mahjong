@@ -380,10 +380,7 @@ class MahjongParser:
         return None
 
     def _is_sequence(self, tiles: list[Tile]) -> bool:
-        """Check if tiles form a consecutive sequence (chi)."""
-        if len(tiles) != 3:
-            return False
-
+        """Check if 3 tiles form a consecutive sequence (chi)."""
         suits = {t.suit for t in tiles}
         if len(suits) != 1 or "z" in suits:
             return False

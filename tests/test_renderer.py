@@ -6,7 +6,8 @@ import pytest
 
 from pymdownx_mahjong.parser import Hand, MahjongParser, Tile, parse_hand
 from pymdownx_mahjong.renderer import MahjongRenderer
-from pymdownx_mahjong.sprite import TileSprite
+from pymdownx_mahjong.sprite import TileSprite, load_symbol
+from pymdownx_mahjong.utils import parse_hand_block
 
 
 class TestMahjongRenderer:
@@ -26,6 +27,20 @@ class TestMahjongRenderer:
 
         assert 'class="mahjong-caption"' in html
         assert "Test Hand" in html
+
+    def test_title_is_escaped(self):
+        html = MahjongRenderer().render(parse_hand("1m"), title='<b>x</b> "q"')
+
+        assert '<figcaption class="mahjong-caption">&lt;b&gt;x&lt;/b&gt; &quot;q&quot;</figcaption>' in html
+
+    @pytest.mark.parametrize(
+        ("notation", "escaped"),
+        [("(123m<)", "(123m&lt;)"), ('"><script>', "&quot;&gt;&lt;script&gt;")],
+    )
+    def test_notation_data_attr_is_escaped(self, notation, escaped):
+        html = MahjongRenderer().render(parse_hand("1m"), notation=notation)
+
+        assert f'data-notation="{escaped}"' in html
 
     def test_render_with_notation_data_attr(self):
         renderer = MahjongRenderer()
@@ -120,24 +135,22 @@ class TestRendererConfiguration:
         # auto theme: no theme class on the container
         assert "mahjong-theme-" not in html.split(">")[0]
 
-    def test_theme_class_on_container(self):
+    @pytest.mark.parametrize("theme", ["light", "dark"])
+    def test_theme_class_on_container(self, theme):
         """Figure container should carry the theme class for CSS targeting."""
-        for theme in ("light", "dark"):
-            renderer = MahjongRenderer(theme=theme)
-            hand = parse_hand("1m")
-            html = renderer.render(hand)
+        html = MahjongRenderer(theme=theme).render(parse_hand("1m"))
 
-            assert f"mahjong-theme-{theme}" in html.split(">")[0], f"figure should have mahjong-theme-{theme} class"
+        assert f"mahjong-theme-{theme}" in html.split(">")[0]
 
-    def test_closed_kan_styles(self):
-        for style in ("outer", "inner"):
-            renderer = MahjongRenderer(theme="light", closed_kan_style=style)
-            hand = parse_hand("[1111z]")
-            html = renderer.render(hand)
+    @pytest.mark.parametrize(
+        ("style", "faces"),
+        [("outer", ["back", "front", "front", "back"]), ("inner", ["front", "back", "back", "front"])],
+    )
+    def test_closed_kan_styles(self, style, faces):
+        html = MahjongRenderer(theme="light", closed_kan_style=style).render(parse_hand("[1111z]"))
+        found = re.findall(r'mahjong-tile-back|data-tile="1z"', html)
 
-            back_count = html.count('class="mahjong-tile mahjong-tile-back"')
-            assert back_count == 2
-            assert renderer.closed_kan_style == style
+        assert ["back" if tile == "mahjong-tile-back" else "front" for tile in found] == faces
 
 
 class TestRenderTiles:
@@ -164,6 +177,13 @@ class TestSprite:
         assert '<symbol id="mj-light-1m"' in html
         assert '<symbol id="mj-dark-1m"' in html
 
+    @pytest.mark.parametrize("theme", ["light", "dark"])
+    def test_white_dragon_has_an_empty_face(self, theme):
+        """Its artwork is a self-closing <svg/>, unlike every other tile's."""
+        html = MahjongRenderer(theme=theme).render(parse_hand("5z"))
+
+        assert re.search(rf'<symbol id="mj-{theme}-5z" viewBox="[^"]+"></symbol>', html)
+
     def test_shared_sprite_is_not_embedded(self):
         sprite = TileSprite()
         html = MahjongRenderer(theme="light").render(parse_hand("1m2p"), sprite=sprite)
@@ -181,8 +201,6 @@ class TestSprite:
         assert first == second
 
     def test_internal_ids_are_namespaced(self):
-        import re
-
         html = MahjongRenderer(theme="light").render(parse_hand("1p2p"))
         ids = re.findall(r'id="([^"]+)"', html)
 
@@ -534,8 +552,6 @@ def _owning_player(css_class, html):
 
 
 def _block_html(block, **kwargs):
-    from pymdownx_mahjong.utils import parse_hand_block
-
     hand, _, _ = parse_hand_block(block, MahjongParser())
     return MahjongRenderer(**kwargs).render(hand)
 
@@ -621,12 +637,12 @@ class TestTable:
 
         assert _owning_player("mahjong-sticks", html) == "self"
 
-    def test_dealer_status_row_holds_only_sticks_without_seat_or_score(self):
+    def test_dealer_status_row_shows_seat_beside_sticks(self):
         html = _block_html("123m\nseat: west\nriichi: 1\ntoimen.hand:\ntoimen.seat: east")
         toimen = html[html.index("mahjong-player-toimen") :]
 
-        assert '<div class="mahjong-status"><div class="mahjong-sticks">' not in toimen
-        assert 'aria-label="Seat Wind: East"' in toimen
+        assert _owning_player("mahjong-sticks", html) == "toimen"
+        assert toimen.index('aria-label="Seat Wind: East"') < toimen.index('class="mahjong-sticks"')
 
     def test_face_down_opponent_hand(self):
         html = _block_html(self.BLOCK)
@@ -729,10 +745,8 @@ class TestRoundMarker:
 
     def test_marker_has_tile_sized_default(self):
         html = _block_html(f"{self.BASE}\nround: E1")
-        marker = html[html.index('class="mahjong-round-marker"') :]
 
-        assert marker.startswith('class="mahjong-round-marker"')
-        assert '<svg width="45" height="30"' in marker
+        assert 'title="Round marker: East"><svg width="45" height="30"' in html
 
     @pytest.mark.parametrize("round_", ["W1", "N2"])
     def test_no_marker_for_west_or_north_rounds(self, round_):
@@ -766,8 +780,6 @@ class TestRoundMarker:
 
 class TestMarkerSymbol:
     def test_svg_symbol_keeps_viewbox(self):
-        from pymdownx_mahjong.sprite import load_symbol
-
         symbol = load_symbol("East", "marker")
 
         assert symbol.startswith('<symbol id="mj-marker-East" viewBox="0 0 567 374">')
@@ -775,6 +787,4 @@ class TestMarkerSymbol:
         assert "<image" not in symbol
 
     def test_missing_svg_uses_placeholder(self):
-        from pymdownx_mahjong.sprite import load_symbol
-
         assert "<rect" in load_symbol("West", "marker")

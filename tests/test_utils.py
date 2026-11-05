@@ -104,10 +104,10 @@ class TestMultiLineDiscards:
 
         assert options == {"discards": "1m", "score": "100"}
 
-    @pytest.mark.parametrize("line", ["hand: 123m", "dora: 1m", "kami.hand: 123m"])
-    def test_other_options_do_not_continue(self, line):
-        with pytest.raises(ParseError, match="Hand notation given more than once"):
-            parse_block_content(f"123m\n{line}\n  456p")
+    @pytest.mark.parametrize("block", ["hand: 123m\n  456p", "123m\ndora: 1m\n  456p", "123m\nkami.hand: 1m\n  456p"])
+    def test_other_options_do_not_continue(self, block):
+        with pytest.raises(ParseError, match="Hand notation given more than once: 456p"):
+            parse_block_content(block)
 
 
 class TestParseHandBlock:
@@ -511,7 +511,7 @@ class TestAutoRemaining:
     def test_a_call_draws_nothing(self):
         # Dealer draws and discards (69); the pon takes that tile and the caller discards.
         hand = parse_hand_block(
-            "remaining: auto\ndiscards: c1z\nshimo.hand: (111z>)\nshimo.discards: 9m\n"
+            "remaining: auto\ndiscards: c1z\nshimo.hand: (111z<)\nshimo.discards: 9m\n"
             "toimen.score: 25000\nkami.score: 25000",
             MahjongParser(),
         )[0]
@@ -577,13 +577,10 @@ class TestAutoRemaining:
 
 
 class TestHandLimits:
-    def test_dora_counted_on_a_single_hand(self):
-        with pytest.raises(ParseError, match="1m appears 5 times"):
-            parse_hand_block("1111m\ndora: 1m", MahjongParser())
-
-    def test_dora_counted_on_a_single_hand_without_draw_or_discards(self):
-        with pytest.raises(ParseError, match="5z appears 5 times"):
-            parse_hand_block("555z\ndora: 55z", MahjongParser())
+    @pytest.mark.parametrize(("block", "tile"), [("1111m\ndora: 1m", "1m"), ("555z\ndora: 55z", "5z")])
+    def test_dora_counted_on_a_single_hand(self, block, tile):
+        with pytest.raises(ParseError, match=f"{tile} appears 5 times"):
+            parse_hand_block(block, MahjongParser())
 
     def test_opponent_hand_over_13_rejected(self):
         with pytest.raises(ParseError, match="shimo: Hand has 16 tiles"):

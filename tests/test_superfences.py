@@ -2,6 +2,7 @@
 
 import pytest
 
+import pymdownx_mahjong.superfences as sf
 from pymdownx_mahjong.superfences import (
     _error_block,
     _SuperfencesState,
@@ -14,8 +15,6 @@ from pymdownx_mahjong.superfences import (
 @pytest.fixture(autouse=True)
 def reset_superfences_state(monkeypatch):
     """Isolate each test from module-level _state side-effects."""
-    import pymdownx_mahjong.superfences as sf
-
     monkeypatch.setattr(sf, "_state", _SuperfencesState())
 
 
@@ -28,10 +27,10 @@ class TestSuperfencesValidator:
         result = superfences_validator(language="mahjong", inputs={}, options={}, attrs={}, md=None)
         assert result is True
 
-    def test_validator_rejects_other_languages(self):
-        for lang in ["python", "javascript", "", "MAHJONG"]:
-            result = superfences_validator(language=lang, inputs={}, options={}, attrs={}, md=None)
-            assert result is False, f"Should reject language: {lang}"
+    @pytest.mark.parametrize("lang", ["python", "javascript", "", "MAHJONG"])
+    def test_validator_rejects_other_languages(self, lang):
+        result = superfences_validator(language=lang, inputs={}, options={}, attrs={}, md=None)
+        assert result is False
 
 
 class TestSuperfencesFormatter:
@@ -67,11 +66,12 @@ class TestSuperfencesFormatter:
 
         assert "mahjong-error" in html
 
-    def test_formatter_no_hand(self):
-        for source in ("", "title: Only Title"):
-            html = _format(source)
-            assert "mahjong-error" in html
-            assert "No hand notation" in html
+    @pytest.mark.parametrize("source", ["", "title: Only Title"])
+    def test_formatter_no_hand(self, source):
+        html = _format(source)
+
+        assert "mahjong-error" in html
+        assert "No hand notation" in html
 
     def test_honba_and_riichi(self):
         html = _format("123m\nriichi: 1\nhonba: 2")

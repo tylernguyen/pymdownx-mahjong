@@ -91,7 +91,7 @@ class TestMahjongParser:
         assert len(meld.tiles) == 4
 
     def test_closed_kan_with_source_rejected(self):
-        with pytest.raises(ParseError):
+        with pytest.raises(ParseError, match="Closed kan cannot have source marker"):
             MahjongParser().parse("[1111z<]")
 
     def test_parse_open_kan(self):
@@ -101,6 +101,23 @@ class TestMahjongParser:
         assert meld.meld_type == MeldType.KAN_OPEN
         assert meld.is_open
         assert meld.source == MeldSource.RIGHT
+
+    @pytest.mark.parametrize(
+        ("notation", "rotated"),
+        [
+            ("(123m<)", [True, False, False]),
+            ("(111z<)", [True, False, False]),
+            ("(111z^)", [False, True, False]),
+            ("(111z>)", [False, False, True]),
+            ("(1111z<)", [True, False, False, False]),
+            ("(1111z^)", [False, True, False, False]),
+            ("(1111z>)", [False, False, False, True]),
+        ],
+    )
+    def test_called_tile_is_rotated_on_the_side_it_came_from(self, notation, rotated):
+        meld = parse_hand(notation).melds[0]
+
+        assert [tile.is_rotated for tile in meld.tiles] == rotated
 
     def test_parse_added_kan_left(self):
         hand = parse_hand("123m (111+1z<)")
@@ -136,7 +153,7 @@ class TestMahjongParser:
         assert len(hand.melds) == 3
 
     def test_invalid_honor_number(self):
-        with pytest.raises(ParseError):
+        with pytest.raises(ParseError, match="Invalid tile: 8z"):
             MahjongParser().parse("8z")
 
     def test_sequence_vs_triplet_detection(self):
@@ -228,7 +245,7 @@ class TestTileCountValidation:
         with pytest.raises(ParseError, match="1m appears 5 times"):
             MahjongParser().parse("11111m")
 
-    def test_four_with_meld_total_five_raises_error(self):
+    def test_closed_tiles_and_meld_counted_together(self):
         with pytest.raises(ParseError, match="1m appears 6 times"):
             MahjongParser().parse("111m (111m<)")
 
@@ -323,7 +340,7 @@ class TestDiscards:
             parser.validate(hand)
 
 
-class TestFaceDownCount:
+class TestBareNumbers:
     """Bare numbers aren't face-down tiles: digits with no suit are a likely forgotten suit."""
 
     @pytest.mark.parametrize("notation", ["13", "11", "10 (777z<)", "13|", "1 3"])
