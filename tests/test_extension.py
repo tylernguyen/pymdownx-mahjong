@@ -84,6 +84,72 @@ class TestMahjongExtension:
         assert "<code>123m</code>" in out
         assert "mahjong-inline" not in out
 
+    @pytest.mark.parametrize(
+        ("text", "kind"),
+        [
+            ("`mj:(123m<)`", "Chi from left"),
+            ("`mj:(111p^)`", "Pon from across"),
+            ("`mj:(999s>)`", "Pon from right"),
+            ("`mj:(1111m<)`", "Open kan from left"),
+            ("`mj:[1111z]`", "Closed kan"),
+            ("`mj:(666+6z^)`", "Added kan from across"),
+        ],
+    )
+    def test_inline_meld(self, text, kind):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert(text)
+        assert out.count('class="mahjong-inline"') == 1
+        assert f'aria-label="{kind}"' in out
+        assert "<code" not in out
+
+    def test_inline_closed_tiles_precede_melds(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert("`mj:(640m<) [3333z] 11p`")
+        assert out.count("mahjong-meld ") == 2
+        assert out.index('data-tile="1p"') < out.index("mahjong-meld ")
+
+    def test_inline_melds_on_one_line_stay_separate(self):
+        """`<` and `>` in two spans mustn't be taken for an HTML tag between them."""
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert("a `mj:(123m<)` b `mj:(111p>)` c")
+        assert out.count('class="mahjong-inline"') == 2
+        assert "&lt;" not in out
+
+    def test_inline_closed_kan_uses_closed_kan_style(self):
+        md = markdown.Markdown(
+            extensions=["pymdownx_mahjong"],
+            extension_configs={"pymdownx_mahjong": {"closed_kan_style": "inner"}},
+        )
+        out = md.convert("`mj:[1111z]`")
+        # inner: front, back, back, front
+        assert out.count("mahjong-tile-back") == 2
+        assert out.index('data-tile="1z"') < out.index("mahjong-tile-back")
+
+    @pytest.mark.parametrize(
+        "notation",
+        ["(123m]", "(124m<)", "(123m^)", "[111z]", "(XXXz)", "(111m<) (111m^)", "(123m<"],
+    )
+    def test_invalid_inline_meld_stays_code(self, notation):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert(f"`mj:{notation}`")
+        assert "mahjong-inline" not in out
+        assert "<code>mj:" in out
+
+    def test_double_backtick_escapes_inline_meld(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert("``mj:[1111z]``")
+        assert "mahjong-inline" not in out
+        assert "<code>mj:[1111z]</code>" in out
+
+    def test_inline_plain_tiles_needn_t_be_a_legal_hand(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        assert md.convert("`mj:11111m`").count('data-tile="1m"') == 5
+
+    def test_inline_meld_symbols_join_the_page_sprite(self):
+        md = markdown.Markdown(extensions=["pymdownx_mahjong"])
+        out = md.convert(":1m: `mj:(123m<)`")
+        assert out.count('<symbol id="mj-light-1m"') == 1
+
     def test_extension_registered_for_superfences(self):
         from pymdownx_mahjong import MahjongExtension
 

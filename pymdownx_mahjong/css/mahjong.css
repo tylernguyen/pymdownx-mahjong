@@ -1270,20 +1270,34 @@ symbol[id^="mj-marker-"] {
 
 /* Inline tile styles (emoji-sized) */
 .mahjong-inline {
+    --mahjong-tile-width: 1.8em;
+    --mahjong-tile-height: 2.4em;
     display: inline;
 }
 
 .mahjong-inline .mahjong-tile {
-    --mahjong-tile-width: 1.8em;
-    --mahjong-tile-height: 2.4em;
     display: inline-flex;
     vertical-align: text-bottom;
-    margin: 0 0.05em;
-    margin-bottom: var(--mahjong-tile-depth);
     border-width: 1px;
     padding: 1px;
 }
 
-.mahjong-inline .mahjong-tile+.mahjong-tile {
+.mahjong-inline > .mahjong-tile {
+    margin: 0 0.05em;
+    margin-bottom: var(--mahjong-tile-depth);
+}
+
+.mahjong-inline > .mahjong-tile+.mahjong-tile {
     margin-left: 0;
+}
+
+.mahjong-inline .mahjong-meld {
+    vertical-align: text-bottom;
+    margin: 0 0.25em;
+}
+
+/* A sideways tile's face overhangs its box by this much on each side, in em like the tile. */
+.mahjong-inline .mahjong-meld > .mahjong-tile-rotated {
+    margin-left: calc((var(--mahjong-tile-height) - var(--mahjong-tile-width)) / 2);
+    margin-right: calc((var(--mahjong-tile-height) - var(--mahjong-tile-width)) / 2);
 }

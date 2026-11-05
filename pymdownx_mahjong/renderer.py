@@ -5,10 +5,13 @@ from __future__ import annotations
 import html
 import itertools
 import re
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from .parser import MAX_DORA_INDICATORS, OPPONENT_SEATS, SEAT_WINDS, Hand, Meld, MeldSource, MeldType, Tile
 from .sprite import MARKER_THEME, TileSprite
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 THEMES: Final[tuple[str, ...]] = ("auto", "light", "dark")
 CLOSED_KAN_STYLES: Final[tuple[str, ...]] = ("outer", "inner")
@@ -393,12 +396,13 @@ class MahjongRenderer:
         parts.append("</div>")
         return parts
 
-    def render_tiles(self, tiles: list[Tile], sprite: TileSprite | None = None) -> str:
-        """Render a simple list of tiles as HTML."""
+    def render_tiles(self, tiles: list[Tile], sprite: TileSprite | None = None, melds: Sequence[Meld] = ()) -> str:
+        """Render a simple list of tiles, followed by any melds, as HTML."""
         page_sprite = sprite
         sprite = sprite or TileSprite()
         parts = [f'<span class="{self.css_class}"{self._style_attr}>']
         parts.extend(self._render_tile(tile, sprite) for tile in tiles)
+        parts.extend(self._render_meld(meld, sprite) for meld in melds)
         parts.append("</span>")
         return self._join(parts, sprite, page_sprite)
 
