@@ -6,6 +6,7 @@
 
 - fix: face-down discards respect `r`, `t` and `c` markers.
 - fix: a block with no tiles to show reports an error instead of an empty figure.
+- fix: a hand is limited to 14 tiles, counting each meld as 3 and any draw.
 - fix: `mj:` inside a longer code span or after an escaped backtick stays literal.
 - fix: an evenly indented block no longer merges the hand into its discards.
 - fix: face-down inline tiles follow the `theme` option.

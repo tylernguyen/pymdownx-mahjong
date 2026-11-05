@@ -596,6 +596,45 @@ class TestAutoRemaining:
 
 
 class TestHandLimits:
+    @pytest.mark.parametrize(
+        "block",
+        [
+            "123456789m123456p",
+            "123456789m12345p\ndraw: 6p",
+            "123m (111p<) (222p<) (333p<) (444p<)",
+            "(111p<) (222p<) (333p<) [4444p] (555s<)",
+        ],
+    )
+    def test_oversized_hand_rejected(self, block):
+        with pytest.raises(ParseError, match=r"Hand has 15 tiles .* \(expected at most 14\)"):
+            parse_hand_block(block, MahjongParser())
+
+    @pytest.mark.parametrize(
+        "block",
+        [
+            "123456789m1234p",
+            "123456789m123p\ndraw: 4p",
+            "11m (111p<) (222p<) (333p<) [4444p]",
+            "1m (111p<) (222p<) (333p<) [4444p]\ndraw: 1m",
+        ],
+    )
+    def test_fourteen_tiles_allowed(self, block):
+        parse_hand_block(block, MahjongParser())
+
+    def test_oversized_hand_rejected_on_a_table(self):
+        with pytest.raises(ParseError, match="Hand has 15 tiles"):
+            parse_hand_block("123456789m123456p\nshimo.hand:", MahjongParser())
+
+    def test_option_errors_reported_with_hand_size(self):
+        with pytest.raises(ParseError) as exc:
+            parse_hand_block("123456789m123456p\nscore: lots", MahjongParser())
+
+        assert "Invalid score value" in str(exc.value)
+        assert "Hand has 15 tiles" in str(exc.value)
+
+    def test_inline_notation_has_no_limit(self):
+        assert len(MahjongParser().parse("123456789m123456p").closed_tiles) == 15
+
     @pytest.mark.parametrize("option", ["honba", "score", "remaining"])
     def test_absurdly_long_number_is_a_parse_error(self, option):
         with pytest.raises(ParseError, match=f"Invalid {option} value"):

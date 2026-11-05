@@ -44,6 +44,14 @@ _MAX_REMAINING: Final = 70
 # whatever their notation leaves out (all 13 without a hand option) is face-down.
 _HAND_SIZE: Final = 13
 
+# The most a player can hold: a full hand and the tile just drawn.
+_MAX_TILES_HELD: Final = _HAND_SIZE + 1
+
+
+def _hand_size(hand: Hand) -> int:
+    """The tiles a player holds, counting each meld as 3 (kans included) and any draw."""
+    return len(hand.closed_tiles) + 3 * len(hand.melds) + (1 if hand.draw_tile else 0)
+
 
 def parse_block_content(content: str) -> tuple[str, dict[str, Any]]:
     """Parse block content into notation and options.
@@ -129,6 +137,12 @@ def parse_hand_block(content: str, parser: MahjongParser) -> tuple[Hand, dict[st
 
     option_errors = apply_hand_options(hand, parser, options)
 
+    size = _hand_size(hand)
+    if size > _MAX_TILES_HELD:
+        option_errors.append(
+            f"Hand has {size} tiles counting each meld as 3 and any draw (expected at most {_MAX_TILES_HELD})"
+        )
+
     for seat, seat_options in player_options.items():
         try:
             opponent = _parse_opponent_hand(seat_options.get("hand", ""), parser)
@@ -166,7 +180,7 @@ def _parse_opponent_hand(notation: str, parser: MahjongParser) -> Hand:
     """
     notation = notation.strip()
     hand = parser.parse(notation) if notation else Hand()
-    hidden = _HAND_SIZE - 3 * len(hand.melds) - len(hand.closed_tiles)
+    hidden = _HAND_SIZE - _hand_size(hand)
     if hidden < 0:
         raise ParseError(
             f"Hand has {_HAND_SIZE - hidden} tiles counting each meld as 3 "
@@ -243,9 +257,8 @@ def _count_remaining(hand: Hand) -> int:
 
     drawn = 0
     for player in players:
-        in_hand = len(player.closed_tiles) + 3 * len(player.melds) + (1 if player.draw_tile else 0)
         # A draw came from the wall even when the rest of the hand isn't shown.
-        extra = max(in_hand - _HAND_SIZE, 1 if player.draw_tile else 0)
+        extra = max(_hand_size(player) - _HAND_SIZE, 1 if player.draw_tile else 0)
         kans = sum(len(meld.tiles) == 4 for meld in player.melds)
         discarded = sum(not tile.is_called for tile in player.discards)
         drawn += extra + kans + discarded
