@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- fix: face-down discards respect `r`, `t` and `c` markers.
+- fix: face-down inline tiles follow the `theme` option.
+- fix: a closed kan always shows its red five.
+- fix: runs of inline face-down tiles are announced once.
+
 ## [0.3.4] - 2026-11-04
 
 ### Added

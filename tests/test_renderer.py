@@ -153,6 +153,16 @@ class TestRendererConfiguration:
         assert ["back" if tile == "mahjong-tile-back" else "front" for tile in found] == faces
 
 
+class TestClosedKanRedFive:
+    @pytest.mark.parametrize("style", ["outer", "inner"])
+    @pytest.mark.parametrize("notation", ["[0555p]", "[5055p]", "[5505p]", "[5550p]"])
+    def test_red_five_stays_face_up_wherever_it_is_written(self, style, notation):
+        html = MahjongRenderer(theme="light", closed_kan_style=style).render(parse_hand(notation))
+
+        assert re.findall(r'data-tile="(\w+)"', html) == ["0p", "5p"]
+        assert html.count('class="mahjong-tile mahjong-tile-back"') == 2
+
+
 class TestRenderTiles:
     def test_render_tiles_simple(self):
         renderer = MahjongRenderer()
@@ -370,6 +380,31 @@ class TestDiscards:
         assert 'class="mahjong-tile mahjong-tile-tsumogiri mahjong-theme-light"' in html
         assert 'aria-label="2 Man (tsumogiri)"' in html
         assert 'aria-label="3 Man (tsumogiri, called)"' in html
+
+    @pytest.mark.parametrize(
+        ("discards", "css_class", "note"),
+        [
+            ("rXz", "mahjong-tile-rotated", "riichi"),
+            ("tXz", "mahjong-tile-tsumogiri", "tsumogiri"),
+            ("cXz", "mahjong-tile-called", "called"),
+        ],
+    )
+    def test_face_down_discard_keeps_its_marker(self, discards, css_class, note):
+        html = self._render(discards)
+
+        assert f'class="mahjong-tile mahjong-tile-back {css_class}"' in html
+        assert f'aria-label="Face-down tile ({note})" title="Face-down tile ({note})"' in html
+
+    def test_face_down_discard_after_riichi_renders_as_tsumogiri(self):
+        html = self._render("r1m Xz")
+
+        assert 'class="mahjong-tile mahjong-tile-back mahjong-tile-tsumogiri"' in html
+        assert 'aria-label="Face-down tile (tsumogiri)"' in html
+
+    def test_unmarked_face_down_discard_is_plain(self):
+        html = self._render("Xz")
+
+        assert 'class="mahjong-tile mahjong-tile-back" role="img" aria-label="Face-down tile"' in html
 
     def test_discards_only_has_no_hand_row(self):
         html = self._render("123m")

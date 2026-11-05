@@ -861,9 +861,9 @@ symbol[id^="mj-marker-"] {
     box-shadow: 0 4px 3px var(--mahjong-tile-shadow);
 }
 
-/* Face-down tiles (never sideways): back color in the corner and atop the edge. The side
-   players' face-down tiles stack like their discards, so, as in the dora wall, their edge
-   starts with a 1px seam (--mahjong-wall-seam) that shows between neighboring tiles. */
+/* Face-down tiles: back color in the corner and atop the edge. The side players' face-down
+   tiles stack like their discards, so, as in the dora wall, their edge starts with a 1px
+   seam (--mahjong-wall-seam) that shows between neighboring tiles. */
 .mahjong-player-shimo .mahjong-tile.mahjong-tile-back {
     box-shadow: -3px 0 0 var(--mahjong-tile-back);
 }
@@ -892,6 +892,49 @@ symbol[id^="mj-marker-"] {
 .mahjong-player-kami .mahjong-tile.mahjong-tile-back::before {
     background: linear-gradient(
         to right,
+        var(--mahjong-wall-seam, #8a6a45) 1px,
+        var(--mahjong-tile-back) 1px calc(var(--mahjong-tile-depth) * 0.6),
+        var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.6)
+    );
+}
+
+/* A face-down riichi discard lies sideways, so its edge is on the next side round. */
+.mahjong-tile-back.mahjong-tile-rotated {
+    box-shadow: 3px 0 0 var(--mahjong-tile-back);
+}
+
+.mahjong-tile-back.mahjong-tile-rotated::before {
+    background: linear-gradient(to right, var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.6), var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.6));
+}
+
+.mahjong-player-shimo .mahjong-tile.mahjong-tile-back.mahjong-tile-rotated {
+    box-shadow: 0 3px 0 var(--mahjong-tile-back);
+}
+
+.mahjong-player-shimo .mahjong-tile.mahjong-tile-back.mahjong-tile-rotated::before {
+    background: linear-gradient(
+        to bottom,
+        var(--mahjong-wall-seam, #8a6a45) 1px,
+        var(--mahjong-tile-back) 1px calc(var(--mahjong-tile-depth) * 0.6),
+        var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.6)
+    );
+}
+
+.mahjong-player-toimen .mahjong-tile.mahjong-tile-back.mahjong-tile-rotated {
+    box-shadow: -3px 0 0 var(--mahjong-tile-back);
+}
+
+.mahjong-player-toimen .mahjong-tile.mahjong-tile-back.mahjong-tile-rotated::before {
+    background: linear-gradient(to left, var(--mahjong-tile-back) calc(var(--mahjong-tile-depth) * 0.6), var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.6));
+}
+
+.mahjong-player-kami .mahjong-tile.mahjong-tile-back.mahjong-tile-rotated {
+    box-shadow: 0 -3px 0 var(--mahjong-tile-back);
+}
+
+.mahjong-player-kami .mahjong-tile.mahjong-tile-back.mahjong-tile-rotated::before {
+    background: linear-gradient(
+        to top,
         var(--mahjong-wall-seam, #8a6a45) 1px,
         var(--mahjong-tile-back) 1px calc(var(--mahjong-tile-depth) * 0.6),
         var(--mahjong-tile-side) calc(var(--mahjong-tile-depth) * 0.6)

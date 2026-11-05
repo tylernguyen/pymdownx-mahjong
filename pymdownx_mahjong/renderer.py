@@ -164,6 +164,8 @@ class MahjongRenderer:
         self.theme = theme
         self.css_class = css_class
         self.closed_kan_style = closed_kan_style
+        # On each root element, for what's inherited rather than set per tile (e.g. face-down tiles).
+        self._theme_class = f" mahjong-theme-{theme}" if theme in ("light", "dark") else ""
         # Set on each rendered block, overriding the stylesheet's defaults.
         style_vars = [
             f"--mahjong-tile-back: {tile_back_color}" if tile_back_color else "",
@@ -201,10 +203,9 @@ class MahjongRenderer:
         parts: list[str] = []
 
         data_attr = f' data-notation="{html.escape(notation, quote=True)}"' if notation else ""
-        theme_class = f" mahjong-theme-{self.theme}" if self.theme in ("light", "dark") else ""
         # A figcaption names the figure; otherwise give it a generic accessible name.
         label_attr = "" if title else ' aria-label="Mahjong hand"'
-        parts.append(f'<figure class="{self.css_class}{theme_class}"{self._style_attr}{data_attr}{label_attr}>')
+        parts.append(f'<figure class="{self.css_class}{self._theme_class}"{self._style_attr}{data_attr}{label_attr}>')
 
         # With other players, the same pieces sit on a square table: the dora row in the
         # center, and each player's discards, status and hand along their own edge.
@@ -400,8 +401,8 @@ class MahjongRenderer:
         """Render a simple list of tiles, followed by any melds, as HTML."""
         page_sprite = sprite
         sprite = sprite or TileSprite()
-        parts = [f'<span class="{self.css_class}"{self._style_attr}>']
-        parts.extend(self._render_tile(tile, sprite) for tile in tiles)
+        parts = [f'<span class="{self.css_class}{self._theme_class}"{self._style_attr}>']
+        parts.extend(self._render_closed_tiles(tiles, sprite, standing=False))
         parts.extend(self._render_meld(meld, sprite) for meld in melds)
         parts.append("</span>")
         return self._join(parts, sprite, page_sprite)
@@ -484,7 +485,12 @@ class MahjongRenderer:
         """Render a single tile as HTML with an SVG referencing the sprite; ``note`` is
         appended to its accessible name."""
         if tile.is_back:
-            return self._STANDING_BACK_TILE_HTML if standing else self._BACK_TILE_HTML
+            if not note:
+                return self._STANDING_BACK_TILE_HTML if standing else self._BACK_TILE_HTML
+            # A face-down discard keeps its markers.
+            class_str = " ".join(["mahjong-tile", "mahjong-tile-back", *self._marker_classes(tile)])
+            label = f"Face-down tile{note}"
+            return f'<span class="{class_str}" role="img" aria-label="{label}" title="{label}"></span>'
 
         info = tile.info
         if not info:
@@ -493,15 +499,7 @@ class MahjongRenderer:
                 f'role="img" aria-label="Unknown tile">?</span>'
             )
 
-        classes = ["mahjong-tile"]
-        if tile.is_rotated:
-            classes.append("mahjong-tile-rotated")
-        if tile.is_added:
-            classes.append("mahjong-tile-added")
-        if tile.is_tsumogiri:
-            classes.append("mahjong-tile-tsumogiri")
-        if tile.is_called:
-            classes.append("mahjong-tile-called")
+        classes = ["mahjong-tile", *self._marker_classes(tile)]
         if self.theme in ("light", "dark"):
             classes.append(f"mahjong-theme-{self.theme}")
 
@@ -518,6 +516,20 @@ class MahjongRenderer:
             f'<span class="{class_str}" data-tile="{tile.notation}" role="img" '
             f'aria-label="{label}" title="{label}">{svg_content}</span>'
         )
+
+    @staticmethod
+    def _marker_classes(tile: Tile) -> list[str]:
+        """The CSS classes for a tile's position and discard markers."""
+        classes = []
+        if tile.is_rotated:
+            classes.append("mahjong-tile-rotated")
+        if tile.is_added:
+            classes.append("mahjong-tile-added")
+        if tile.is_tsumogiri:
+            classes.append("mahjong-tile-tsumogiri")
+        if tile.is_called:
+            classes.append("mahjong-tile-called")
+        return classes
 
     @staticmethod
     def _discard_note(tile: Tile) -> str:
@@ -548,6 +560,8 @@ class MahjongRenderer:
 
         if meld.meld_type == MeldType.KAN_ADDED:
             parts.extend(self._render_added_kan(meld, sprite))
+        elif meld.meld_type == MeldType.KAN_CLOSED:
+            parts.extend(self._render_closed_kan(meld, sprite))
         else:
             parts.extend(self._render_standard_meld(meld, sprite))
 
@@ -564,18 +578,13 @@ class MahjongRenderer:
             return [t[0], t[1], stack_open, t[2], t[3], "</span>"]
         return [t[0], stack_open, t[1], t[3], "</span>", t[2]]
 
-    def _render_standard_meld(self, meld: Meld, sprite: TileSprite) -> list[str]:
-        """Render a standard meld (non-added kan)."""
-        parts: list[str] = []
-        for i, tile in enumerate(meld.tiles):
-            if meld.meld_type == MeldType.KAN_CLOSED:
-                # inner: front, back, back, front; outer: back, front, front, back
-                is_back = i in (1, 2) if self.closed_kan_style == "inner" else i in (0, 3)
-                if is_back:
-                    parts.append(self._BACK_TILE_HTML)
-                else:
-                    parts.append(self._render_tile(tile, sprite))
-            else:
-                parts.append(self._render_tile(tile, sprite, note=self._meld_note(tile)))
+    def _render_closed_kan(self, meld: Meld, sprite: TileSprite) -> list[str]:
+        """Render a closed kan, with any red fives among the two face-up tiles so they show."""
+        fronts = sorted(meld.tiles, key=lambda tile: tile.number != 0)[:2]
+        first, second = (self._render_tile(tile, sprite) for tile in fronts)
+        back = self._BACK_TILE_HTML
+        return [first, back, back, second] if self.closed_kan_style == "inner" else [back, first, second, back]
 
-        return parts
+    def _render_standard_meld(self, meld: Meld, sprite: TileSprite) -> list[str]:
+        """Render a chi, pon or open kan."""
+        return [self._render_tile(tile, sprite, note=self._meld_note(tile)) for tile in meld.tiles]

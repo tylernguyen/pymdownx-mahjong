@@ -79,6 +79,15 @@ class TestMahjongExtension:
         assert ":1m:" not in out
         assert out.count("<img") == 1
 
+    def test_inline_face_down_run_announced_once(self, md):
+        out = md.convert("`mj:XXXz`")
+        assert out.count('role="img"') == 1
+        assert 'aria-label="3 face-down tiles"' in out
+        assert out.count("mahjong-tile-back") == 3
+
+    def test_inline_closed_kan_shows_red_five(self, md):
+        assert 'data-tile="0p"' in md.convert("`mj:[0555p]`")
+
     def test_double_backtick_escapes_mj_code(self, md):
         out = md.convert("``mj:123456789m``")
         assert "mahjong-inline" not in out
@@ -262,6 +271,11 @@ class TestConfigPropagation:
     def test_no_style_without_tile_back_color(self):
         out = self._md().convert("```mahjong\n123m\n```\n\n:1m:")
         assert "--mahjong-tile-back" not in out
+
+    @pytest.mark.parametrize("theme", ["light", "dark"])
+    def test_inline_root_carries_theme_for_face_down_tiles(self, theme):
+        out = self._md(theme=theme).convert(":Xz:")
+        assert f'<span class="mahjong-inline mahjong-theme-{theme}">' in out
 
     @pytest.mark.parametrize("text", [":1m:", "`mj:1m`"])
     def test_inline_tiles_use_theme(self, text):
