@@ -107,6 +107,14 @@ class TestMahjongRenderer:
         assert stack.group(1).count("mahjong-tile-rotated") == 2
         assert stack.group(1).count("mahjong-tile-added") == 1
 
+    @pytest.mark.parametrize("notation", ["(555+0p<)", "(555+0p^)", "(555+0p>)"])
+    def test_added_tile_is_on_top_of_the_stack(self, notation):
+        html = MahjongRenderer(theme="light").render(parse_hand(notation), sprite=TileSprite())
+        stack = html[html.index('class="mahjong-tile-stack"') :]
+
+        assert re.findall(r'data-tile="(\w+)"', stack)[:2] == ["0p", "5p"]
+        assert re.findall(r'aria-label="([^"]+)"', stack)[:2] == ["Red 5 Pin (added)", "5 Pin (called)"]
+
     def test_render_dora(self):
         renderer = MahjongRenderer()
         hand = parse_hand("123m456p789s11222z")

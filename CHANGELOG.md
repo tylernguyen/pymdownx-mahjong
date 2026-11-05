@@ -17,6 +17,7 @@
 - fix: `enable_inline` rejects unknown values.
 - fix: color options accept uppercase function names and reject empty ones.
 - fix: very long numbers report an error instead of crashing.
+- fix: an added kan render order.
 
 ## [0.3.4] - 2026-11-04
 

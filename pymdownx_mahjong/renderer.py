@@ -573,14 +573,15 @@ class MahjongRenderer:
         return "".join(parts)
 
     def _render_added_kan(self, meld: Meld, sprite: TileSprite) -> list[str]:
-        """Render an added kan (shouminkan) — stacked pair position depends on source."""
+        """Render an added kan (shouminkan): the added tile stacked on top of the called tile,
+        whose position depends on the source."""
         t = [self._render_tile(tile, sprite, note=self._meld_note(tile)) for tile in meld.tiles]
         stack_open = '<span class="mahjong-tile-stack">'
         if meld.tiles[0].is_rotated:
-            return [stack_open, t[0], t[3], "</span>", t[1], t[2]]
+            return [stack_open, t[3], t[0], "</span>", t[1], t[2]]
         if meld.tiles[2].is_rotated:
-            return [t[0], t[1], stack_open, t[2], t[3], "</span>"]
-        return [t[0], stack_open, t[1], t[3], "</span>", t[2]]
+            return [t[0], t[1], stack_open, t[3], t[2], "</span>"]
+        return [t[0], stack_open, t[3], t[1], "</span>", t[2]]
 
     def _render_closed_kan(self, meld: Meld, sprite: TileSprite) -> list[str]:
         """Render a closed kan, with any red fives among the two face-up tiles so they show."""
